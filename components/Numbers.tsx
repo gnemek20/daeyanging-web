@@ -5,7 +5,9 @@ const Numbers = () => {
         <div className="sec-head reveal"><span className="num">04</span><span className="label">By the Numbers</span></div>
         <h2 className="big reveal">2004년부터,<br /><b className="gold-text">단단하게.</b></h2>
         <p className="lede lede--sub reveal" data-d="1" style={{ marginTop: '1.5rem' }}>
-          2004년 창업 이래 20년 넘게 패션 브랜드와 함께 성장해 왔습니다.<br />
+          2004년 창업 이래 20년 넘게 패션 브랜드와 함께 성장해 왔습니다.
+        </p>
+        <p className="lede lede--sub reveal" data-d="2" style={{ marginTop: '1rem' }}>
           브랜드 파트너십과 독립적으로, 15개 이상의 하청 생산 공장과 안정적인 제조 네트워크를 구축하고 있습니다.
         </p>
 

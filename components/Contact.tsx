@@ -17,7 +17,7 @@ const Contact = () => {
         <div className="contact-grid">
           <div className="reveal">
             <h2><b className="gold-text">날개</b>를<br />달아드리겠습니다.</h2>
-            <p className="lede">샘플 요청, 단가 문의, 맞춤 제작 상담 — 어떤 단계든 편하게 연락 주세요.</p>
+            <p className="lede lede--sub" style={{ marginTop: '1.4rem' }}>샘플 요청, 단가 문의, 맞춤 제작 상담 — 어떤 단계든 편하게 연락 주세요.</p>
             <div className="cinfo">
               <a href="tel:01037443084"><span className="k">Tel</span><span className="val">010-3744-3084</span></a>
               <a href="mailto:kyounghwa_kim@daeyanging.com"><span className="k">Email</span><span className="val">kyounghwa_kim@daeyanging.com</span></a>
