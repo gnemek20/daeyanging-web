@@ -16,6 +16,7 @@
   --gold-line: linear-gradient(180deg,#f4e3a6,#c8a458 55%,#7d5f29);
 }
 *{ box-sizing:border-box; margin:0; padding:0; }
+*{ scrollbar-width:thin; scrollbar-color:var(--bronze) transparent; }
 html{ scroll-behavior:smooth; }
 body{
   background:var(--bg); color:var(--ink);
