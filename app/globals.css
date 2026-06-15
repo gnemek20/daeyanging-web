@@ -168,7 +168,7 @@ h2.big b{ font-weight:400; }
 .stats{ display:grid; grid-template-columns:repeat(4,1fr); margin-top:3.6rem; border-top:1px solid var(--line); }
 .stat{ padding:2.6rem 1.6rem 0; border-left:1px solid var(--line); }
 .stat:first-child{ border-left:none; padding-left:0; }
-.stat .n{ font-family:"Cormorant Garamond",serif; font-weight:500; font-size:clamp(3.4rem,6.5vw,5.4rem); line-height:.86; background:var(--gold-text); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.stat .n{ font-family:"Cormorant Garamond",serif; font-weight:500; font-size:clamp(3.4rem,6.5vw,5.4rem); line-height:1; padding:.08em 0; overflow:visible; background:var(--gold-text); -webkit-background-clip:text; background-clip:text; color:transparent; }
 .stat .l{ margin-top:1rem; font-size:1rem; color:var(--ink); letter-spacing:.01em; }
 .stat .en{ display:block; margin-top:.3rem; font-family:"Jost",sans-serif; font-size:.6rem; letter-spacing:.18em; text-transform:uppercase; color:var(--muted-2); }
 @media (max-width:760px){
@@ -211,12 +211,12 @@ h2.big b{ font-weight:400; }
 .prod{ border:1px solid var(--line); border-radius:var(--r); overflow:hidden; background:var(--bg-3); transition:.45s; display:flex; flex-direction:column; }
 .prod:hover{ border-color:rgba(201,164,82,.4); transform:translateY(-2px); }
 .ph{
-  height:218px; position:relative; background-color:#191309;
+  height:180px; position:relative; background-color:#191309;
   background-image:repeating-linear-gradient(135deg,rgba(201,164,82,.07) 0 2px,transparent 2px 11px);
   display:flex; align-items:flex-end; justify-content:space-between;
 }
-.ph--feature{ flex:1; min-height:320px; }
-.ph--wide{ height:160px; }
+.ph--feature{ flex:1; min-height:260px; }
+.ph--wide{ height:130px; }
 .prod-index{ font-family:"Cormorant Garamond",serif; font-style:italic; font-size:2.2rem; color:rgba(201,164,82,.18); line-height:1; align-self:flex-start; padding:.9rem 0 0 1.2rem; }
 .ph .mono{ font-family:"Jost",sans-serif; font-size:.62rem; letter-spacing:.12em; text-transform:uppercase; color:var(--muted-2); margin:0 1.2rem 1rem 0; padding:.3rem .55rem; border:1px dashed var(--muted-2); border-radius:3px; flex-shrink:0; }
 .prod--feature{ }

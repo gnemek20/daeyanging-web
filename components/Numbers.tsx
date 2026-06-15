@@ -11,16 +11,16 @@ const Numbers = () => {
 
         <div className="stats reveal" data-d="1">
           <div className="stat">
-            <div className="n">15+</div>
-            <div className="l">하청 생산 파트너<span className="en">Production Partners</span></div>
+            <div className="n">20+</div>
+            <div className="l">협업 브랜드<span className="en">Partner Brands</span></div>
           </div>
           <div className="stat">
             <div className="n">2004</div>
             <div className="l">창업 연도<span className="en">Founded</span></div>
           </div>
           <div className="stat">
-            <div className="n">00+</div>
-            <div className="l">협업 브랜드<span className="en">Partner Brands</span></div>
+            <div className="n">15+</div>
+            <div className="l">제조 파트너<span className="en">Production Partners</span></div>
           </div>
           <div className="stat">
             <div className="n">00+</div>
