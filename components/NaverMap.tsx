@@ -15,45 +15,45 @@ const STATIONS = [
   { lat: 37.5712, lng: 127.0097, line: '4', color: '#00A5DE', name: '동대문역', walk: '도보 10분' },
 ]
 
+const FONT = `'Pretendard Variable',Pretendard,system-ui,sans-serif`
+
 const MARKER_MAIN = `
-<div style="display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 4px 12px rgba(0,0,0,.45))">
+<div style="display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 4px 10px rgba(23,24,28,.35))">
   <div style="
-    width:48px;height:48px;border-radius:50%;
-    background:linear-gradient(135deg,#f6e6b4,#c8a458 55%,#8a6a31);
-    border:2.5px solid #f6e6b4;
+    width:46px;height:46px;border-radius:50%;
+    background:#23306B;border:3px solid #E3C47C;
     display:grid;place-items:center;
-    font-family:Cormorant Garamond,serif;font-weight:600;font-size:1.1rem;
-    color:#1a1410;
-    box-shadow:0 0 0 4px rgba(201,164,82,.22),0 6px 18px rgba(0,0,0,.4);
+    font-family:Archivo,${FONT};font-stretch:125%;font-weight:700;font-size:.95rem;
+    color:#fff;
   ">DY</div>
-  <div style="width:2px;height:14px;background:linear-gradient(#c8a458,transparent);margin-top:-1px"></div>
+  <div style="width:3px;height:14px;background:#B58A3A;margin-top:-1px;border-radius:2px"></div>
 </div>`
 
 const markerStation = (line: string, color: string) => `
 <div style="
-  width:34px;height:34px;border-radius:50%;
+  width:32px;height:32px;border-radius:50%;
   background:${color};
-  border:2.5px solid rgba(255,255,255,.9);
+  border:2.5px solid #fff;
   display:grid;place-items:center;
-  font-family:Jost,sans-serif;font-weight:600;font-size:.88rem;
+  font-family:${FONT};font-weight:700;font-size:.85rem;
   color:#fff;
-  box-shadow:0 3px 10px rgba(0,0,0,.4);
-  filter:drop-shadow(0 2px 6px rgba(0,0,0,.35));
+  box-shadow:0 2px 8px rgba(23,24,28,.3);
 ">${line}</div>`
 
 const INFO_WINDOW = `
 <div style="
-  background:#1a1610;border:1px solid rgba(201,164,82,.35);border-radius:6px;
-  padding:1.2rem 1.5rem;min-width:220px;
-  box-shadow:0 12px 40px rgba(0,0,0,.6);
+  background:#fff;border-radius:12px;
+  padding:1rem 1.2rem;min-width:220px;
+  box-shadow:0 10px 30px rgba(23,24,28,.18);
+  font-family:${FONT};
 ">
-  <div style="font-family:Cormorant Garamond,serif;font-size:1.15rem;color:#f6e6b4;font-weight:500;margin-bottom:.5rem">대양ING</div>
-  <div style="font-family:Noto Serif KR,serif;font-size:.82rem;color:#9a9082;line-height:1.7">
+  <div style="font-size:1rem;color:#17181C;font-weight:700;margin-bottom:.35rem">대양ING</div>
+  <div style="font-size:.82rem;color:#5E626B;line-height:1.6">
     서울특별시 종로구<br>김상옥로 59, 한아빌딩 3층
   </div>
-  <div style="margin-top:.85rem;padding-top:.85rem;border-top:1px solid rgba(201,164,82,.15);display:flex;gap:.55rem">
-    <span style="font-family:Jost,sans-serif;font-size:.65rem;letter-spacing:.08em;padding:.28rem .65rem;border-radius:3px;background:#0052A4;color:#fff">1 종로5가 5분</span>
-    <span style="font-family:Jost,sans-serif;font-size:.65rem;letter-spacing:.08em;padding:.28rem .65rem;border-radius:3px;background:#00A5DE;color:#fff">4 동대문 10분</span>
+  <div style="margin-top:.75rem;display:flex;gap:.45rem">
+    <span style="font-size:.72rem;font-weight:600;padding:.25rem .6rem;border-radius:999px;background:#0052A4;color:#fff">1 종로5가 5분</span>
+    <span style="font-size:.72rem;font-weight:600;padding:.25rem .6rem;border-radius:999px;background:#00A5DE;color:#fff">4 동대문 10분</span>
   </div>
 </div>`
 
@@ -127,11 +127,11 @@ const NaverMap = () => {
 
         const stationInfo = new maps.InfoWindow({
           content: `<div style="
-            background:#1a1610;border:1px solid ${color}55;border-radius:4px;
-            padding:.55rem .9rem;
-            font-family:Noto Serif KR,serif;font-size:.78rem;color:#ece6da;
-            box-shadow:0 4px 14px rgba(0,0,0,.5);white-space:nowrap;
-          "><strong style="color:${color}">${line}호선</strong> ${name} · <span style="color:#9a9082">${walk}</span></div>`,
+            background:#fff;border-radius:999px;
+            padding:.45rem .85rem;
+            font-family:${FONT};font-size:.78rem;color:#17181C;
+            box-shadow:0 4px 14px rgba(23,24,28,.18);white-space:nowrap;
+          "><strong style="color:${color}">${line}호선</strong> ${name} <span style="color:#5E626B">${walk}</span></div>`,
           borderWidth: 0,
           backgroundColor: 'transparent',
           disableAnchor: true,
@@ -162,7 +162,7 @@ const NaverMap = () => {
   return (
     <div
       ref={mapRef}
-      style={{ width: '100%', height: '100%', minHeight: '420px', borderRadius: '4px' }}
+      style={{ width: '100%', height: '100%', minHeight: '420px' }}
     />
   )
 }

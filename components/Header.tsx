@@ -1,59 +1,66 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+
+const LINKS = [
+  { href: '#company', label: '회사소개' },
+  { href: '#products', label: '제품' },
+  { href: '#contact', label: '상담문의' },
+  { href: '#location', label: '오시는 길' },
+]
 
 const Header = () => {
-  const headerRef = useRef<HTMLElement>(null)
+  const [active, setActive] = useState<string | null>(null)
+  const [scrolled, setScrolled] = useState(false)
+  const menuRef = useRef<HTMLDetailsElement>(null)
 
   useEffect(() => {
-    const navLinks = [...document.querySelectorAll<HTMLAnchorElement>('.hnav .links a')]
-    const spy = navLinks
-      .map((a) => ({ a, sec: document.querySelector<HTMLElement>(a.getAttribute('href') || '') }))
-      .filter((x) => x.sec)
-
     const onScroll = () => {
-      if (headerRef.current) {
-        headerRef.current.classList.toggle('scrolled', window.scrollY > 30)
+      setScrolled(window.scrollY > 8)
+      const pos = window.scrollY + window.innerHeight * 0.35
+      let cur: string | null = null
+      for (const { href } of LINKS) {
+        const sec = document.querySelector<HTMLElement>(href)
+        if (sec && sec.offsetTop <= pos) cur = href
       }
-
-      const pos = window.scrollY + window.innerHeight * 0.32
-      let cur: { a: HTMLAnchorElement; sec: HTMLElement | null } | null = null
-      for (const item of spy) {
-        if (item.sec && item.sec.offsetTop <= pos) cur = item
-      }
-
-      navLinks.forEach((a) => a.classList.remove('active'))
-      if (cur && window.scrollY > 40) cur.a.classList.add('active')
+      setActive(window.scrollY > 40 ? cur : null)
     }
-
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('resize', onScroll)
     onScroll()
-
     return () => {
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', onScroll)
     }
   }, [])
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
+  const closeMenu = () => menuRef.current?.removeAttribute('open')
 
   return (
-    <header id="topbar" ref={headerRef}>
-      <div className="brand" onClick={scrollToTop}>
-        <span className="dy">DY</span>
-        <span className="kr">대양ING</span>
+    <header className={`top${scrolled ? ' top--scrolled' : ''}`}>
+      <div className="top__inner">
+        <a className="brand" href="#" aria-label="대양ING 처음으로">
+          <span className="brand__dy">DY</span>
+          <span className="brand__kr">대양ING</span>
+        </a>
+        <nav className="nav" aria-label="주요 메뉴">
+          {LINKS.map((l) => (
+            <a key={l.href} href={l.href} aria-current={active === l.href ? 'true' : undefined}>
+              {l.label}
+            </a>
+          ))}
+        </nav>
+        <details className="mnav" ref={menuRef}>
+          <summary aria-label="메뉴 열기">메뉴</summary>
+          <div className="mnav__panel">
+            {LINKS.map((l) => (
+              <a key={l.href} href={l.href} onClick={closeMenu}>
+                {l.label}
+              </a>
+            ))}
+          </div>
+        </details>
       </div>
-      <nav className="hnav">
-        <div className="links">
-          <a href="#company">회사소개</a>
-          <a href="#products">제품</a>
-          <a href="#contact">상담문의</a>
-          <a href="#location">오시는 길</a>
-        </div>
-      </nav>
     </header>
   )
 }
