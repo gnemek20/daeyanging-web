@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import Script from 'next/script'
+import { useRef } from 'react'
 
 declare global {
   interface Window {
@@ -57,113 +58,98 @@ const INFO_WINDOW = `
   </div>
 </div>`
 
+const CLIENT_ID = process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID
+
+// 지도 스크립트는 next/script 가 불러오고, 불러온 뒤(그리고 다시 마운트될 때마다) onReady 에서 지도를 그린다.
 const NaverMap = () => {
   const mapRef = useRef<HTMLDivElement>(null)
-  const mapInstance = useRef<unknown>(null)
 
-  useEffect(() => {
-    const clientId = process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID
-    if (!clientId || !mapRef.current) return
+  const initMap = () => {
+    if (!mapRef.current || !window.naver?.maps) return
+    const { maps } = window.naver
 
-    const initMap = () => {
-      if (!mapRef.current || !window.naver?.maps) return
-      const { maps } = window.naver
+    const center = new maps.LatLng(MAIN.lat, MAIN.lng)
 
-      const center = new maps.LatLng(MAIN.lat, MAIN.lng)
+    const map = new maps.Map(mapRef.current, {
+      center,
+      zoom: 16,
+      mapTypeControl: false,
+      scaleControl: false,
+      logoControl: true,
+      logoControlOptions: { position: maps.Position.BOTTOM_LEFT },
+      mapDataControl: false,
+      zoomControl: true,
+      zoomControlOptions: {
+        style: maps.ZoomControlStyle.SMALL,
+        position: maps.Position.TOP_RIGHT,
+      },
+      minZoom: 10,
+    })
 
-      const map = new maps.Map(mapRef.current, {
-        center,
-        zoom: 16,
-        mapTypeControl: false,
-        scaleControl: false,
-        logoControl: true,
-        logoControlOptions: { position: maps.Position.BOTTOM_LEFT },
-        mapDataControl: false,
-        zoomControl: true,
-        zoomControlOptions: {
-          style: maps.ZoomControlStyle.SMALL,
-          position: maps.Position.TOP_RIGHT,
-        },
-        minZoom: 10,
-      })
-      mapInstance.current = map
+    const mainMarker = new maps.Marker({
+      position: center,
+      map,
+      icon: {
+        content: MARKER_MAIN,
+        anchor: new maps.Point(24, 66),
+      },
+      zIndex: 10,
+    })
 
-      const mainMarker = new maps.Marker({
-        position: center,
+    const infoWindow = new maps.InfoWindow({
+      content: INFO_WINDOW,
+      borderWidth: 0,
+      backgroundColor: 'transparent',
+      disableAnchor: true,
+      pixelOffset: new maps.Point(0, -74),
+    })
+
+    maps.Event.addListener(mainMarker, 'click', () => {
+      if (infoWindow.getMap()) infoWindow.close()
+      else infoWindow.open(map, mainMarker)
+    })
+
+    infoWindow.open(map, mainMarker)
+
+    STATIONS.forEach(({ lat, lng, line, color, name, walk }) => {
+      const pos = new maps.LatLng(lat, lng)
+      const marker = new maps.Marker({
+        position: pos,
         map,
         icon: {
-          content: MARKER_MAIN,
-          anchor: new maps.Point(24, 66),
+          content: markerStation(line, color),
+          anchor: new maps.Point(17, 17),
         },
-        zIndex: 10,
+        zIndex: 5,
       })
 
-      const infoWindow = new maps.InfoWindow({
-        content: INFO_WINDOW,
+      const stationInfo = new maps.InfoWindow({
+        content: `<div style="
+          background:#fff;border-radius:999px;
+          padding:.45rem .85rem;
+          font-family:${FONT};font-size:.78rem;color:#17181C;
+          box-shadow:0 4px 14px rgba(23,24,28,.18);white-space:nowrap;
+        "><strong style="color:${color}">${line}호선</strong> ${name} <span style="color:#5E626B">${walk}</span></div>`,
         borderWidth: 0,
         backgroundColor: 'transparent',
         disableAnchor: true,
-        pixelOffset: new maps.Point(0, -74),
+        pixelOffset: new maps.Point(0, -44),
       })
 
-      maps.Event.addListener(mainMarker, 'click', () => {
-        if (infoWindow.getMap()) infoWindow.close()
-        else infoWindow.open(map, mainMarker)
+      maps.Event.addListener(marker, 'click', () => {
+        if (stationInfo.getMap()) stationInfo.close()
+        else stationInfo.open(map, marker)
       })
-
-      infoWindow.open(map, mainMarker)
-
-      STATIONS.forEach(({ lat, lng, line, color, name, walk }) => {
-        const pos = new maps.LatLng(lat, lng)
-        const marker = new maps.Marker({
-          position: pos,
-          map,
-          icon: {
-            content: markerStation(line, color),
-            anchor: new maps.Point(17, 17),
-          },
-          zIndex: 5,
-        })
-
-        const stationInfo = new maps.InfoWindow({
-          content: `<div style="
-            background:#fff;border-radius:999px;
-            padding:.45rem .85rem;
-            font-family:${FONT};font-size:.78rem;color:#17181C;
-            box-shadow:0 4px 14px rgba(23,24,28,.18);white-space:nowrap;
-          "><strong style="color:${color}">${line}호선</strong> ${name} <span style="color:#5E626B">${walk}</span></div>`,
-          borderWidth: 0,
-          backgroundColor: 'transparent',
-          disableAnchor: true,
-          pixelOffset: new maps.Point(0, -44),
-        })
-
-        maps.Event.addListener(marker, 'click', () => {
-          if (stationInfo.getMap()) stationInfo.close()
-          else stationInfo.open(map, marker)
-        })
-      })
-    }
-
-    const SCRIPT_ID = 'naver-maps-v3'
-    if (document.getElementById(SCRIPT_ID)) {
-      if (window.naver?.maps) initMap()
-      return
-    }
-
-    const script = document.createElement('script')
-    script.id = SCRIPT_ID
-    script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${clientId}`
-    script.async = true
-    script.onload = initMap
-    document.head.appendChild(script)
-  }, [])
+    })
+  }
 
   return (
-    <div
-      ref={mapRef}
-      style={{ width: '100%', height: '100%', minHeight: '420px' }}
-    />
+    <>
+      <div ref={mapRef} className="naver-map" />
+      {CLIENT_ID && (
+        <Script src={`https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${CLIENT_ID}`} onReady={initMap} />
+      )}
+    </>
   )
 }
 

@@ -1,4 +1,3 @@
-import Header from '@/components/Header'
 import Hero from '@/components/Hero'
 import Company from '@/components/Company'
 import Products from '@/components/Products'
@@ -7,7 +6,6 @@ import Craft from '@/components/Craft'
 import Numbers from '@/components/Numbers'
 import Contact from '@/components/Contact'
 import Location from '@/components/Location'
-import Footer from '@/components/Footer'
 import { SITE, jsonLd } from '@/lib/site'
 
 // 검색엔진이 회사·매장 정보를 이해하도록 넣는 구조화 데이터(사이트에 이미 공개된 정보만)
@@ -52,7 +50,6 @@ export default function Page() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(businessLd) }} />
-      <Header />
       <main>
         <Hero />
         <Company />
@@ -63,7 +60,6 @@ export default function Page() {
         <Contact />
         <Location />
       </main>
-      <Footer />
     </>
   )
 }

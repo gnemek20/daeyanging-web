@@ -12,6 +12,8 @@ type Props = {
   finish?: ToothFinish
   title: string
   bleed?: boolean
+  /** 금속 그라데이션 4단계를 직접 지정(CSS 변수 가능). 없으면 finish 프리셋을 쓴다. */
+  stops?: [string, string, string, string]
 }
 
 const W = 600
@@ -25,10 +27,11 @@ const finishStops: Record<ToothFinish, [string, string, string, string]> = {
   gloss: ['#B9BCC2', '#3A3C41', '#141518', '#000000'],
 }
 
-const ZipperStrip = ({ id, kind, tape, teeth = '#B58A3A', finish = 'metal', title, bleed = false }: Props) => {
+// 색은 presentation 속성이 아니라 style 로 넣는다 — 그래야 var(--…) 같은 CSS 변수도 받을 수 있다.
+const ZipperStrip = ({ id, kind, tape, teeth = '#B58A3A', finish = 'metal', title, bleed = false, stops }: Props) => {
   const g = `${id}-t`
   const sg = `${id}-s`
-  const [s0, s1, s2, s3] = finishStops[finish]
+  const [s0, s1, s2, s3] = stops ?? finishStops[finish]
   const top = bleed ? 0 : 46
   const bot = bleed ? H : H - 46
   const sliderX = bleed ? 350 : 400
@@ -90,10 +93,10 @@ const ZipperStrip = ({ id, kind, tape, teeth = '#B58A3A', finish = 'metal', titl
     >
       <defs>
         <linearGradient id={g} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor={s0} />
-          <stop offset="0.35" stopColor={s1} />
-          <stop offset="0.75" stopColor={s2} />
-          <stop offset="1" stopColor={s3} />
+          <stop offset="0" style={{ stopColor: s0 }} />
+          <stop offset="0.35" style={{ stopColor: s1 }} />
+          <stop offset="0.75" style={{ stopColor: s2 }} />
+          <stop offset="1" style={{ stopColor: s3 }} />
         </linearGradient>
         <linearGradient id={sg} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#000" stopOpacity="0.22" />
@@ -111,8 +114,8 @@ const ZipperStrip = ({ id, kind, tape, teeth = '#B58A3A', finish = 'metal', titl
 
       {bleed && <rect x="0" y="0" width={W} height={H} fill="#000" opacity="0.55" />}
       <g>
-        <path d={tapeTopPath} fill={tape} />
-        <path d={tapeBotPath} fill={tape} />
+        <path d={tapeTopPath} style={{ fill: tape }} />
+        <path d={tapeBotPath} style={{ fill: tape }} />
         <path d={tapeTopPath} fill={`url(#${id}-w)`} />
         <path d={tapeBotPath} fill={`url(#${id}-w)`} />
         <rect x="0" y={top} width={W} height={bot - top} fill={`url(#${sg})`} style={{ mixBlendMode: 'soft-light' }} />
@@ -140,13 +143,13 @@ const ZipperStrip = ({ id, kind, tape, teeth = '#B58A3A', finish = 'metal', titl
           {kind === 'conceal' ? (
             <>
               <path d="M22 4 C 38 32, 40 74, 22 98 C 4 74, 6 32, 22 4 Z" fill={`url(#${g})`} />
-              <circle cx="22" cy="74" r="6" fill={tape} />
+              <circle cx="22" cy="74" r="6" style={{ fill: tape }} />
             </>
           ) : (
             <>
               <rect x="6" y="2" width="32" height="104" rx="14" fill={`url(#${g})`} />
               <rect x="10" y="10" width="4" height="86" rx="2" fill="#fff" opacity="0.45" />
-              <rect x="15" y="66" width="14" height="28" rx="7" fill={tape} />
+              <rect x="15" y="66" width="14" height="28" rx="7" style={{ fill: tape }} />
             </>
           )}
         </g>

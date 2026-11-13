@@ -174,20 +174,30 @@ li {
 }
 
 /* ───────── 머리글 ───────── */
+/* 기본은 늘 배경이 있는 머리글(읽기 쉽게). 스크롤 기반 애니메이션을 지원하면
+   맨 위에서는 투명했다가 조금 내리면 배경이 생긴다 — 자바스크립트 없이. */
 .top {
   position: fixed;
   inset: 0 0 auto;
   z-index: 50;
   height: var(--header-h);
-  transition:
-    background-color 220ms ease-out,
-    border-color 220ms ease-out;
-  border-bottom: 1px solid transparent;
-}
-.top--scrolled {
   background: rgb(246 246 243 / 0.88);
   backdrop-filter: blur(14px) saturate(1.4);
-  border-bottom-color: var(--line);
+  border-bottom: 1px solid var(--line);
+}
+@supports ((animation-timeline: scroll()) and (animation-range: 0% 100%)) {
+  .top {
+    animation: top-fill linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 0 48px;
+  }
+}
+@keyframes top-fill {
+  from {
+    background-color: rgb(246 246 243 / 0);
+    border-bottom-color: transparent;
+    backdrop-filter: none;
+  }
 }
 .top__inner {
   height: 100%;
@@ -347,8 +357,31 @@ li {
   touch-action: pan-y;
   min-height: 100svh;
 }
+/* --t: 슬라이더 목표 위치(포인터가 바꾼다, transition 으로 부드럽게)
+   --k: 처음 열리는 정도 0→1 (keyframes 로 물결처럼). 둘 다 등록해야 값 사이를 보간할 수 있다.
+   @property 를 모르는 브라우저는 var() 의 대체값으로 바로 최종 모습을 보여 준다. */
+@property --t {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 30%;
+}
+@property --k {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
+@keyframes tp-open {
+  from {
+    --k: 0;
+  }
+}
 .tp {
-  --p: 30%;
+  --p: calc(2% + (var(--t, 30%) - 2%) * var(--k, 1));
+  @media (prefers-reduced-motion: no-preference) {
+    animation: tp-open 1.5s cubic-bezier(0.55, 0, 0.2, 1) both;
+    animation-delay: calc(400ms + var(--i, 0) * 70ms);
+    transition: --t 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
   --t-hi: #f6e2a8;
   --t-mid: #c79a45;
   --t-lo: #7a571c;
@@ -620,6 +653,11 @@ li {
 
 /* ───────── 맞춤 제작 ───────── */
 .custom {
+  --cfg-tape: #26367a;
+  --cfg-s0: #f6e2a8;
+  --cfg-s1: #d4ae5e;
+  --cfg-s2: #a07a2e;
+  --cfg-s3: #6e4f18;
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
   gap: clamp(2rem, 5vw, 5rem);
@@ -630,6 +668,7 @@ li {
   aspect-ratio: 5 / 4;
   border-radius: var(--r);
   overflow: hidden;
+  background: var(--cfg-tape);
   transition: background-color 300ms ease-out;
   .zstrip {
     width: 100%;
@@ -645,6 +684,10 @@ li {
   background: rgb(255 255 255 / 0.9);
   font-size: 0.85rem;
   font-weight: 600;
+  [data-tag-color],
+  [data-tag-finish] {
+    display: none;
+  }
 }
 .config {
   .body {
@@ -654,22 +697,37 @@ li {
 .config__rows {
   margin-top: 2rem;
   border-top: 1px solid var(--line);
-  > div {
-    display: grid;
-    grid-template-columns: 5.5rem 1fr;
-    align-items: center;
-    gap: 1rem;
-    min-height: 3.6rem;
-    padding-block: 0.6rem;
-    border-bottom: 1px solid var(--line);
-  }
-  dt {
-    color: var(--muted);
-    font-size: 0.95rem;
-  }
-  dd {
-    font-weight: 500;
-  }
+}
+.config__row {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  align-items: center;
+  gap: 1rem;
+  min-height: 3.6rem;
+  margin: 0;
+  padding: 0.6rem 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  min-inline-size: 0;
+}
+/* float 시킨 legend 는 일반 자식처럼 격자 칸에 들어간다 */
+.config__k {
+  float: left;
+  padding: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+.config__v {
+  font-weight: 500;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .swatches {
   display: flex;
@@ -677,23 +735,35 @@ li {
   gap: 0.5rem;
 }
 .swatch {
+  position: relative;
   width: 28px;
   height: 28px;
   border-radius: 50%;
   border: 1px solid rgb(18 19 22 / 0.15);
-  padding: 0;
   cursor: pointer;
   transition: scale 150ms ease-out;
+  input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
   &:hover {
     scale: 1.12;
   }
-  &[aria-checked='true'] {
+  &:has(input:checked) {
     outline: 2px solid var(--ink);
     outline-offset: 3px;
+  }
+  &:has(input:focus-visible) {
+    outline: 2px dashed var(--ink);
+    outline-offset: 5px;
   }
 }
 .seg {
   display: inline-flex;
+  justify-self: start;
   padding: 3px;
   gap: 3px;
   border-radius: 999px;
@@ -701,8 +771,7 @@ li {
   border: 1px solid var(--line);
 }
 .seg__btn {
-  border: 0;
-  background: transparent;
+  position: relative;
   padding: 0.4rem 1rem;
   border-radius: 999px;
   font-size: 0.92rem;
@@ -712,12 +781,23 @@ li {
   transition:
     background-color 150ms ease-out,
     color 150ms ease-out;
+  input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
   &:hover {
     color: var(--ink);
   }
-  &[aria-checked='true'] {
+  &:has(input:checked) {
     background: var(--ink);
     color: #fff;
+  }
+  &:has(input:focus-visible) {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
   }
 }
 @media (max-width: 860px) {
@@ -993,17 +1073,19 @@ li {
   }
 }
 .loc__map {
+  position: relative;
   min-height: 480px;
   border-radius: var(--r);
   overflow: hidden;
   background: var(--soft);
-  > div {
-    height: 100%;
-  }
+}
+.naver-map {
+  position: absolute;
+  inset: 0;
 }
 .map-loading {
-  height: 100%;
-  min-height: 480px;
+  position: absolute;
+  inset: 0;
   display: grid;
   place-items: center;
   color: var(--muted);

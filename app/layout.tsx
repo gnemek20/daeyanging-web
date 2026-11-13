@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from 'next'
+import Header from '@/components/Header'
+import Footer from '@/components/Footer'
 import { SITE } from '@/lib/site'
 import './globals.css'
 
@@ -51,7 +53,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,300..800&display=swap"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <Header />
+        {children}
+        <Footer />
+      </body>
     </html>
   )
 }

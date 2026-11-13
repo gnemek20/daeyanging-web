@@ -1,8 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import Header from '@/components/Header'
-import Footer from '@/components/Footer'
 import { GUIDES, getGuide, type Block } from '@/lib/guides'
 import { OG_BASE, SITE, jsonLd } from '@/lib/site'
 
@@ -114,7 +112,6 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
 
   return (
     <>
-      <Header />
       <main className="doc">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(ld) }} />
         <article className="wrap doc__wrap">
@@ -168,7 +165,6 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
           )}
         </article>
       </main>
-      <Footer />
     </>
   )
 }

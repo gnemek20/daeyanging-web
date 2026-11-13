@@ -1,4 +1,4 @@
-import LocationMap from './LocationMap'
+import NaverMap from './NaverMap'
 
 const Location = () => {
   return (
@@ -65,7 +65,9 @@ const Location = () => {
         </div>
 
         <div className="loc__map">
-          <LocationMap />
+          {/* 지도가 그려지면 이 안내를 덮는다 */}
+          <p className="map-loading">지도를 불러오는 중…</p>
+          <NaverMap />
         </div>
       </div>
     </section>

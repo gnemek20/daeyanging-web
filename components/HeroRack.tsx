@@ -1,10 +1,9 @@
 'use client'
 
-// 첫 화면의 "지퍼 컬러 카드". 부자재 쇼룸의 컬러 카드처럼 색색의 지퍼 테이프가 나란히 걸려 있고,
-// 처음 열릴 때 슬라이더들이 물결처럼 내려가며 지퍼가 열린다. 포인터를 올리면 가까운 슬라이더들이 포인터를 따라온다.
-// 장식용 그림이므로 보조기기에는 숨긴다. 동작 줄이기 설정이면 물결 모양으로 멈춘 채 보여 준다.
-
-import { useEffect, useRef } from 'react'
+// 첫 화면의 "지퍼 컬러 카드".
+// - 처음 열리는 물결: CSS(@property --k + keyframes)가 맡는다. 서버에서 그린 HTML 그대로 움직인다.
+// - 포인터 따라오기: 이벤트 핸들러에서 각 테이프의 --t 만 바꾸고, 부드러운 이동은 CSS transition 이 맡는다.
+// 장식용 그림이므로 보조기기에는 숨긴다. 동작 줄이기 설정이면 CSS 가 멈춘 물결 모양으로 보여 준다.
 
 type Metal = 'brass' | 'silver' | 'gun' | 'self'
 
@@ -24,94 +23,44 @@ const TAPES: { c: string; m: Metal }[] = [
   { c: '#17181C', m: 'silver' },
 ]
 
-const rest = (i: number) => 0.34 + 0.2 * Math.sin(i * 0.62 + 0.4) + 0.06 * Math.sin(i * 1.7)
+const rest = (i: number) => +(100 * (0.34 + 0.2 * Math.sin(i * 0.62 + 0.4) + 0.06 * Math.sin(i * 1.7))).toFixed(2)
 
-const HeroRack = () => {
-  const rackRef = useRef<HTMLDivElement>(null)
-  const state = useRef({
-    cur: TAPES.map(() => 0.02),
-    target: TAPES.map((_, i) => rest(i)),
-    start: TAPES.map((_, i) => i * 70),
-    t0: 0,
-    raf: 0 as number,
-    reduced: false,
+const tapesOf = (rack: HTMLElement) => [...rack.querySelectorAll<HTMLElement>('.tp')].filter((el) => el.offsetParent !== null)
+
+const onMove = (e: React.PointerEvent<HTMLDivElement>) => {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  const rack = e.currentTarget
+  const r = rack.getBoundingClientRect()
+  const tapes = tapesOf(rack)
+  const xi = ((e.clientX - r.left) / r.width) * tapes.length - 0.5
+  const py = Math.min(90, Math.max(6, ((e.clientY - r.top) / r.height) * 100))
+  tapes.forEach((el, vi) => {
+    const w = Math.exp(-((vi - xi) ** 2) / 1.6)
+    const base = Number(el.dataset.rest)
+    el.style.setProperty('--t', `${(base * (1 - w) + py * w).toFixed(2)}%`)
   })
-
-  useEffect(() => {
-    const s = state.current
-    const rack = rackRef.current
-    if (!rack) return
-    const tapes = [...rack.querySelectorAll<HTMLElement>('.tp')]
-    const apply = () => tapes.forEach((el, i) => el.style.setProperty('--p', `${(s.cur[i] * 100).toFixed(2)}%`))
-
-    s.reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (s.reduced) {
-      s.cur = TAPES.map((_, i) => rest(i))
-      apply()
-      return
-    }
-
-    const tick = (now: number) => {
-      if (!s.t0) s.t0 = now
-      let moving = false
-      for (let i = 0; i < tapes.length; i++) {
-        if (now - s.t0 < 400 + s.start[i]) {
-          moving = true
-          continue
-        }
-        const d = s.target[i] - s.cur[i]
-        if (Math.abs(d) > 0.0008) {
-          s.cur[i] += d * 0.09
-          moving = true
-        } else s.cur[i] = s.target[i]
-      }
-      apply()
-      s.raf = moving ? requestAnimationFrame(tick) : 0
-    }
-    apply()
-    s.raf = requestAnimationFrame(tick)
-    ;(rack as HTMLDivElement & { _kick?: () => void })._kick = () => {
-      if (!s.raf) s.raf = requestAnimationFrame(tick)
-    }
-    return () => cancelAnimationFrame(s.raf)
-  }, [])
-
-  const kick = () => (rackRef.current as (HTMLDivElement & { _kick?: () => void }) | null)?._kick?.()
-
-  const onMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    const s = state.current
-    if (s.reduced || !rackRef.current) return
-    const r = rackRef.current.getBoundingClientRect()
-    const visible = [...rackRef.current.querySelectorAll<HTMLElement>('.tp')].filter((el) => el.offsetParent !== null)
-    const n = visible.length
-    const xi = ((e.clientX - r.left) / r.width) * n - 0.5
-    const py = Math.min(0.9, Math.max(0.06, (e.clientY - r.top) / r.height))
-    for (let i = 0; i < TAPES.length; i++) {
-      const vi = visible.indexOf(rackRef.current.querySelectorAll<HTMLElement>('.tp')[i])
-      if (vi < 0) continue
-      const w = Math.exp(-((vi - xi) ** 2) / 1.6)
-      s.target[i] = rest(i) * (1 - w) + py * w
-    }
-    kick()
-  }
-  const onLeave = () => {
-    const s = state.current
-    s.target = TAPES.map((_, i) => rest(i))
-    kick()
-  }
-
-  return (
-    <div className="rack" ref={rackRef} aria-hidden="true" onPointerMove={onMove} onPointerLeave={onLeave}>
-      {TAPES.map((t, i) => (
-        <div key={i} className={`tp tp--${t.m}`} style={{ '--tape': t.c } as React.CSSProperties}>
-          <span className="tp__teeth tp__teeth--closed" />
-          <span className="tp__teeth tp__teeth--l" />
-          <span className="tp__teeth tp__teeth--r" />
-          <span className="tp__slider" />
-        </div>
-      ))}
-    </div>
-  )
 }
+
+const onLeave = (e: React.PointerEvent<HTMLDivElement>) => {
+  tapesOf(e.currentTarget).forEach((el) => el.style.setProperty('--t', `${el.dataset.rest}%`))
+}
+
+const HeroRack = () => (
+  <div className="rack" aria-hidden="true" onPointerMove={onMove} onPointerLeave={onLeave}>
+    {TAPES.map((t, i) => (
+      <div
+        key={i}
+        className={`tp tp--${t.m}`}
+        data-rest={rest(i)}
+        style={{ '--tape': t.c, '--i': i, '--t': `${rest(i)}%` } as React.CSSProperties}
+      >
+        <span className="tp__teeth tp__teeth--closed" />
+        <span className="tp__teeth tp__teeth--l" />
+        <span className="tp__teeth tp__teeth--r" />
+        <span className="tp__slider" />
+      </div>
+    ))}
+  </div>
+)
 
 export default HeroRack

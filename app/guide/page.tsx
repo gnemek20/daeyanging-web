@@ -1,7 +1,5 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import Header from '@/components/Header'
-import Footer from '@/components/Footer'
 import { GUIDES } from '@/lib/guides'
 import { OG_BASE, SITE, jsonLd } from '@/lib/site'
 
@@ -26,7 +24,6 @@ export default function GuideIndex() {
 
   return (
     <>
-      <Header />
       <main className="doc">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(ld) }} />
         <div className="wrap doc__wrap">
@@ -51,7 +48,6 @@ export default function GuideIndex() {
           </ul>
         </div>
       </main>
-      <Footer />
     </>
   )
 }
