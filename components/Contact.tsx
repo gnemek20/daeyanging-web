@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-const EMAIL = 'kyounghwa_kim@daeyanging.com'
+const EMAIL = 'hyunwoo.kim@hyunwoo.ai'
 
 // 서버로 보내는 기능이 없으므로, 적은 내용을 담아 방문자의 메일 앱을 연다.
 const Contact = () => {
