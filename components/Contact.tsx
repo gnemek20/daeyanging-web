@@ -73,7 +73,7 @@ const Contact = () => {
             <span>문의 내용</span>
             <textarea name="message" rows={5} placeholder="필요하신 지퍼 종류, 수량, 일정 등을 적어주세요." required />
           </label>
-          <button className="btn btn--brass" type="submit">
+          <button className="btn btn--light" type="submit">
             메일로 문의 보내기
           </button>
           <p className="form__note" role="status">

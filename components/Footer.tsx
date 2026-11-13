@@ -1,6 +1,13 @@
+const STRIP = ['#EDE6D6', '#C9A27A', '#E0662F', '#C8202F', '#E9A6B4', '#8C7AC4', '#26367A', '#1F6FD1', '#0F7A5C', '#9AAF4A', '#F2C230', '#4A4038']
+
 const Footer = () => {
   return (
     <footer className="foot">
+      <div className="foot__strip" aria-hidden="true">
+        {STRIP.map((c) => (
+          <span key={c} style={{ background: c }} />
+        ))}
+      </div>
       <div className="wrap">
         <p className="foot__line">패션에 새로운 날개를 달다.</p>
         <div className="foot__grid">

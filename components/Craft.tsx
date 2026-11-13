@@ -8,10 +8,10 @@ const Craft = () => {
   return (
     <section className="sec" id="craft" aria-labelledby="craft-h">
       <div className="wrap">
-        <div className="split">
+        <header className="sec__head">
           <h2 className="h2" id="craft-h">하나의 예술처럼.</h2>
-          <p className="lede split__body">부드럽고, 강하게. 매일 여닫는 작은 움직임이 오래도록 변함없도록 만듭니다.</p>
-        </div>
+          <p className="body">부드럽고, 강하게. 매일 여닫는 작은 움직임이 오래도록 변함없도록 만듭니다.</p>
+        </header>
         <ul className="qualities">
           {QUALITIES.map((q) => (
             <li key={q.t}>

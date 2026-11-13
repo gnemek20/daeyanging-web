@@ -4,11 +4,15 @@ import { useState } from 'react'
 import ZipperStrip, { type ToothFinish } from './ZipperStrip'
 
 const COLORS = [
-  { name: '인디고', hex: '#23306B' },
-  { name: '블랙', hex: '#1E1F23' },
-  { name: '아이보리', hex: '#D9D2BF' },
-  { name: '와인', hex: '#6B2333' },
-  { name: '올리브', hex: '#545F45' },
+  { name: '인디고', hex: '#26367A' },
+  { name: '코발트', hex: '#1F6FD1' },
+  { name: '레드', hex: '#C8202F' },
+  { name: '탠저린', hex: '#E0662F' },
+  { name: '머스터드', hex: '#E2AE2A' },
+  { name: '에메랄드', hex: '#0F7A5C' },
+  { name: '로즈', hex: '#E9A6B4' },
+  { name: '아이보리', hex: '#E6DECB' },
+  { name: '블랙', hex: '#17181C' },
 ]
 
 const FINISHES: { key: ToothFinish; label: string }[] = [
@@ -23,29 +27,31 @@ const Custom = () => {
   const finishLabel = FINISHES.find((f) => f.key === finish)?.label
 
   return (
-    <section className="sec sec--tint" id="custom" aria-labelledby="custom-h">
-      <div className="wrap split">
-        <div>
+    <section className="sec sec--soft" id="custom" aria-labelledby="custom-h">
+      <div className="wrap custom">
+        <div className="custom__preview" style={{ background: color.hex }}>
+          <ZipperStrip
+            id="cfg"
+            kind="metal"
+            tape={color.hex}
+            finish={finish}
+            title={`${color.name} 테이프, ${finishLabel} 마감 지퍼 미리보기`}
+            bleed
+          />
+          <p className="custom__tag" aria-live="polite">
+            {color.name} 테이프, {finishLabel} 마감
+          </p>
+        </div>
+
+        <div className="config">
           <h2 className="h2" id="custom-h">
             생각하는 모양
             <br />
             그대로.
           </h2>
-          <p className="body split__note">
+          <p className="body">
             정해진 규격에 맞추지 않습니다. 사이즈, 컬러, 마감까지, 1:1 맞춤 제작으로 원하는 지퍼를 자유롭게 구현합니다.
           </p>
-        </div>
-
-        <div className="config">
-          <div className="config__preview">
-            <ZipperStrip
-              id="cfg"
-              kind="metal"
-              tape={color.hex}
-              finish={finish}
-              title={`${color.name} 테이프, ${finishLabel} 마감 지퍼 미리보기`}
-            />
-          </div>
 
           <dl className="config__rows">
             <div>

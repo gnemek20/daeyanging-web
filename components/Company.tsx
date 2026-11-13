@@ -1,14 +1,11 @@
 const Company = () => {
   return (
     <section className="sec" id="company" aria-labelledby="company-h">
-      <div className="wrap split">
-        <h2 className="h2" id="company-h">
-          최고의 작품을 위한
-          <br />
-          첫 걸음.
+      <div className="wrap">
+        <h2 className="statement" id="company-h">
+          최고의 작품을 위한 첫 걸음. <span>패션의 완성을 위해 달리는 당신에게, 대양ING가 날개를 달아드리겠습니다.</span>
         </h2>
-        <div className="split__body">
-          <p className="lede">패션의 완성을 위해 달리는 당신에게, 대양ING가 날개를 달아드리겠습니다.</p>
+        <div className="company">
           <p className="body">
             고품질 지퍼와 의류 부자재를 빠르게, 그리고 원하는 방식 그대로 제작합니다. 옷의 첫인상이자 마지막 손길인 작은
             디테일에 완성도를 담습니다.
