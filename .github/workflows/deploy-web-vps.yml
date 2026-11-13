@@ -1,0 +1,66 @@
+name: Deploy web to VPS
+
+# daeyanging.com 을 iwinv VPS(공용 edge-caddy 뒤)에 Docker 이미지로 배포한다.
+#   빌드: ./Dockerfile(Next.js standalone) → 태그 없이 docker save → ssh 로 서버에 보낸다.
+#   서버: /opt/webdeploy/gate daeyanging 이 받아 web-daeyanging:prod-<sha7> 로 태그를 붙이고 컨테이너를 바꾼다
+#         (헬스체크 실패 시 직전 이미지로 자동 복구).
+# main 에 push 하면 prod 로 배포된다.
+# 시크릿:
+#   VPS_DEPLOY_KEY — 이 저장소 전용 배포 키. 서버는 이 키로 "deploy" 한 가지만 허용한다.
+#   VPS_BUILD_ENV  — 빌드 때 쓰는 .env 내용(NEXT_PUBLIC_NAVER_MAP_CLIENT_ID).
+# 손으로 되돌리기(서버): /opt/webdeploy/switch daeyanging prod <옛 태그>   · 태그 목록: docker images web-daeyanging
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-web-vps
+  cancel-in-progress: true
+
+env:
+  SERVICE: daeyanging
+  TARGET: prod
+  VPS_HOST: 115.68.227.61
+  VPS_HOST_KEY: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM5rS4lC21RTAXfzqk9oBEIakLBxcxMNxgnYfAhiqoat
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 빌드용 env 파일
+        env:
+          BUILD_ENV: ${{ secrets.VPS_BUILD_ENV }}
+        run: |
+          umask 077
+          printf '%s\n' "$BUILD_ENV" > "$RUNNER_TEMP/build.env"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: 이미지 빌드
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          build-args: |
+            NODE_VERSION=22
+          secret-files: |
+            dotenv=${{ runner.temp }}/build.env
+          load: true
+          tags: web-build:latest
+          cache-from: type=gha,scope=${{ env.SERVICE }}-${{ env.TARGET }}
+          cache-to: type=gha,mode=max,scope=${{ env.SERVICE }}-${{ env.TARGET }}
+
+      - name: 서버로 보내고 교체
+        env:
+          DEPLOY_KEY: ${{ secrets.VPS_DEPLOY_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_deploy && chmod 600 ~/.ssh/id_deploy
+          echo "$VPS_HOST $VPS_HOST_KEY" > ~/.ssh/known_hosts
+          IMAGE_ID="$(docker image inspect -f '{{.Id}}' web-build:latest)"
+          docker save "$IMAGE_ID" | gzip -1 \
+            | ssh -i ~/.ssh/id_deploy -o ServerAliveInterval=30 "ubuntu@$VPS_HOST" deploy "$TARGET" "$GITHUB_SHA"
