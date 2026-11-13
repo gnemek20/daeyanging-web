@@ -1,7 +1,9 @@
 'use client'
 
 // 첫 화면의 "지퍼 컬러 카드".
-// - 처음 열리는 물결: CSS(@property --k + keyframes)가 맡는다. 서버에서 그린 HTML 그대로 움직인다.
+// 성능: 움직이는 것은 테이프마다 .tp__run 한 겹의 translate 뿐이다(GPU 합성만, 레이아웃·다시 그리기 없음).
+//   이빨·슬라이더·벌어진 V 는 한 번 그려 두고 그 레이어째로 옮긴다.
+// - 처음 열리는 물결: CSS keyframes(translate)가 맡는다. 서버에서 그린 HTML 그대로 움직인다.
 // - 포인터 따라오기: 이벤트 핸들러에서 각 테이프의 --t 만 바꾸고, 부드러운 이동은 CSS transition 이 맡는다.
 // 장식용 그림이므로 보조기기에는 숨긴다. 동작 줄이기 설정이면 CSS 가 멈춘 물결 모양으로 보여 준다.
 
@@ -54,10 +56,14 @@ const HeroRack = () => (
         data-rest={rest(i)}
         style={{ '--tape': t.c, '--i': i, '--t': `${rest(i)}%` } as React.CSSProperties}
       >
-        <span className="tp__teeth tp__teeth--closed" />
-        <span className="tp__teeth tp__teeth--l" />
-        <span className="tp__teeth tp__teeth--r" />
-        <span className="tp__slider" />
+        <span className="tp__chain" />
+        <span className="tp__run">
+          <span className="tp__open">
+            <span className="tp__half tp__half--l" />
+            <span className="tp__half tp__half--r" />
+          </span>
+          <span className="tp__slider" />
+        </span>
       </div>
     ))}
   </div>

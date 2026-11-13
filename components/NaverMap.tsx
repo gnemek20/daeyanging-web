@@ -1,7 +1,7 @@
 'use client'
 
 import Script from 'next/script'
-import { useRef } from 'react'
+import { useCallback, useRef, useState } from 'react'
 
 declare global {
   interface Window {
@@ -60,9 +60,28 @@ const INFO_WINDOW = `
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID
 
-// 지도 스크립트는 next/script 가 불러오고, 불러온 뒤(그리고 다시 마운트될 때마다) onReady 에서 지도를 그린다.
+// 지도 스크립트(수백 KB)는 '오시는 길'이 화면 가까이 왔을 때만 불러온다.
+// 관찰은 ref 콜백에서 시작하고, React 19 의 ref 정리 함수로 끝낸다(useEffect 없음).
+// 불러온 뒤(그리고 다시 마운트될 때마다) next/script 의 onReady 에서 지도를 그린다.
 const NaverMap = () => {
   const mapRef = useRef<HTMLDivElement>(null)
+  const [near, setNear] = useState(false)
+
+  const watch = useCallback((el: HTMLDivElement | null) => {
+    mapRef.current = el
+    if (!el) return
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setNear(true)
+          io.disconnect()
+        }
+      },
+      { rootMargin: '600px 0px' },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
 
   const initMap = () => {
     if (!mapRef.current || !window.naver?.maps) return
@@ -145,9 +164,12 @@ const NaverMap = () => {
 
   return (
     <>
-      <div ref={mapRef} className="naver-map" />
-      {CLIENT_ID && (
-        <Script src={`https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${CLIENT_ID}`} onReady={initMap} />
+      <div ref={watch} className="naver-map" />
+      {CLIENT_ID && near && (
+        <Script
+          src={`https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${CLIENT_ID}`}
+          onReady={initMap}
+        />
       )}
     </>
   )

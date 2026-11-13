@@ -11,7 +11,7 @@
 
   --sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, 'Apple SD Gothic Neo',
     'Malgun Gothic', sans-serif;
-  --wide: Archivo, var(--sans);
+  --wide: var(--font-archivo), var(--sans);
 
   --gutter: clamp(16px, 4vw, 56px);
   --header-h: 72px;
@@ -174,19 +174,24 @@ li {
 }
 
 /* ───────── 머리글 ───────── */
-/* 기본은 늘 배경이 있는 머리글(읽기 쉽게). 스크롤 기반 애니메이션을 지원하면
-   맨 위에서는 투명했다가 조금 내리면 배경이 생긴다 — 자바스크립트 없이. */
+/* 머리글 배경은 ::before 한 겹. 기본은 늘 보이고(읽기 쉽게), 스크롤 기반 애니메이션을 지원하면
+   맨 위에서는 투명했다가 조금 내리면 나타난다. opacity 만 바뀌므로 합성 단계에서 처리된다(blur 없음). */
 .top {
   position: fixed;
   inset: 0 0 auto;
   z-index: 50;
   height: var(--header-h);
-  background: rgb(246 246 243 / 0.88);
-  backdrop-filter: blur(14px) saturate(1.4);
-  border-bottom: 1px solid var(--line);
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: rgb(246 246 243 / 0.95);
+    border-bottom: 1px solid var(--line);
+  }
 }
 @supports ((animation-timeline: scroll()) and (animation-range: 0% 100%)) {
-  .top {
+  .top::before {
     animation: top-fill linear both;
     animation-timeline: scroll(root block);
     animation-range: 0 48px;
@@ -194,9 +199,7 @@ li {
 }
 @keyframes top-fill {
   from {
-    background-color: rgb(246 246 243 / 0);
-    border-bottom-color: transparent;
-    backdrop-filter: none;
+    opacity: 0;
   }
 }
 .top__inner {
@@ -229,8 +232,7 @@ li {
   gap: 0.15rem;
   padding: 4px;
   border-radius: 999px;
-  background: rgb(255 255 255 / 0.72);
-  backdrop-filter: blur(10px);
+  background: rgb(255 255 255 / 0.85);
   a {
     padding: 0.45rem 1rem;
     border-radius: 999px;
@@ -357,40 +359,27 @@ li {
   touch-action: pan-y;
   min-height: 100svh;
 }
-/* --t: 슬라이더 목표 위치(포인터가 바꾼다, transition 으로 부드럽게)
-   --k: 처음 열리는 정도 0→1 (keyframes 로 물결처럼). 둘 다 등록해야 값 사이를 보간할 수 있다.
-   @property 를 모르는 브라우저는 var() 의 대체값으로 바로 최종 모습을 보여 준다. */
-@property --t {
-  syntax: '<percentage>';
-  inherits: true;
-  initial-value: 30%;
-}
-@property --k {
-  syntax: '<number>';
-  inherits: true;
-  initial-value: 1;
-}
+/* 성능 원칙: 움직이는 건 .tp__run 의 translate 하나뿐(합성 단계에서만 처리).
+   이빨 무늬·그림자·마스크는 처음 한 번만 그리고, 슬라이더와 벌어진 V 는 run 레이어째로 이동한다.
+   --t: 슬라이더 위치(테이프 높이 대비 %). 포인터가 바꾸고 translate transition 이 부드럽게 따라간다. */
 @keyframes tp-open {
   from {
-    --k: 0;
+    translate: 0 2%;
   }
 }
 .tp {
-  --p: calc(2% + (var(--t, 30%) - 2%) * var(--k, 1));
-  @media (prefers-reduced-motion: no-preference) {
-    animation: tp-open 1.5s cubic-bezier(0.55, 0, 0.2, 1) both;
-    animation-delay: calc(400ms + var(--i, 0) * 70ms);
-    transition: --t 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
-  }
   --t-hi: #f6e2a8;
   --t-mid: #c79a45;
   --t-lo: #7a571c;
+  --weave: repeating-linear-gradient(0deg, rgb(255 255 255 / 0.06) 0 1px, transparent 1px 3px);
   position: relative;
   flex: 1 1 0;
   min-width: 0;
+  overflow: hidden;
+  contain: layout paint;
   background:
     linear-gradient(90deg, rgb(0 0 0 / 0.16), transparent 22%, transparent 78%, rgb(0 0 0 / 0.18)),
-    repeating-linear-gradient(0deg, rgb(255 255 255 / 0.06) 0 1px, transparent 1px 3px),
+    var(--weave),
     var(--tape);
   box-shadow: 0 18px 30px -18px rgb(0 0 0 / 0.45);
 }
@@ -409,12 +398,16 @@ li {
   --t-mid: color-mix(in oklab, var(--tape), #fff 12%);
   --t-lo: color-mix(in oklab, var(--tape), #000 30%);
 }
-/* 이: 왼쪽·오른쪽 이를 반 칸씩 엇갈려 그리고, 슬라이더 위쪽은 V자로 벌어진다 */
-.tp__teeth {
+/* 이 무늬: 금속 그라데이션을 줄무늬 마스크로 잘라 이를 만든다 */
+.tp__chain,
+.tp__half {
+  --teeth: linear-gradient(90deg, var(--t-lo), var(--t-hi) 35%, var(--t-mid) 60%, var(--t-lo));
+  --mask: repeating-linear-gradient(180deg, #000 0 5px, transparent 5px 10px);
+}
+/* 닫힌 이: 테이프 전체 길이에 고정. 슬라이더 위쪽은 run 의 덮개가 가린다 */
+.tp__chain {
   position: absolute;
-  top: -2%;
-  bottom: 0;
-  left: 50%;
+  inset: 0 auto 0 50%;
   width: var(--teeth-w);
   margin-left: calc(var(--teeth-w) / -2);
   &::before,
@@ -423,10 +416,9 @@ li {
     position: absolute;
     inset: 0;
     width: 62%;
-    background: linear-gradient(90deg, var(--t-lo), var(--t-hi) 35%, var(--t-mid) 60%, var(--t-lo));
-    -webkit-mask-image: repeating-linear-gradient(180deg, #000 0 5px, transparent 5px 10px);
-    mask-image: repeating-linear-gradient(180deg, #000 0 5px, transparent 5px 10px);
-    filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.35));
+    background: var(--teeth);
+    -webkit-mask-image: var(--mask);
+    mask-image: var(--mask);
   }
   &::after {
     left: auto;
@@ -435,30 +427,52 @@ li {
     mask-position: 0 5px;
   }
 }
-.tp__teeth--closed {
-  clip-path: inset(var(--p) 0 0 0);
+.tp__run {
+  position: absolute;
+  inset: 0;
+  translate: 0 var(--t, 30%);
+  will-change: translate;
+  @media (prefers-reduced-motion: no-preference) {
+    animation: tp-open 1.5s cubic-bezier(0.55, 0, 0.2, 1) backwards;
+    animation-delay: calc(300ms + var(--i, 0) * 70ms);
+    transition: translate 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
 }
-.tp__teeth--l,
-.tp__teeth--r {
-  clip-path: inset(0 0 calc(100% - var(--p)) 0);
-  transform-origin: 50% var(--p);
+/* 슬라이더 위쪽: 테이프 색 덮개 위에 V 자로 벌어진 이 */
+.tp__open {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  /* 닫힌 이만 가릴 만큼만(테이프 가장자리 음영을 덮지 않게) */
+  width: calc(var(--teeth-w) + 4px);
+  height: 100%;
+  margin-left: calc(var(--teeth-w) / -2 - 2px);
+  background: var(--weave), var(--tape);
 }
-.tp__teeth--l {
+.tp__half {
+  position: absolute;
+  bottom: 0;
+  height: 100%;
+  width: calc(var(--teeth-w) * 0.62);
+  background: var(--teeth);
+  -webkit-mask-image: var(--mask);
+  mask-image: var(--mask);
+  transform-origin: 50% 100%;
+}
+.tp__half--l {
+  right: 50%;
   rotate: -1.6deg;
-  &::after {
-    display: none;
-  }
 }
-.tp__teeth--r {
+.tp__half--r {
+  left: 50%;
   rotate: 1.6deg;
-  &::before {
-    display: none;
-  }
+  -webkit-mask-position: 0 5px;
+  mask-position: 0 5px;
 }
 .tp__slider {
   position: absolute;
   left: 50%;
-  top: var(--p);
+  top: 0;
   width: calc(var(--teeth-w) * 1.9);
   height: calc(var(--teeth-w) * 2.6);
   translate: -50% -70%;

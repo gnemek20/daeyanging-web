@@ -1,8 +1,14 @@
 import type { Metadata, Viewport } from 'next'
+import { Archivo } from 'next/font/google'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { SITE } from '@/lib/site'
+// 글꼴은 모두 이 사이트에서 직접 내려준다(외부 글꼴 서버 연결 없음).
+// Pretendard: 한글을 유니코드 구간별로 쪼갠 파일이라 화면에 쓰인 글자 구간만 받는다.
+import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css'
 import './globals.css'
+
+const archivo = Archivo({ subsets: ['latin'], axes: ['wdth'], variable: '--font-archivo', display: 'swap' })
 
 const verificationOther: Record<string, string> = {}
 if (SITE.verification.naver) verificationOther['naver-site-verification'] = SITE.verification.naver
@@ -39,20 +45,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko">
-      <head>
-        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="" />
-        <link
-          rel="stylesheet"
-          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
-        />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,300..800&display=swap"
-        />
-      </head>
+    <html lang="ko" className={archivo.variable}>
       <body>
         <Header />
         {children}
