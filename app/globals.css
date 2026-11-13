@@ -62,8 +62,20 @@ ul {
   padding: 0;
   list-style: none;
 }
+/* 모든 링크: 색·배경·테두리·밑줄 색이 바뀔 때 나타날 때도 돌아갈 때도 같은 속도로 */
 a {
   color: inherit;
+  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+  text-underline-offset: 4px;
+  transition:
+    color 220ms ease,
+    background-color 220ms ease,
+    border-color 220ms ease,
+    text-decoration-color 220ms ease,
+    box-shadow 220ms ease;
+  &:hover {
+    text-decoration-color: currentColor;
+  }
 }
 button,
 input,
@@ -174,8 +186,17 @@ li {
 }
 
 /* ───────── 머리글 ───────── */
-/* 머리글 배경은 ::before 한 겹. 기본은 늘 보이고(읽기 쉽게), 스크롤 기반 애니메이션을 지원하면
-   맨 위에서는 투명했다가 조금 내리면 나타난다. opacity 만 바뀌므로 합성 단계에서 처리된다(blur 없음). */
+/* 머리글 배경과 밑줄은 ::before 한 겹. 맨 위에서는 숨고(<html data-at-top>, TopSentinel 이 켬),
+   조금 내리면 나타난다. opacity transition 이라 나타날 때도 사라질 때도 똑같이 부드럽다.
+   자바스크립트가 없으면 속성이 없으므로 늘 보인다. */
+.top-sentinel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 24px;
+  pointer-events: none;
+}
 .top {
   position: fixed;
   inset: 0 0 auto;
@@ -187,20 +208,12 @@ li {
     inset: 0;
     z-index: -1;
     background: rgb(246 246 243 / 0.95);
-    border-bottom: 1px solid var(--line);
+    box-shadow: 0 1px 0 var(--line);
+    transition: opacity 350ms cubic-bezier(0.2, 0.7, 0.2, 1);
   }
 }
-@supports ((animation-timeline: scroll()) and (animation-range: 0% 100%)) {
-  .top::before {
-    animation: top-fill linear both;
-    animation-timeline: scroll(root block);
-    animation-range: 0 48px;
-  }
-}
-@keyframes top-fill {
-  from {
-    opacity: 0;
-  }
+html[data-at-top] .top::before {
+  opacity: 0;
 }
 .top__inner {
   height: 100%;
@@ -215,6 +228,12 @@ li {
   align-items: baseline;
   gap: 0.55rem;
   text-decoration: none;
+  .brand__dy {
+    transition: color 220ms ease;
+  }
+  &:hover .brand__dy {
+    color: var(--indigo);
+  }
 }
 .brand__dy {
   font-family: var(--wide);
@@ -241,14 +260,11 @@ li {
     color: var(--muted);
     text-decoration: none;
     transition:
-      color 150ms ease-out,
-      background-color 150ms ease-out;
+      color 220ms ease,
+      background-color 220ms ease;
     &:hover {
       color: var(--ink);
-    }
-    &[aria-current='true'] {
-      color: #fff;
-      background: var(--ink);
+      background: var(--soft);
     }
   }
 }
@@ -264,8 +280,12 @@ li {
     color: #fff;
     font-size: 0.92rem;
     font-weight: 600;
+    transition: background-color 220ms ease;
     &::-webkit-details-marker {
       display: none;
+    }
+    &:hover {
+      background: var(--indigo);
     }
   }
 }
@@ -280,24 +300,39 @@ li {
   box-shadow: 0 16px 40px rgb(18 19 22 / 0.16);
   display: flex;
   flex-direction: column;
-  transform-origin: top right;
   a {
     padding: 0.8rem 1rem;
     border-radius: 8px;
     font-weight: 600;
     text-decoration: none;
+    transition: background-color 200ms ease;
     &:hover {
       background: var(--soft);
     }
   }
-  @media (prefers-reduced-motion: no-preference) {
-    animation: menu-in 180ms ease-out both;
-  }
 }
-@keyframes menu-in {
-  from {
+/* 메뉴 열고 닫기 모두 부드럽게: ::details-content 를 지원하면 닫힐 때도 사라지는 동안 보인다 */
+@supports selector(::details-content) {
+  .mnav::details-content {
     opacity: 0;
-    scale: 0.96;
+    transition:
+      opacity 220ms ease,
+      content-visibility 220ms allow-discrete;
+  }
+  .mnav[open]::details-content {
+    opacity: 1;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .mnav::details-content {
+      translate: 0 -6px;
+      transition:
+        opacity 220ms ease,
+        translate 220ms ease,
+        content-visibility 220ms allow-discrete;
+    }
+    .mnav[open]::details-content {
+      translate: 0 0;
+    }
   }
 }
 @media (max-width: 760px) {
@@ -678,6 +713,13 @@ li {
   align-items: center;
 }
 .custom__preview {
+  /* 테이프·금속 색이 바뀔 때 SVG 색도 함께 서서히 */
+  path,
+  stop {
+    transition:
+      fill 300ms ease,
+      stop-color 300ms ease;
+  }
   position: relative;
   aspect-ratio: 5 / 4;
   border-radius: var(--r);
@@ -755,7 +797,13 @@ li {
   border-radius: 50%;
   border: 1px solid rgb(18 19 22 / 0.15);
   cursor: pointer;
-  transition: scale 150ms ease-out;
+  /* 선택 고리는 box-shadow 로 그려 켜질 때도 꺼질 때도 부드럽게 */
+  box-shadow:
+    0 0 0 3px var(--soft),
+    0 0 0 5px transparent;
+  transition:
+    scale 200ms ease,
+    box-shadow 220ms ease;
   input {
     position: absolute;
     inset: 0;
@@ -765,10 +813,14 @@ li {
   }
   &:hover {
     scale: 1.12;
+    box-shadow:
+      0 0 0 3px var(--soft),
+      0 0 0 5px rgb(18 19 22 / 0.25);
   }
   &:has(input:checked) {
-    outline: 2px solid var(--ink);
-    outline-offset: 3px;
+    box-shadow:
+      0 0 0 3px var(--soft),
+      0 0 0 5px var(--ink);
   }
   &:has(input:focus-visible) {
     outline: 2px dashed var(--ink);
@@ -1093,17 +1145,41 @@ li {
   overflow: hidden;
   background: var(--soft);
 }
+/* 지도는 다 그려지면 서서히 나타나고, 안내 문구는 서서히 사라진다 */
 .naver-map {
   position: absolute;
   inset: 0;
+  opacity: 0;
+  transition: opacity 600ms ease;
+  &[data-state='ready'] {
+    opacity: 1;
+  }
 }
-.map-loading {
+.naver-map__canvas {
+  width: 100%;
+  height: 100%;
+}
+.map-status {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
+  padding: 1.5rem;
+  text-align: center;
   color: var(--muted);
   font-size: 0.95rem;
+  transition:
+    opacity 400ms ease,
+    visibility 400ms allow-discrete;
+  &[data-state='ready'] {
+    opacity: 0;
+    visibility: hidden;
+  }
+  a {
+    font-weight: 600;
+    color: var(--ink);
+    text-decoration-line: underline;
+  }
 }
 @media (max-width: 860px) {
   .loc {
@@ -1166,18 +1242,14 @@ li {
   margin-top: clamp(2rem, 4vw, 3rem);
   a {
     color: var(--muted);
-    text-underline-offset: 4px;
-    text-decoration-thickness: 1px;
     &:hover {
       color: var(--ink);
-      text-decoration-thickness: 2px;
     }
   }
 }
 .foot__nav a {
   font-size: 0.9rem;
   color: rgb(246 246 243 / 0.7);
-  text-underline-offset: 4px;
   &:hover {
     color: #fff;
   }
@@ -1198,10 +1270,11 @@ li {
   font-size: 0.9rem;
   color: var(--muted);
   a {
-    text-decoration: none;
+    text-decoration-line: underline;
+    text-decoration-color: transparent;
     &:hover {
       color: var(--ink);
-      text-decoration: underline;
+      text-decoration-color: currentColor;
     }
   }
 }
@@ -1289,7 +1362,6 @@ li {
   justify-items: start;
   a:not(.btn) {
     color: #fff;
-    text-underline-offset: 3px;
   }
   .btn--ink {
     margin-top: 0.5rem;
@@ -1325,8 +1397,8 @@ li {
     display: grid;
     gap: 0.4rem;
   }
-  a {
-    text-underline-offset: 4px;
+  a:hover {
+    color: var(--indigo);
   }
 }
 .guide-list {
@@ -1339,16 +1411,29 @@ li {
     border-radius: var(--r);
     background: var(--card);
     text-decoration: none;
-    transition: background-color 150ms ease-out;
+    box-shadow: 0 0 0 transparent;
+    transition:
+      background-color 250ms ease,
+      box-shadow 250ms ease,
+      translate 250ms ease;
     &:hover {
       background: #fff;
+      box-shadow: 0 10px 30px -12px rgb(18 19 22 / 0.18);
       h2 {
-        text-decoration: underline;
-        text-underline-offset: 4px;
+        text-decoration-color: currentColor;
+      }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      &:hover {
+        translate: 0 -2px;
       }
     }
   }
   h2 {
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-underline-offset: 4px;
+    transition: text-decoration-color 250ms ease;
     font-size: 1.2rem;
     font-weight: 600;
     letter-spacing: -0.02em;

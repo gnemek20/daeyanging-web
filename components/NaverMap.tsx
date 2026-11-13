@@ -59,33 +59,47 @@ const INFO_WINDOW = `
 </div>`
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID
+const NAVER_LINK = 'https://map.naver.com/p/search/서울특별시 종로구 김상옥로 59'
+
+type MapState = 'waiting' | 'loading' | 'ready' | 'error'
 
 // 지도 스크립트(수백 KB)는 '오시는 길'이 화면 가까이 왔을 때만 불러온다.
 // 관찰은 ref 콜백에서 시작하고, React 19 의 ref 정리 함수로 끝낸다(useEffect 없음).
-// 불러온 뒤(그리고 다시 마운트될 때마다) next/script 의 onReady 에서 지도를 그린다.
+// 상태: waiting → loading → ready(지도가 서서히 나타남) / error(차단·인증 실패·시간 초과 시 안내와 링크)
 const NaverMap = () => {
   const mapRef = useRef<HTMLDivElement>(null)
-  const [near, setNear] = useState(false)
+  const [state, setState] = useState<MapState>(CLIENT_ID ? 'waiting' : 'error')
 
   const watch = useCallback((el: HTMLDivElement | null) => {
     mapRef.current = el
-    if (!el) return
+    if (!el || !CLIENT_ID) return
+    let timer: ReturnType<typeof setTimeout> | undefined
     const io = new IntersectionObserver(
       (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          setNear(true)
-          io.disconnect()
-        }
+        if (!entries.some((e) => e.isIntersecting)) return
+        io.disconnect()
+        // 네이버 지도 인증 실패 시 호출되는 전역 콜백
+        ;(window as unknown as { navermap_authFailure?: () => void }).navermap_authFailure = () => setState('error')
+        setState((s) => (s === 'waiting' ? 'loading' : s))
+        timer = setTimeout(() => setState((s) => (s === 'ready' ? s : 'error')), 15000)
       },
       { rootMargin: '600px 0px' },
     )
     io.observe(el)
-    return () => io.disconnect()
+    return () => {
+      io.disconnect()
+      clearTimeout(timer)
+    }
   }, [])
 
   const initMap = () => {
     if (!mapRef.current || !window.naver?.maps) return
     const { maps } = window.naver
+    // 로더가 나머지 모듈을 아직 받는 중이면 끝난 뒤 다시 그린다
+    if (maps.jsContentLoaded === false) {
+      maps.onJSContentLoaded = initMap
+      return
+    }
 
     const center = new maps.LatLng(MAIN.lat, MAIN.lng)
 
@@ -104,6 +118,7 @@ const NaverMap = () => {
       },
       minZoom: 10,
     })
+    maps.Event.once(map, 'init', () => setState('ready'))
 
     const mainMarker = new maps.Marker({
       position: center,
@@ -164,11 +179,28 @@ const NaverMap = () => {
 
   return (
     <>
-      <div ref={watch} className="naver-map" />
-      {CLIENT_ID && near && (
+      {/* 네이버 지도는 지도 상자에 position: relative 를 인라인으로 넣는다. 크기는 바깥 상자가 정하고
+          안쪽 상자는 그 100% 를 채우게 해서, 지도가 상자 모양을 바꿔도 높이가 0 이 되지 않게 한다. */}
+      <div className="naver-map" data-state={state}>
+        <div ref={watch} className="naver-map__canvas" />
+      </div>
+      <div className="map-status" data-state={state} role="status">
+        {state === 'error' ? (
+          <p>
+            <span className="ph">지도를 불러오지 못했습니다.</span>{' '}
+            <a href={NAVER_LINK} target="_blank" rel="noopener noreferrer">
+              네이버 지도에서 보기
+            </a>
+          </p>
+        ) : (
+          <p>지도를 불러오는 중…</p>
+        )}
+      </div>
+      {CLIENT_ID && state !== 'waiting' && (
         <Script
           src={`https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${CLIENT_ID}`}
           onReady={initMap}
+          onError={() => setState('error')}
         />
       )}
     </>

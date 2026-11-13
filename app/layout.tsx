@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Archivo } from 'next/font/google'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import TopSentinel from '@/components/TopSentinel'
 import { SITE } from '@/lib/site'
 // 글꼴은 모두 이 사이트에서 직접 내려준다(외부 글꼴 서버 연결 없음).
 // Pretendard: 한글을 유니코드 구간별로 쪼갠 파일이라 화면에 쓰인 글자 구간만 받는다.
@@ -47,6 +48,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ko" className={archivo.variable}>
       <body>
+        <TopSentinel />
         <Header />
         {children}
         <Footer />
