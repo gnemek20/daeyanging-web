@@ -33,7 +33,10 @@ const Contact = () => {
             <br />
             달아드리겠습니다.
           </h2>
-          <p className="body split__note">샘플 요청, 단가 문의, 맞춤 제작 상담 — 어떤 단계든 편하게 연락 주세요.</p>
+          <p className="body split__note">
+            <span className="ph">샘플 요청, 단가 문의, 맞춤 제작 상담 —</span>{' '}
+            <span className="ph">어떤 단계든 편하게 연락 주세요.</span>
+          </p>
           <dl className="cinfo">
             <div>
               <dt>전화</dt>
@@ -77,9 +80,17 @@ const Contact = () => {
             메일로 문의 보내기
           </button>
           <p className="form__note" role="status">
-            {opened
-              ? '메일 앱이 열렸습니다. 메일 앱에서 보내기를 눌러야 문의가 전달됩니다.'
-              : '보내기를 누르면 작성한 내용이 담긴 메일 앱이 열립니다.'}
+            {opened ? (
+              <>
+                <span className="ph">메일 앱이 열렸습니다.</span> <span className="ph">메일 앱에서 보내기를 눌러야</span>{' '}
+                <span className="ph">문의가 전달됩니다.</span>
+              </>
+            ) : (
+              <>
+                <span className="ph">보내기를 누르면</span> <span className="ph">작성한 내용이 담긴</span>{' '}
+                <span className="ph">메일 앱이 열립니다.</span>
+              </>
+            )}
           </p>
         </form>
       </div>

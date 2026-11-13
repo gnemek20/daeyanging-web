@@ -41,8 +41,10 @@ body {
   font-family: var(--sans);
   font-size: 1.0625rem;
   line-height: 1.75;
+  /* 한국어는 어절 단위로만 줄바꿈. 칸보다 긴 한 단어(이메일 주소 등)만 예외로 끊는다. */
   word-break: keep-all;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  line-break: strict;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -71,6 +73,25 @@ textarea {
 }
 address {
   font-style: normal;
+}
+
+/* 제목은 줄 길이를 고르게, 본문은 마지막 줄에 한 어절만 남지 않게 */
+h1,
+h2,
+h3,
+.lede,
+.statement,
+.foot__line {
+  text-wrap: balance;
+}
+p,
+dd,
+li {
+  text-wrap: pretty;
+}
+/* 의미 덩어리: 줄바꿈은 덩어리 사이에서만 일어난다 (칸보다 길면 안에서 어절 단위로 끊긴다) */
+.ph {
+  display: inline-block;
 }
 
 :where(a, button, input, textarea, summary, [tabindex]):focus-visible {
@@ -496,7 +517,7 @@ address {
   line-height: 1.32;
   letter-spacing: -0.035em;
   max-width: 24em;
-  span {
+  .statement__sub {
     color: var(--muted);
     font-weight: 500;
   }
@@ -561,6 +582,7 @@ address {
     font-size: 1.3rem;
     font-weight: 600;
     letter-spacing: -0.025em;
+    text-wrap: nowrap;
     span {
       margin-left: 0.6rem;
       font-family: var(--wide);

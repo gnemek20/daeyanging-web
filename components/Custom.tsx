@@ -50,7 +50,8 @@ const Custom = () => {
             그대로.
           </h2>
           <p className="body">
-            정해진 규격에 맞추지 않습니다. 사이즈, 컬러, 마감까지, 1:1 맞춤 제작으로 원하는 지퍼를 자유롭게 구현합니다.
+            <span className="ph">정해진 규격에 맞추지 않습니다.</span> <span className="ph">사이즈, 컬러, 마감까지,</span>{' '}
+            <span className="ph">1:1 맞춤 제작으로</span> <span className="ph">원하는 지퍼를 자유롭게 구현합니다.</span>
           </p>
 
           <dl className="config__rows">
