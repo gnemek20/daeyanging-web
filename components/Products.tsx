@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import ZipperStrip, { type ToothFinish, type ZipperKind } from './ZipperStrip'
 
 const PRODUCTS: {
@@ -57,6 +58,9 @@ const Products = () => {
             </li>
           ))}
         </ul>
+        <p className="products__more">
+          <Link href="/guide/zipper-types">지퍼 종류별 차이 자세히 보기</Link>
+        </p>
       </div>
     </section>
   )

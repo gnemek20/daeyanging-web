@@ -1064,3 +1064,202 @@ li {
     text-align: left;
   }
 }
+
+/* ───────── 가이드로 가는 조용한 링크 ───────── */
+.products__more {
+  margin-top: clamp(2rem, 4vw, 3rem);
+  a {
+    color: var(--muted);
+    text-underline-offset: 4px;
+    text-decoration-thickness: 1px;
+    &:hover {
+      color: var(--ink);
+      text-decoration-thickness: 2px;
+    }
+  }
+}
+.foot__nav a {
+  font-size: 0.9rem;
+  color: rgb(246 246 243 / 0.7);
+  text-underline-offset: 4px;
+  &:hover {
+    color: #fff;
+  }
+}
+
+/* ───────── 가이드 문서 ───────── */
+.doc {
+  padding-top: calc(var(--header-h) + clamp(2rem, 5vw, 4rem));
+  padding-bottom: clamp(4rem, 8vw, 7rem);
+}
+.doc__wrap {
+  max-width: 820px;
+}
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+  a {
+    text-decoration: none;
+    &:hover {
+      color: var(--ink);
+      text-decoration: underline;
+    }
+  }
+}
+.doc__title {
+  margin-top: 1.5rem;
+  font-size: clamp(1.9rem, 1.2rem + 2.4vw, 3rem);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.035em;
+}
+.doc__lead {
+  margin-top: 1.25rem;
+  font-size: clamp(1.1rem, 1rem + 0.35vw, 1.25rem);
+  line-height: 1.7;
+  color: var(--muted);
+}
+.doc__sec {
+  margin-top: clamp(2.5rem, 5vw, 3.5rem);
+  h2 {
+    font-size: clamp(1.35rem, 1.1rem + 0.8vw, 1.7rem);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+  }
+  p + p,
+  p + .doc__table,
+  .doc__table + p {
+    margin-top: 1rem;
+  }
+}
+.doc__list {
+  display: grid;
+  gap: 0.6rem;
+  padding-left: 1.2rem;
+  list-style: disc;
+  li::marker {
+    color: var(--muted);
+  }
+}
+.doc__list--ol {
+  list-style: decimal;
+}
+.doc__table {
+  overflow-x: auto;
+  border-radius: var(--r);
+  background: var(--card);
+  table {
+    width: 100%;
+    min-width: 520px;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+  caption {
+    text-align: left;
+    padding: 0.9rem 1rem 0.4rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  th,
+  td {
+    text-align: left;
+    vertical-align: top;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--line);
+  }
+  thead th {
+    font-weight: 600;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  tbody th {
+    font-weight: 600;
+    white-space: nowrap;
+  }
+}
+.doc__cta {
+  margin-top: clamp(3rem, 6vw, 4.5rem);
+  padding: clamp(1.5rem, 3vw, 2.25rem);
+  border-radius: var(--r);
+  background: var(--indigo);
+  color: #fff;
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+  a:not(.btn) {
+    color: #fff;
+    text-underline-offset: 3px;
+  }
+  .btn--ink {
+    margin-top: 0.5rem;
+    background: #fff;
+    color: var(--ink);
+    &:hover {
+      background: #f1e7d0;
+    }
+  }
+  :where(a, button):focus-visible {
+    outline-color: #fff;
+  }
+}
+.doc__cta-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.doc__cta-contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  color: rgb(255 255 255 / 0.8);
+}
+.doc__related {
+  margin-top: clamp(2.5rem, 5vw, 3.5rem);
+  h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  ul {
+    margin-top: 0.75rem;
+    display: grid;
+    gap: 0.4rem;
+  }
+  a {
+    text-underline-offset: 4px;
+  }
+}
+.guide-list {
+  margin-top: clamp(2rem, 5vw, 3rem);
+  display: grid;
+  gap: 0.75rem;
+  a {
+    display: block;
+    padding: clamp(1.25rem, 2.5vw, 1.75rem);
+    border-radius: var(--r);
+    background: var(--card);
+    text-decoration: none;
+    transition: background-color 150ms ease-out;
+    &:hover {
+      background: #fff;
+      h2 {
+        text-decoration: underline;
+        text-underline-offset: 4px;
+      }
+    }
+  }
+  h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  p {
+    margin-top: 0.4rem;
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+}

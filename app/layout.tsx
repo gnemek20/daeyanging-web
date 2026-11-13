@@ -1,13 +1,38 @@
 import type { Metadata, Viewport } from 'next'
+import { SITE } from '@/lib/site'
 import './globals.css'
 
+const verificationOther: Record<string, string> = {}
+if (SITE.verification.naver) verificationOther['naver-site-verification'] = SITE.verification.naver
+
 export const metadata: Metadata = {
-  title: '대양ING — 패션에 새로운 날개를 달다',
-  description: '고품질 지퍼와 의류 부자재를, 원하는 방식 그대로. 주식회사 대양아이엔지, 서울 종로·동대문.',
+  metadataBase: new URL(SITE.url),
+  title: {
+    default: `${SITE.name} — 지퍼·의류 부자재 맞춤 제작 | 서울 종로·동대문`,
+    template: `%s | ${SITE.name}`,
+  },
+  description: SITE.description,
+  keywords: [...SITE.keywords],
+  applicationName: SITE.name,
+  alternates: { canonical: '/' },
+  openGraph: {
+    type: 'website',
+    locale: 'ko_KR',
+    siteName: SITE.name,
+    url: '/',
+    title: `${SITE.name} — ${SITE.tagline}`,
+    description: SITE.description,
+  },
+  twitter: { card: 'summary_large_image' },
+  formatDetection: { telephone: true },
+  verification: {
+    ...(SITE.verification.google ? { google: SITE.verification.google } : {}),
+    ...(Object.keys(verificationOther).length ? { other: verificationOther } : {}),
+  },
 }
 
 export const viewport: Viewport = {
-  themeColor: '#EFF0EE',
+  themeColor: '#F6F6F3',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -23,7 +48,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..800&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,300..800&display=swap"
         />
       </head>
       <body>{children}</body>

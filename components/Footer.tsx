@@ -1,3 +1,4 @@
+import Link from 'next/link'
 const STRIP = ['#EDE6D6', '#C9A27A', '#E0662F', '#C8202F', '#E9A6B4', '#8C7AC4', '#26367A', '#1F6FD1', '#0F7A5C', '#9AAF4A', '#F2C230', '#4A4038']
 
 const Footer = () => {
@@ -15,6 +16,9 @@ const Footer = () => {
             <span className="brand__dy">DY</span>
             <span>대양ING</span>
           </div>
+          <nav className="foot__nav" aria-label="자료">
+            <Link href="/guide">지퍼·의류 부자재 가이드</Link>
+          </nav>
           <div className="foot__biz">
             <p>주식회사 대양아이엔지 | 사업자번호 869-81-02857</p>
             <p>도매·소매, 제조업: ZIPPER 외 의류 부자재 | 010-3744-3084</p>
