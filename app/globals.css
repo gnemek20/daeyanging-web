@@ -106,9 +106,15 @@ li {
   display: inline-block;
 }
 
-:where(a, button, input, textarea, summary, [tabindex]):focus-visible {
+:where(a, button, summary, [tabindex]):focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: 3px;
+}
+/* 입력 칸에는 outline 을 쓰지 않는다. 포커스는 각 칸의 테두리 색으로 보여 준다 */
+input,
+textarea,
+select {
+  outline: none;
 }
 ::selection {
   background: var(--ink);
@@ -929,17 +935,12 @@ html[data-at-top] .top::before {
     font: 500 1rem/1 var(--sans);
     font-variant-numeric: tabular-nums;
     text-transform: uppercase;
-    outline: none;
   }
   &:hover {
     border-color: rgb(18 19 22 / 0.3);
   }
   &:focus-within {
     border-color: var(--ink);
-  }
-  &:has(input:focus-visible) {
-    outline: 2px solid var(--ink);
-    outline-offset: 1px;
   }
 }
 .code__field--hex input {
@@ -1080,7 +1081,7 @@ html[data-at-top] .top::before {
   .body {
     color: rgb(255 255 255 / 0.74);
   }
-  :where(a, button, input, textarea):focus-visible {
+  :where(a, button):focus-visible {
     outline-color: #fff;
   }
 }
@@ -1154,6 +1155,7 @@ html[data-at-top] .top::before {
       border-color: rgb(255 255 255 / 0.4);
     }
     &:focus {
+      border-color: #fff;
       background: rgb(255 255 255 / 0.12);
     }
   }
