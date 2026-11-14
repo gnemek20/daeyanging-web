@@ -22,7 +22,6 @@ export const SITE = {
     '의류 부자재 업체',
     'OEM 지퍼',
   ],
-  phone: '010-3744-3084',
   email: 'hyunwoo.kim@hyunwoo.ai',
   bizNo: '869-81-02857',
   address: {

@@ -18,7 +18,6 @@ const businessLd = {
   description: SITE.description,
   url: SITE.url,
   image: `${SITE.url}/opengraph-image`,
-  telephone: '+82-10-3744-3084',
   email: SITE.email,
   taxID: SITE.bizNo,
   foundingDate: SITE.founded,

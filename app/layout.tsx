@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     description: SITE.description,
   },
   twitter: { card: 'summary_large_image' },
-  formatDetection: { telephone: true },
+  formatDetection: { telephone: false },
   verification: {
     ...(SITE.verification.google ? { google: SITE.verification.google } : {}),
     ...(Object.keys(verificationOther).length ? { other: verificationOther } : {}),

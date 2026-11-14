@@ -140,9 +140,6 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
             </p>
             <p className="doc__cta-contact">
               <span className="ph">
-                전화 <a href={`tel:${SITE.phone.replace(/-/g, '')}`}>{SITE.phone}</a>
-              </span>
-              <span className="ph">
                 메일 <a href={`mailto:${SITE.email}`}>{SITE.email}</a>
               </span>
             </p>

@@ -21,7 +21,7 @@ const Footer = () => {
           </nav>
           <div className="foot__biz">
             <p>주식회사 대양아이엔지 | 사업자번호 869-81-02857</p>
-            <p>도매·소매, 제조업: ZIPPER 외 의류 부자재 | 010-3744-3084</p>
+            <p>도매·소매, 제조업: ZIPPER 외 의류 부자재</p>
             <p>ⓒ 2026 주식회사 대양아이엔지. All rights reserved.</p>
           </div>
         </div>

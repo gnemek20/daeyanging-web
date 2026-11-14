@@ -18,12 +18,6 @@ const Contact = () => {
           </p>
           <dl className="cinfo">
             <div>
-              <dt>전화</dt>
-              <dd>
-                <a href={`tel:${SITE.phone.replace(/-/g, '')}`}>{SITE.phone}</a>
-              </dd>
-            </div>
-            <div>
               <dt>이메일</dt>
               <dd>
                 <a href={`mailto:${SITE.email}`}>{SITE.email}</a>
