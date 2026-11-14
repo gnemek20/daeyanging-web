@@ -19,7 +19,8 @@ const H = 512
 const CY = 256
 const L = 170 // 벌어지는 구간 길이
 const G = 34 // 완전히 열렸을 때 반쪽이 위·아래로 벌어지는 거리
-const S0 = 300 // 첫 화면 슬라이더 위치
+const S0 = 598 // 첫 화면: 닫힌 상태(글자 완성)
+const S_OPEN = 300 // 섹션에 들어오면 여기까지 저절로 열린다
 const SMIN = 24
 const SMAX = 620
 
@@ -272,7 +273,7 @@ const ZipperPlay = () => {
       startY = e.clientY
       left = root.getBoundingClientRect().left
       dragging = false
-      touched = true
+      touch()
     }
     const onMove = (e: PointerEvent) => {
       if (e.pointerId !== pid) return
@@ -317,10 +318,15 @@ const ZipperPlay = () => {
       const step = { ArrowRight: 24, ArrowUp: 24, ArrowLeft: -24, ArrowDown: -24, PageUp: 96, PageDown: -96 }[e.key]
       if (step === undefined && e.key !== 'Home' && e.key !== 'End') return
       e.preventDefault()
-      touched = true
+      touch()
       k = 260
       target = e.key === 'Home' ? SMIN : e.key === 'End' ? SMAX : clamp(target + (step ?? 0), SMIN, SMAX)
       kick()
+    }
+    // 사용자가 직접 만지면 안내를 거둔다
+    const touch = () => {
+      touched = true
+      root.removeAttribute('data-hint')
     }
     const onKind = (e: Event) => {
       const t = e.target as HTMLInputElement
@@ -333,17 +339,18 @@ const ZipperPlay = () => {
     })
     ro.observe(root)
 
-    // 처음 화면에 들어오면 한 번 스르르 닫히며 글자를 완성해 보인다
+    // 섹션에 들어서면 한 번 스르르 열어 보이고, 직접 여닫을 수 있다는 안내를 띄운다
     const io = new IntersectionObserver(
       ([en]) => {
         if (!en.isIntersecting) return
         io.disconnect()
-        if (touched || reduce.matches) return
-        k = 38
-        target = SMAX - 12
+        if (touched) return
+        root.toggleAttribute('data-hint', true)
+        k = reduce.matches ? 2000 : 34
+        target = S_OPEN
         kick()
       },
-      { threshold: 0.6 },
+      { threshold: 0.45 },
     )
     io.observe(root)
 
@@ -468,6 +475,22 @@ const ZipperPlay = () => {
             <Pull />
           </Layer>
         </div>
+        {/* 직접 해 보라는 안내: 슬라이더를 따라다니고, 처음 만지면 사라진다 */}
+        <span className="zp__ping" />
+        <span className="zp__hint">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <path
+              d="M8 7 3 12l5 5M16 7l5 5-5 5M3 12h18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <span className="zp__hint-mouse">클릭하거나 끌어서 직접 열어 보세요</span>
+          <span className="zp__hint-touch">손가락으로 끌어서 직접 열어 보세요</span>
+        </span>
       </div>
       <div
         className="zp__handle"

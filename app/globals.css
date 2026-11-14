@@ -860,6 +860,100 @@ html[data-at-top] .top::before {
   transform: translateX(calc(var(--s) * var(--u)));
   will-change: transform;
 }
+/* 직접 여닫기 안내: 슬라이더 몸통 가운데(그림 좌표 11) 위에 붙어 함께 움직인다 */
+.zp__hint {
+  position: absolute;
+  left: calc(11 * var(--u));
+  top: calc(50% - 50 * var(--u));
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.28);
+  translate: -50% -100%;
+  opacity: 0;
+  scale: 0.9;
+  transition:
+    opacity 260ms ease,
+    scale 260ms ease;
+  /* 아래 꼬리 */
+  &::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -5px;
+    width: 10px;
+    height: 10px;
+    background: inherit;
+    rotate: 45deg;
+    translate: -50% 0;
+  }
+}
+.zp__hint-touch {
+  display: none;
+}
+@media (hover: none) {
+  .zp__hint-mouse {
+    display: none;
+  }
+  .zp__hint-touch {
+    display: inline;
+  }
+}
+.zp__ping {
+  position: absolute;
+  left: calc(11 * var(--u));
+  top: 50%;
+  width: calc(104 * var(--u));
+  aspect-ratio: 1;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  translate: -50% -50%;
+  opacity: 0;
+}
+.zp[data-hint] {
+  .zp__hint {
+    opacity: 1;
+    scale: 1;
+    transition-delay: 700ms;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .zp__hint {
+      animation: zp-bob 1.6s ease-in-out 1.2s infinite;
+    }
+    .zp__ping {
+      animation: zp-ping 1.6s ease-out 1.2s infinite;
+    }
+  }
+}
+@keyframes zp-ping {
+  from {
+    opacity: 0.75;
+    scale: 0.55;
+  }
+  to {
+    opacity: 0;
+    scale: 1.25;
+  }
+}
+@keyframes zp-bob {
+  50% {
+    transform: translateY(-4px);
+  }
+}
+@media (max-width: 640px) {
+  .zp__hint {
+    font-size: 0.78rem;
+    padding: 0.4rem 0.75rem;
+  }
+}
 /* 손잡이: 슬라이더 몸통의 고리(그림 좌표 2, 가운데+8)를 축으로 흔들린다 */
 .zp__pull {
   position: absolute;
