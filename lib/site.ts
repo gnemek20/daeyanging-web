@@ -31,7 +31,7 @@ export const SITE = {
     country: 'KR',
     full: '서울특별시 종로구 김상옥로 59, 한아빌딩 3층',
   },
-  geo: { lat: 37.5706, lng: 127.0057 },
+  geo: { lat: 37.5736, lng: 127.0045 },
   founded: '2004',
   // 서치 어드바이저 소유 확인 코드 — 받으면 채운다(빈 값이면 메타 태그를 넣지 않는다).
   verification: {

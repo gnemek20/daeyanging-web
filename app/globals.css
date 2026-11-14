@@ -990,7 +990,7 @@ html[data-at-top] .top::before {
 .stats {
   margin-top: clamp(3.5rem, 7vw, 6rem);
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: clamp(1rem, 2vw, 1.5rem);
   > div {
     display: flex;
@@ -1015,7 +1015,6 @@ html[data-at-top] .top::before {
 }
 @media (max-width: 860px) {
   .stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     row-gap: 2.5rem;
   }
 }

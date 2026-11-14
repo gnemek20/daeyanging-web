@@ -3,7 +3,7 @@ const Company = () => {
     <section className="sec" id="company" aria-labelledby="company-h">
       <div className="wrap">
         <h2 className="statement" id="company-h">
-          <span className="ph">최고의 작품을 위한 첫 걸음.</span>{' '}
+          <span className="ph">최고의 작품을 위한 첫걸음.</span>{' '}
           <span className="statement__sub">
             <span className="ph">패션의 완성을 위해 달리는 당신에게,</span>{' '}
             <span className="ph">대양ING가 날개를 달아드리겠습니다.</span>
