@@ -1,9 +1,10 @@
+import TapeCode from './TapeCode'
 import TapePicker from './TapePicker'
 import ZipperStrip from './ZipperStrip'
 
 // 서버 컴포넌트 — 자바스크립트 없이 동작한다.
 // 컬러와 마감은 기본 라디오 버튼이고, 선택에 따라 미리보기 색과 안내 문구를 CSS(:has)가 바꾼다.
-// 컬러 줄 맨 끝의 "직접 고르기"만 색상 선택기 값을 읽어야 해서 작은 클라이언트 컴포넌트(TapePicker)다.
+// 컬러 줄 맨 끝의 "직접 고르기"(TapePicker)와 HEX·RGB 코드 입력(TapeCode)만 입력값을 읽어야 해서 작은 클라이언트 컴포넌트다.
 
 const COLORS = [
   { key: 'indigo', name: '인디고', hex: '#26367A' },
@@ -111,12 +112,16 @@ const Custom = () => {
               <div className="config__v swatches" role="radiogroup" aria-labelledby="cfg-color-k">
                 {COLORS.map((c, i) => (
                   <label key={c.key} className="swatch" style={{ background: c.hex }} title={c.name}>
-                    <input type="radio" name="tape" value={c.key} defaultChecked={i === 0} />
+                    <input type="radio" name="tape" value={c.key} data-hex={c.hex} defaultChecked={i === 0} />
                     <span className="sr-only">{c.name}</span>
                   </label>
                 ))}
                 <TapePicker initial={PICK_DEFAULT} />
               </div>
+            </div>
+            <div className="config__row">
+              <span className="config__k">컬러 코드</span>
+              <TapeCode initial={COLORS[0].hex} />
             </div>
             <div className="config__row">
               <span className="config__k" id="cfg-finish-k">
