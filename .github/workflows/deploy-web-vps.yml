@@ -13,6 +13,10 @@ name: Deploy web to VPS
 on:
   push:
     branches: [main]
+    # 백엔드 API(server/)만 바뀐 커밋은 deploy-api-vps.yml 이 맡는다
+    paths-ignore:
+      - 'server/**'
+      - '.github/workflows/deploy-api-vps.yml'
   workflow_dispatch:
 
 concurrency:

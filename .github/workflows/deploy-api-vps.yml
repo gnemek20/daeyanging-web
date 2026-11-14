@@ -1,0 +1,61 @@
+name: Deploy API to VPS
+
+# 대양ING 백엔드 API(server/, FastAPI)를 iwinv VPS 에 Docker 이미지로 배포한다.
+#   빌드: server/Dockerfile → 태그 없이 docker save → ssh 로 서버에 보낸다.
+#   서버: /home/ubuntu/web/daeyanging-api/gate 가 받아 web-daeyanging-api:prod-<sha7> 로 태그를 붙이고
+#         컨테이너를 바꾼다(/health 가 healthy 가 아니면 직전 이미지로 자동 복구).
+#   API 는 전용 내부 네트워크(daeyanging-net)에만 붙어 사이트 컨테이너만 부를 수 있다(인터넷 노출 없음).
+# server/ 가 바뀐 커밋이 main 에 들어오면 prod 로 배포된다.
+# 시크릿:
+#   VPS_API_DEPLOY_KEY — API 전용 배포 키. 서버는 이 키로 "deploy" 한 가지만 허용한다.
+# 손으로 되돌리기(서버): /home/ubuntu/web/daeyanging-api/gate switch prod <옛 태그>   · 태그 목록: docker images web-daeyanging-api
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server/**'
+      - '.github/workflows/deploy-api-vps.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-api-vps
+  cancel-in-progress: true
+
+env:
+  TARGET: prod
+  VPS_HOST: 115.68.227.61
+  VPS_HOST_KEY: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM5rS4lC21RTAXfzqk9oBEIakLBxcxMNxgnYfAhiqoat
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: 이미지 빌드
+        uses: docker/build-push-action@v6
+        with:
+          context: server
+          load: true
+          tags: api-build:latest
+          cache-from: type=gha,scope=daeyanging-api
+          cache-to: type=gha,mode=max,scope=daeyanging-api
+
+      - name: 서버로 보내고 교체
+        env:
+          DEPLOY_KEY: ${{ secrets.VPS_API_DEPLOY_KEY }}
+        run: |
+          if [ -z "$DEPLOY_KEY" ]; then
+            echo "::warning::VPS_API_DEPLOY_KEY 시크릿이 없어 서버 배포를 건너뜁니다(이미지 빌드만 확인)."
+            exit 0
+          fi
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_deploy && chmod 600 ~/.ssh/id_deploy
+          echo "$VPS_HOST $VPS_HOST_KEY" > ~/.ssh/known_hosts
+          IMAGE_ID="$(docker image inspect -f '{{.Id}}' api-build:latest)"
+          docker save "$IMAGE_ID" | gzip -1 \
+            | ssh -i ~/.ssh/id_deploy -o ServerAliveInterval=30 "ubuntu@$VPS_HOST" deploy "$TARGET" "$GITHUB_SHA"

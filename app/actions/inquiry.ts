@@ -1,10 +1,14 @@
 'use server'
 
 import { headers } from 'next/headers'
-import { MAIL_TO, mailReady, sendMail } from '@/lib/mailer'
 
-// 상담 문의 폼 → hyunwoo.kim@daeyanging.com 으로 메일 발송(옛 Express 메일 서버를 대신한다).
+// 상담 문의 폼 → 대양ING 백엔드 API(FastAPI, server/) → hyunwoo.kim@daeyanging.com 으로 메일 발송.
 // 항목: 성함 / 회사명*, 이메일*, 문의 내용*
+// API 는 iwinv 의 전용 내부 네트워크에만 있다. 서버 실행 환경변수(prod.env, 저장소에 없음):
+//   INQUIRY_API_URL    예) http://web-daeyanging-api-prod:8000
+//   INQUIRY_API_TOKEN  API 의 API_TOKEN 과 같은 값
+const API_URL = process.env.INQUIRY_API_URL
+const API_TOKEN = process.env.INQUIRY_API_TOKEN
 
 export type InquiryFields = { name: string; email: string; message: string }
 export type InquiryState = {
@@ -29,8 +33,6 @@ const limited = (ip: string) => {
   return recent.length > MAX_PER_WINDOW
 }
 
-const esc = (s: string) =>
-  s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
 // 메일 머리글(제목 등)에 들어갈 값은 줄바꿈과 제어 문자를 없앤다
 const oneLine = (s: string) => s.replace(/[\u0000-\u001f\u007f]+/g, ' ').trim()
 
@@ -57,26 +59,22 @@ export async function sendInquiry(_prev: InquiryState, form: FormData): Promise<
     return { status: 'error', message: '짧은 시간에 문의가 많았습니다. 잠시 후 다시 보내 주세요.', fields }
   }
 
-  if (!mailReady()) {
-    console.error('[inquiry] SMTP_PASS 가 설정되지 않아 메일을 보내지 못했습니다.')
+  if (!API_URL || !API_TOKEN) {
+    console.error('[inquiry] INQUIRY_API_URL / INQUIRY_API_TOKEN 이 설정되지 않았습니다.')
     return { status: 'error', message: '지금은 문의를 보낼 수 없습니다. 아래 메일 주소로 직접 보내 주세요.', fields }
   }
 
-  const text = [`성함 / 회사명: ${fields.name}`, `이메일: ${fields.email}`, '', fields.message].join('\n')
-  const html =
-    `<p><b>성함 / 회사명</b>: ${esc(fields.name)}<br><b>이메일</b>: ${esc(fields.email)}</p>` +
-    `<hr><p style="white-space:pre-wrap">${esc(fields.message)}</p>`
-
   try {
-    await sendMail({
-      to: MAIL_TO,
-      replyTo: { name: fields.name, address: fields.email },
-      subject: `[홈페이지 문의] ${fields.name}`,
-      text,
-      html,
+    const res = await fetch(`${API_URL}/inquiries`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': API_TOKEN },
+      body: JSON.stringify({ ...fields, client_ip: ip.slice(0, 64) }),
+      signal: AbortSignal.timeout(25_000),
+      cache: 'no-store',
     })
+    if (!res.ok) throw new Error(`API ${res.status}`)
   } catch (err) {
-    console.error('[inquiry] 메일 발송 실패:', err instanceof Error ? err.message : err)
+    console.error('[inquiry] 문의 API 호출 실패:', err instanceof Error ? err.message : err)
     return { status: 'error', message: '문의를 보내지 못했습니다. 아래 메일 주소로 직접 보내 주세요.', fields }
   }
 
