@@ -627,39 +627,7 @@ html[data-at-top] .top::before {
   }
 }
 
-/* ───────── 사진 공통 ─────────
-   실제 제품 사진. 칸의 비율을 먼저 정해 두고(레이아웃 밀림 없음) 사진은 그 칸을 덮는다.
-   마우스를 올리면 사진이 아주 조금 커지고, 벗어나면 같은 속도로 돌아온다. */
-.photo,
-.samples li,
-.gallery li,
-.pullers li,
-.company__photo,
-.pcover,
-.custom__photo {
-  position: relative;
-  margin: 0;
-  overflow: hidden;
-  border-radius: var(--r);
-  background: var(--soft);
-  img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: scale 600ms cubic-bezier(0.2, 0.7, 0.2, 1);
-  }
-}
-@media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  :is(.samples, .gallery, .pullers) li:hover img {
-    scale: 1.04;
-  }
-}
-
-/* ───────── 소개 문장 + 사진 네 장 ───────── */
-.sec--tight {
-  padding-block: clamp(4.5rem, 8vw, 7.5rem);
-}
+/* ───────── 회사 ───────── */
 .statement {
   font-size: clamp(1.75rem, 1rem + 2.7vw, 3.6rem);
   font-weight: 600;
@@ -671,36 +639,11 @@ html[data-at-top] .top::before {
     font-weight: 500;
   }
 }
-.samples {
-  margin-top: clamp(2.5rem, 5vw, 4rem);
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: clamp(0.5rem, 1.2vw, 1rem);
-  li {
-    aspect-ratio: 3 / 4;
-  }
-}
-
-/* ───────── 회사 ───────── */
 .company {
+  margin-top: clamp(3rem, 7vw, 6rem);
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
   gap: clamp(2rem, 6vw, 6rem);
-  align-items: center;
-}
-.company__photo {
-  aspect-ratio: 4 / 5;
-}
-.company__body {
-  margin-top: 1.75rem;
-  display: grid;
-  gap: 1rem;
-  .body {
-    color: var(--ink-2);
-  }
-}
-.company .facts {
-  margin-top: 2.25rem;
 }
 .facts {
   border-top: 1px solid var(--line);
@@ -724,33 +667,55 @@ html[data-at-top] .top::before {
   .company {
     grid-template-columns: 1fr;
   }
-  .company__photo {
-    aspect-ratio: 16 / 10;
-  }
 }
 
-/* ───────── 제품: 대표 사진 + 지퍼 사진 일곱 장 ───────── */
-.pcover {
-  margin-top: clamp(2.5rem, 5vw, 4rem);
-  aspect-ratio: 21 / 9;
-}
-.gallery {
-  margin-top: clamp(0.5rem, 1.2vw, 1rem);
+/* ───────── 제품 ───────── */
+.products {
+  margin-top: clamp(3rem, 6vw, 5rem);
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: clamp(0.5rem, 1.2vw, 1rem);
-  li {
-    aspect-ratio: 3 / 2;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(2.5rem, 4vw, 3.5rem) clamp(1rem, 2vw, 1.75rem);
+}
+.product__art {
+  aspect-ratio: 4 / 3;
+  border-radius: var(--r);
+  overflow: hidden;
+  .zstrip {
+    width: 100%;
+    height: 100%;
+    transition: scale 600ms cubic-bezier(0.2, 0.7, 0.2, 1);
   }
-  /* 첫 장은 두 칸·두 줄, 마지막 두 장은 두 칸씩 — 일곱 장이 빈칸 없이 채워진다 */
-  li:first-child {
-    grid-column: span 2;
-    grid-row: span 2;
-    aspect-ratio: auto;
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .product:hover .zstrip {
+    scale: 1.04;
   }
-  li:nth-last-child(-n + 2) {
-    grid-column: span 2;
-    aspect-ratio: 3 / 1.5;
+}
+.product__body {
+  padding-top: 1.1rem;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 2rem;
+  h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    text-wrap: nowrap;
+    span {
+      margin-left: 0.6rem;
+      font-family: var(--wide);
+      font-stretch: 125%;
+      font-size: 0.8rem;
+      font-weight: 400;
+      color: var(--muted);
+      letter-spacing: 0;
+    }
+  }
+  p {
+    color: var(--muted);
+    justify-self: end;
+    text-align: right;
+    max-width: 22em;
   }
 }
 .zstrip {
@@ -759,15 +724,14 @@ html[data-at-top] .top::before {
   height: auto;
 }
 @media (max-width: 760px) {
-  .gallery {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    li:first-child {
-      grid-row: auto;
-      aspect-ratio: 2 / 1;
-    }
-    li:nth-last-child(-n + 2) {
-      grid-column: auto;
-      aspect-ratio: 3 / 2;
+  .products {
+    grid-template-columns: 1fr;
+  }
+  .product__body {
+    grid-template-columns: 1fr;
+    p {
+      justify-self: start;
+      text-align: left;
     }
   }
 }
@@ -975,50 +939,47 @@ html[data-at-top] .top::before {
     outline-offset: 2px;
   }
 }
-/* 맞춤 지퍼 실물 사진: 미리보기·선택 줄 아래 전체 폭 */
-.custom__photo {
-  grid-column: 1 / -1;
-  aspect-ratio: 2 / 1;
-  figcaption {
-    position: absolute;
-    left: 1rem;
-    bottom: 1rem;
-    padding: 0.35rem 0.85rem;
-    border-radius: 999px;
-    background: rgb(255 255 255 / 0.9);
-    font-size: 0.85rem;
-    font-weight: 600;
-  }
-}
 @media (max-width: 860px) {
   .custom {
     grid-template-columns: 1fr;
   }
-  .custom__photo {
-    aspect-ratio: 16 / 9;
-  }
 }
 
-/* ───────── 풀러: 하나의 예술처럼 ───────── */
-.pullers {
-  margin-top: clamp(2.5rem, 5vw, 4rem);
+/* ───────── 품질 ───────── */
+.qualities {
+  margin-top: clamp(3rem, 6vw, 5rem);
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(0.5rem, 1.2vw, 1rem);
+  gap: clamp(1.25rem, 2.5vw, 2rem);
   li {
-    aspect-ratio: 4 / 3;
+    padding: clamp(1.5rem, 2.5vw, 2.25rem);
+    border-radius: var(--r);
+    background: var(--card);
+    min-height: 15rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+  h3 {
+    font-size: clamp(1.35rem, 1.1rem + 0.8vw, 1.75rem);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+  }
+  p {
+    color: var(--muted);
   }
 }
 @media (max-width: 860px) {
-  .pullers {
+  .qualities {
     grid-template-columns: 1fr;
     li {
-      aspect-ratio: 16 / 9;
+      min-height: 0;
     }
   }
 }
 
-/* ───────── 약속 + 숫자 (어두운 면) ───────── */
+/* ───────── 숫자 ───────── */
 .sec--ink {
   background: var(--ink);
   color: #f6f6f3;
@@ -1026,52 +987,26 @@ html[data-at-top] .top::before {
     color: rgb(246 246 243 / 0.66);
   }
 }
-.promises {
-  margin-top: clamp(2.5rem, 5vw, 4rem);
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(0.75rem, 1.5vw, 1.25rem);
-  li {
-    display: flex;
-    align-items: center;
-    gap: 1.1rem;
-    padding: clamp(1.25rem, 2.2vw, 1.75rem);
-    border-radius: var(--r);
-    background: rgb(255 255 255 / 0.05);
-    border-top: 3px solid var(--c);
-  }
-  h3 {
-    font-size: clamp(1.3rem, 1.05rem + 0.9vw, 1.8rem);
-    font-weight: 600;
-    letter-spacing: -0.03em;
-  }
-}
-/* 옛 사이트의 약속 아이콘(검은 단색 SVG)을 마스크로 써서 줄 색으로 칠한다 */
-.promises__icon {
-  flex: none;
-  width: clamp(2.4rem, 2rem + 1vw, 3rem);
-  aspect-ratio: 1;
-  background: var(--c);
-  -webkit-mask: var(--icon) center / contain no-repeat;
-  mask: var(--icon) center / contain no-repeat;
-}
 .stats {
-  margin-top: clamp(3rem, 6vw, 5rem);
+  margin-top: clamp(3.5rem, 7vw, 6rem);
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: clamp(1rem, 2vw, 1.5rem);
   > div {
     display: flex;
     flex-direction: column-reverse;
     justify-content: flex-end;
     padding-top: 1.25rem;
-    border-top: 1px solid rgb(255 255 255 / 0.18);
+    border-top: 3px solid var(--c);
   }
   dd {
+    font-family: var(--wide);
+    font-stretch: 125%;
+    font-weight: 300;
     font-size: clamp(2.6rem, 1.4rem + 3.6vw, 5.4rem);
-    font-weight: 600;
     line-height: 1;
-    letter-spacing: -0.045em;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
   }
   dt {
     margin-top: 0.9rem;
@@ -1079,8 +1014,9 @@ html[data-at-top] .top::before {
   }
 }
 @media (max-width: 860px) {
-  .promises {
-    grid-template-columns: 1fr;
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 2.5rem;
   }
 }
 
@@ -1198,85 +1134,6 @@ html[data-at-top] .top::before {
 .form[data-status='sent'] .form__note {
   color: #fff;
 }
-.form__types {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  legend {
-    float: left;
-    width: 100%;
-    margin-bottom: 0.45rem;
-    padding: 0;
-    font-size: 0.92rem;
-    color: rgb(255 255 255 / 0.74);
-  }
-}
-.chip {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 40px;
-  padding: 0 1.1rem;
-  border-radius: 999px;
-  border: 1px solid rgb(255 255 255 / 0.3);
-  font-size: 0.94rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    background-color 180ms ease,
-    border-color 180ms ease,
-    color 180ms ease;
-  input {
-    position: absolute;
-    inset: 0;
-    margin: 0;
-    opacity: 0;
-    cursor: pointer;
-  }
-  &:hover {
-    border-color: rgb(255 255 255 / 0.7);
-  }
-  &:has(input:checked) {
-    background: #fff;
-    border-color: #fff;
-    color: var(--indigo);
-  }
-  &:has(input:focus-visible) {
-    outline: 2px solid #fff;
-    outline-offset: 2px;
-  }
-}
-.form .form__file {
-  input {
-    padding: 0.6rem;
-    cursor: pointer;
-  }
-  input::file-selector-button {
-    margin-right: 0.8rem;
-    padding: 0.45rem 1rem;
-    border: 0;
-    border-radius: 999px;
-    background: #fff;
-    color: var(--indigo);
-    font: inherit;
-    font-size: 0.88rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 180ms ease;
-  }
-  input:hover::file-selector-button {
-    background: #f1e7d0;
-  }
-  small {
-    font-size: 0.82rem;
-    color: rgb(255 255 255 / 0.55);
-  }
-}
 .form__row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1351,6 +1208,13 @@ html[data-at-top] .top::before {
 .subway__walk {
   font-size: 0.9rem;
   color: var(--muted);
+}
+.loc .facts {
+  margin-top: 1.5rem;
+}
+.facts--compact > div {
+  grid-template-columns: 4rem 1fr;
+  padding-block: 0.8rem;
 }
 .loc__actions {
   margin-top: 2rem;
@@ -1742,19 +1606,9 @@ html[data-at-top] .top::before {
     font-size: clamp(1.3rem, 1.05rem + 1.2vw, 1.6rem);
     line-height: 1.42;
   }
-  .samples {
-    margin-top: 1.75rem;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    li {
-      aspect-ratio: 1;
-    }
-  }
   .company {
-    gap: 1.5rem;
-  }
-  .company__body {
-    margin-top: 1.1rem;
-    gap: 0.75rem;
+    margin-top: 2.25rem;
+    gap: 1.75rem;
   }
   .facts > div {
     grid-template-columns: 5rem 1fr;
@@ -1764,14 +1618,21 @@ html[data-at-top] .top::before {
     font-size: 0.88rem;
   }
 
-  .pcover {
-    margin-top: 1.5rem;
-    aspect-ratio: 16 / 9;
+  .products {
+    margin-top: 2rem;
+    gap: 1.75rem;
   }
-  .custom__photo figcaption {
-    left: 0.75rem;
-    bottom: 0.75rem;
-    font-size: 0.78rem;
+  .product__art {
+    aspect-ratio: 2 / 1;
+  }
+  .product__body {
+    padding-top: 0.75rem;
+    h3 {
+      font-size: 1.12rem;
+    }
+    p {
+      font-size: 0.94rem;
+    }
   }
 
   .custom__preview {
@@ -1793,18 +1654,18 @@ html[data-at-top] .top::before {
     font-size: 0.88rem;
   }
 
-  .pullers {
-    margin-top: 1.5rem;
-  }
-  .promises {
-    margin-top: 1.75rem;
-    gap: 0.5rem;
+  .qualities {
+    margin-top: 2rem;
+    gap: 0.75rem;
     li {
-      padding: 1rem 1.1rem;
-      gap: 0.9rem;
+      padding: 1.25rem;
+      gap: 0.6rem;
     }
     h3 {
-      font-size: clamp(1.1rem, 1rem + 0.5vw, 1.25rem);
+      font-size: clamp(1.08rem, 1rem + 0.4vw, 1.2rem);
+    }
+    p {
+      font-size: 0.94rem;
     }
   }
 

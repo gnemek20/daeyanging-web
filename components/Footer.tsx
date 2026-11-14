@@ -21,10 +21,9 @@ const Footer = () => {
             <Link href="/guide">지퍼·의류 부자재 가이드</Link>
           </nav>
           <div className="foot__biz">
-            <p>서울특별시 종로구 김상옥로 59, 한아빌딩 3층</p>
-            <p>사업자번호 869-81-02857 | 도매 및 소매, 제조업: ZIPPER 외 의류 부자재</p>
-            <p>이메일 hyunwoo.kim@daeyanging.com</p>
-            <p>주식회사 대양아이엔지 ⓒ</p>
+            <p>주식회사 대양아이엔지 | 사업자번호 869-81-02857</p>
+            <p>도매·소매, 제조업: ZIPPER 외 의류 부자재</p>
+            <p>ⓒ 2026 주식회사 대양아이엔지. All rights reserved.</p>
           </div>
         </div>
       </div>

@@ -1,8 +1,22 @@
-import Image from 'next/image'
 import Link from 'next/link'
-import { PRODUCT_COVER, ZIPPERS } from '@/lib/photos'
+import ZipperStrip, { type ToothFinish, type ZipperKind } from './ZipperStrip'
 
-// 최신 사이트(DaeyangING /product)의 "다양한 지퍼를 자유롭게," — 대표 사진 한 장과 지퍼 사진 일곱 장
+const PRODUCTS: {
+  kind: ZipperKind
+  name: string
+  en: string
+  desc: string[]
+  tape: string
+  teeth?: string
+  finish?: ToothFinish
+  bg: string
+}[] = [
+  { kind: 'metal', name: '메탈 지퍼', en: 'Metal', desc: ['데님·아우터에 어울리는', '묵직한 금속 질감과 견고함.'], tape: '#26367A', finish: 'metal', bg: '#1B2657' },
+  { kind: 'vislon', name: '비슬론 지퍼', en: 'Vislon', desc: ['가볍고 다채로운 컬러.', '캐주얼·스포츠웨어에 최적.'], tape: '#E8622A', teeth: '#FF9A55', finish: 'silver', bg: '#B8481A' },
+  { kind: 'conceal', name: '콘실 지퍼', en: 'Conceal', desc: ['봉제선에 숨어 깔끔하게.', '매끈한 실루엣의 완성.'], tape: '#E7B3B6', teeth: '#B97C82', finish: 'silver', bg: '#C98D93' },
+  { kind: 'nylon', name: '나일론 지퍼', en: 'Nylon', desc: ['부드러운 개폐감과 경량성.', '가장 폭넓게 쓰이는 표준.'], tape: '#0F7A5C', teeth: '#BFEBD8', finish: 'gloss', bg: '#0A5843' },
+]
+
 const Products = () => {
   return (
     <section className="sec" id="products" aria-labelledby="products-h">
@@ -13,18 +27,34 @@ const Products = () => {
             <br />
             자유롭게.
           </h2>
-          <p className="lede">
-            <span className="ph">DaeyangING,</span> <span className="ph">패션에 날개를 달아주는</span>{' '}
-            <span className="ph">하나의 방법.</span>
+          <p className="body">
+            <span className="ph">메탈부터 나일론까지,</span> <span className="ph">옷의 성격에 맞는 지퍼를 고르세요.</span>{' '}
+            <span className="ph">모든 제품은 컬러와 규격을</span> <span className="ph">맞춤으로 제작합니다.</span>
           </p>
         </header>
-        <figure className="pcover">
-          <Image src={PRODUCT_COVER.src} alt={PRODUCT_COVER.alt} placeholder="blur" sizes="(max-width: 1360px) 100vw, 1300px" />
-        </figure>
-        <ul className="gallery">
-          {ZIPPERS.map((p) => (
-            <li key={p.alt}>
-              <Image src={p.src} alt={p.alt} placeholder="blur" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" />
+        <ul className="products">
+          {PRODUCTS.map((p) => (
+            <li key={p.kind} className="product">
+              <div className="product__art" style={{ background: p.bg }}>
+                <ZipperStrip
+                  id={`p-${p.kind}`}
+                  kind={p.kind}
+                  tape={p.tape}
+                  teeth={p.teeth}
+                  finish={p.finish}
+                  title={`${p.name} 확대 그림`}
+                  bleed
+                />
+              </div>
+              <div className="product__body">
+                <h3>
+                  {p.name}
+                  <span lang="en">{p.en}</span>
+                </h3>
+                <p>
+                  <span className="ph">{p.desc[0]}</span> <span className="ph">{p.desc[1]}</span>
+                </p>
+              </div>
             </li>
           ))}
         </ul>

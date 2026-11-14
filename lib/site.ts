@@ -5,16 +5,14 @@ export const SITE = {
   name: '대양ING',
   legalName: '주식회사 대양아이엔지',
   tagline: '패션에 새로운 날개를 달다',
-  // 최신 사이트(DaeyangING)의 설명문 그대로 + 위치
   description:
-    '지퍼를 통해 패션에 새로운 날개를 달다 - 대양ING는 고품질 지퍼와 의류 부자재를 빠르게, 원하는 방식으로 제작해 드립니다. 서울 종로구 김상옥로 59 (종로5가역·동대문역 인근).',
+    '2004년부터 지퍼와 의류 부자재를 제작·공급합니다. 메탈·비슬론·나일론·콘실 지퍼를 사이즈, 컬러, 마감까지 1:1 맞춤 제작합니다. 서울 종로구 김상옥로 59 (종로5가역·동대문역 인근).',
   keywords: [
     '의류 부자재',
     '지퍼',
     '지퍼 제작',
     '지퍼 맞춤 제작',
     '지퍼 도매',
-    '지퍼 풀러',
     '메탈 지퍼',
     '비슬론 지퍼',
     '나일론 지퍼',
@@ -33,8 +31,8 @@ export const SITE = {
     country: 'KR',
     full: '서울특별시 종로구 김상옥로 59, 한아빌딩 3층',
   },
-  // 건물 위치(김상옥로 59, 효제동). 최신 사이트의 지도 좌표와 같다.
-  geo: { lat: 37.5736, lng: 127.0045 },
+  geo: { lat: 37.5706, lng: 127.0057 },
+  founded: '2004',
   // 서치 어드바이저 소유 확인 코드 — 받으면 채운다(빈 값이면 메타 태그를 넣지 않는다).
   verification: {
     google: '',
@@ -46,7 +44,7 @@ export const SITE = {
 export const OG_BASE = {
   siteName: SITE.name,
   locale: 'ko_KR',
-  images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: '대양ING — 고품질 지퍼 및 의류 부자재 맞춤 제작' }],
+  images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'DY 대양ING — 지퍼·의류 부자재' }],
 }
 
 // JSON-LD 를 <script> 에 넣을 때 '<' 를 이스케이프한다(Next.js JSON-LD 가이드).

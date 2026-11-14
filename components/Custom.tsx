@@ -1,7 +1,5 @@
-import Image from 'next/image'
 import TapePicker from './TapePicker'
 import ZipperStrip from './ZipperStrip'
-import { LETTERING_ZIPPER } from '@/lib/photos'
 
 // 서버 컴포넌트 — 자바스크립트 없이 동작한다.
 // 컬러와 마감은 기본 라디오 버튼이고, 선택에 따라 미리보기 색과 안내 문구를 CSS(:has)가 바꾼다.
@@ -96,8 +94,9 @@ const Custom = () => {
             그대로.
           </h2>
           <p className="body">
-            <span className="ph">지퍼가 맞물렸을 때</span> <span className="ph">원하는 모양이 나오도록</span>{' '}
-            <span className="ph">표현이 가능합니다.</span> <span className="ph">테이프 컬러와 마감을 골라 보세요.</span>
+            <span className="ph">정해진 규격에 맞추지 않습니다.</span>{' '}
+            <span className="ph">사이즈, 컬러, 마감까지,</span> <span className="ph">1:1 맞춤 제작으로</span>{' '}
+            <span className="ph">원하는 지퍼를 자유롭게 구현합니다.</span>
           </p>
 
           <div className="config__rows">
@@ -142,12 +141,6 @@ const Custom = () => {
             </div>
           </div>
         </div>
-        <figure className="custom__photo">
-          <Image src={LETTERING_ZIPPER.src} alt={LETTERING_ZIPPER.alt} placeholder="blur" sizes="(max-width: 1360px) 100vw, 1300px" />
-          <figcaption>
-            <span className="ph">테이프에 브랜드 문구와 라인을 넣은</span> <span className="ph">맞춤 지퍼.</span>
-          </figcaption>
-        </figure>
       </div>
     </section>
   )

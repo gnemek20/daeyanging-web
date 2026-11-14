@@ -1,4 +1,4 @@
-// 대양ING 기존 로고(DY + 아래 굵은 띠). 옛 사이트(DaeyangING/public/icons/logo.svg)의 도형 그대로.
+// 대양ING 기존 로고(DY + 아래 굵은 띠). 원본: DaeyangING/public/icons/logo.svg
 // 원본 좌표계: viewBox 0 0 651 383, 아래 transform 으로 뒤집어 그린다.
 export const LOGO_VIEWBOX = '0 0 651 383'
 export const LOGO_TRANSFORM = 'translate(0 383) scale(0.1 -0.1)'

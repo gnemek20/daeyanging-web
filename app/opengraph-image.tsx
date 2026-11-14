@@ -1,8 +1,8 @@
 import { ImageResponse } from 'next/og'
 import { LOGO_PATHS, LOGO_TRANSFORM, LOGO_VIEWBOX } from '@/lib/logo'
 
-// 공유 미리보기 이미지: 지퍼 컬러 카드 + 기존 DY 로고 + 영문 워드마크(기본 글꼴로 그릴 수 있는 라틴 문자만 쓴다)
-export const alt = '대양ING — 고품질 지퍼 및 의류 부자재 맞춤 제작'
+// 공유 미리보기 이미지: 지퍼 컬러 카드 + DY 로고 + 영문 워드마크(기본 글꼴로 그릴 수 있는 라틴 문자만 쓴다)
+export const alt = 'DY 대양ING — Zippers & garment trims since 2004'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
@@ -22,7 +22,7 @@ export default function Image() {
           </svg>
           <div style={{ fontSize: 40, fontWeight: 700, color: '#121316', marginTop: 20 }}>DAEYANG ING</div>
           <div style={{ fontSize: 28, color: '#64676E', marginTop: 24 }}>Zippers &amp; garment trims</div>
-          <div style={{ fontSize: 28, color: '#64676E' }}>Jongno, Seoul</div>
+          <div style={{ fontSize: 28, color: '#64676E' }}>Seoul, since 2004</div>
         </div>
         <div style={{ display: 'flex', flex: 1, gap: 6, padding: '0 14px', background: '#E3E2DC' }}>
           {TAPES.map((c, i) => (
