@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Logo from './Logo'
 import MobileMenu from './MobileMenu'
 import NavLink from './NavLink'
 
@@ -15,7 +16,7 @@ const Header = () => {
     <header className="top">
       <div className="top__inner">
         <Link className="brand" href="/" aria-label="대양ING 처음으로">
-          <span className="brand__dy">DY</span>
+          <Logo className="brand__logo" />
           <span className="brand__kr">대양ING</span>
         </Link>
         <nav className="nav" aria-label="주요 메뉴">

@@ -17,7 +17,7 @@ if (SITE.verification.naver) verificationOther['naver-site-verification'] = SITE
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
   title: {
-    default: `${SITE.name} — 지퍼·의류 부자재 맞춤 제작 | 서울 종로·동대문`,
+    default: `${SITE.name} | 고품질 지퍼 및 의류 부자재 맞춤 제작`,
     template: `%s | ${SITE.name}`,
   },
   description: SITE.description,

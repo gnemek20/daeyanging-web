@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 // 컬러 줄 맨 끝의 "직접 고르기" 스와치.
 // 무지개 고리 안에 기본 색상 선택기(스포이드 포함)를 숨겨 두고, 고른 색을 미리보기에 바로 입힌다.
@@ -6,27 +6,20 @@
 // 상태 없이 이벤트 핸들러에서 CSS 변수만 바꾼다(렌더링 다시 하지 않음).
 const TapePicker = ({ initial }: { initial: string }) => {
   const apply = (input: HTMLInputElement) => {
-    const root = input.closest<HTMLElement>(".custom");
-    if (!root) return;
-    const hex = input.value.toUpperCase();
-    root.style.setProperty("--cfg-pick", hex);
-    root.toggleAttribute("data-picked", true);
-    const radio = input.parentElement?.querySelector<HTMLInputElement>(
-      'input[type="radio"]',
-    );
-    if (radio) radio.checked = true;
-    const tag = root.querySelector("[data-tag-hex]");
-    if (tag) tag.textContent = hex;
-  };
+    const root = input.closest<HTMLElement>('.custom')
+    if (!root) return
+    const hex = input.value.toUpperCase()
+    root.style.setProperty('--cfg-pick', hex)
+    root.toggleAttribute('data-picked', true)
+    const radio = input.parentElement?.querySelector<HTMLInputElement>('input[type="radio"]')
+    if (radio) radio.checked = true
+    const tag = root.querySelector('[data-tag-hex]')
+    if (tag) tag.textContent = hex
+  }
 
   return (
     <label className="swatch swatch--pick" title="컬러 직접 고르기">
-      <input
-        type="radio"
-        name="tape"
-        value="custom"
-        aria-label="직접 고른 컬러"
-      />
+      <input type="radio" name="tape" value="custom" aria-label="직접 고른 컬러" />
       <input
         type="color"
         className="swatch__color"
@@ -36,7 +29,7 @@ const TapePicker = ({ initial }: { initial: string }) => {
         onInput={(e) => apply(e.currentTarget)}
       />
     </label>
-  );
-};
+  )
+}
 
-export default TapePicker;
+export default TapePicker

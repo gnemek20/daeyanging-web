@@ -1,9 +1,10 @@
 import Hero from '@/components/Hero'
+import Intro from '@/components/Intro'
 import Company from '@/components/Company'
 import Products from '@/components/Products'
 import Custom from '@/components/Custom'
 import Craft from '@/components/Craft'
-import Numbers from '@/components/Numbers'
+import Promises from '@/components/Promises'
 import Contact from '@/components/Contact'
 import Location from '@/components/Location'
 import { SITE, jsonLd } from '@/lib/site'
@@ -20,7 +21,6 @@ const businessLd = {
   image: `${SITE.url}/opengraph-image`,
   email: SITE.email,
   taxID: SITE.bizNo,
-  foundingDate: SITE.founded,
   address: {
     '@type': 'PostalAddress',
     streetAddress: SITE.address.street,
@@ -29,17 +29,9 @@ const businessLd = {
     addressCountry: SITE.address.country,
   },
   geo: { '@type': 'GeoCoordinates', latitude: SITE.geo.lat, longitude: SITE.geo.lng },
-  openingHoursSpecification: [
-    {
-      '@type': 'OpeningHoursSpecification',
-      dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
-      opens: '09:00',
-      closes: '18:00',
-    },
-  ],
   areaServed: 'KR',
-  knowsAbout: ['지퍼', '의류 부자재', '메탈 지퍼', '비슬론 지퍼', '나일론 지퍼', '콘실 지퍼', '지퍼 맞춤 제작'],
-  makesOffer: ['메탈 지퍼', '비슬론 지퍼', '콘실 지퍼', '나일론 지퍼'].map((name) => ({
+  knowsAbout: ['지퍼', '지퍼 풀러', '의류 부자재', '메탈 지퍼', '비슬론 지퍼', '나일론 지퍼', '콘실 지퍼', '지퍼 맞춤 제작'],
+  makesOffer: ['지퍼', '지퍼 풀러'].map((name) => ({
     '@type': 'Offer',
     itemOffered: { '@type': 'Product', name, category: '의류 부자재 > 지퍼' },
   })),
@@ -51,11 +43,12 @@ export default function Page() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(businessLd) }} />
       <main>
         <Hero />
+        <Intro />
         <Company />
+        <Promises />
         <Products />
         <Custom />
         <Craft />
-        <Numbers />
         <Contact />
         <Location />
       </main>

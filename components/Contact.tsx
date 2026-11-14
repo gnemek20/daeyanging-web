@@ -8,13 +8,11 @@ const Contact = () => {
       <div className="wrap split">
         <div>
           <h2 className="h2" id="contact-h">
-            날개를
-            <br />
-            달아드리겠습니다.
+            상담 문의
           </h2>
           <p className="body split__note">
-            <span className="ph">샘플 요청, 단가 문의, 맞춤 제작 상담 —</span>{' '}
-            <span className="ph">어떤 단계든 편하게 연락 주세요.</span>
+            <span className="ph">필요한 지퍼와 풀러를 알려 주세요.</span>{' '}
+            <span className="ph">참고 사진이나 도안을 첨부하시면</span> <span className="ph">더 정확하게 안내해 드립니다.</span>
           </p>
           <dl className="cinfo">
             <div>

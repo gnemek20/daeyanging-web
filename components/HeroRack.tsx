@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 // 첫 화면의 "지퍼 컬러 카드".
 // 성능: 움직이는 것은 테이프마다 .tp__run 한 겹의 translate 뿐이다(GPU 합성만, 레이아웃·다시 그리기 없음).
@@ -8,62 +8,54 @@
 // 장식용 그림이므로 보조기기에는 숨긴다. 동작 줄이기 설정이면 CSS 가 멈춘 물결 모양으로 보여 준다.
 // 휴대폰(760px 이하)에서는 CSS 가 랙을 -90° 돌려 낮은 가로 띠로 보여 준다. 지퍼가 오른쪽으로 뻗는다.
 //   그때는 화면의 세로 위치가 테이프 순서, 가로 위치가 슬라이더 위치가 된다.
-const SIDEWAYS = "(max-width: 760px)";
+const SIDEWAYS = '(max-width: 760px)'
 
-type Metal = "brass" | "silver" | "gun" | "self";
+type Metal = 'brass' | 'silver' | 'gun' | 'self'
 
 const TAPES: { c: string; m: Metal }[] = [
-  { c: "#EDE6D6", m: "brass" },
-  { c: "#C9A27A", m: "brass" },
-  { c: "#E0662F", m: "self" },
-  { c: "#C8202F", m: "silver" },
-  { c: "#E9A6B4", m: "silver" },
-  { c: "#8C7AC4", m: "self" },
-  { c: "#2B3A8C", m: "brass" },
-  { c: "#1F6FD1", m: "silver" },
-  { c: "#0F7A5C", m: "self" },
-  { c: "#9AAF4A", m: "brass" },
-  { c: "#F2C230", m: "gun" },
-  { c: "#4A4038", m: "brass" },
-  { c: "#17181C", m: "silver" },
-];
+  { c: '#EDE6D6', m: 'brass' },
+  { c: '#C9A27A', m: 'brass' },
+  { c: '#E0662F', m: 'self' },
+  { c: '#C8202F', m: 'silver' },
+  { c: '#E9A6B4', m: 'silver' },
+  { c: '#8C7AC4', m: 'self' },
+  { c: '#2B3A8C', m: 'brass' },
+  { c: '#1F6FD1', m: 'silver' },
+  { c: '#0F7A5C', m: 'self' },
+  { c: '#9AAF4A', m: 'brass' },
+  { c: '#F2C230', m: 'gun' },
+  { c: '#4A4038', m: 'brass' },
+  { c: '#17181C', m: 'silver' },
+]
 
-const rest = (i: number) =>
-  +(
-    100 *
-    (0.34 + 0.2 * Math.sin(i * 0.62 + 0.4) + 0.06 * Math.sin(i * 1.7))
-  ).toFixed(2);
+const rest = (i: number) => +(100 * (0.34 + 0.2 * Math.sin(i * 0.62 + 0.4) + 0.06 * Math.sin(i * 1.7))).toFixed(2)
 
 const tapesOf = (rack: HTMLElement) =>
-  [...rack.querySelectorAll<HTMLElement>(".tp")].filter(
-    (el) => el.offsetParent !== null,
-  );
+  [...rack.querySelectorAll<HTMLElement>('.tp')].filter((el) => el.offsetParent !== null)
 
 const onMove = (e: React.PointerEvent<HTMLDivElement>) => {
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const rack = e.currentTarget;
-  const r = rack.getBoundingClientRect();
-  const tapes = tapesOf(rack);
-  const fx = (e.clientX - r.left) / r.width;
-  const fy = (e.clientY - r.top) / r.height;
-  const sideways = window.matchMedia(SIDEWAYS).matches;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  const rack = e.currentTarget
+  const r = rack.getBoundingClientRect()
+  const tapes = tapesOf(rack)
+  const fx = (e.clientX - r.left) / r.width
+  const fy = (e.clientY - r.top) / r.height
+  const sideways = window.matchMedia(SIDEWAYS).matches
   // 돌린 상태: 아래쪽이 첫 테이프, 왼쪽이 테이프 위쪽 끝
-  const across = sideways ? 1 - fy : fx;
-  const along = sideways ? fx : fy;
-  const xi = across * tapes.length - 0.5;
-  const py = Math.min(90, Math.max(6, along * 100));
+  const across = sideways ? 1 - fy : fx
+  const along = sideways ? fx : fy
+  const xi = across * tapes.length - 0.5
+  const py = Math.min(90, Math.max(6, along * 100))
   tapes.forEach((el, vi) => {
-    const w = Math.exp(-((vi - xi) ** 2) / 1.6);
-    const base = Number(el.dataset.rest);
-    el.style.setProperty("--t", `${(base * (1 - w) + py * w).toFixed(2)}%`);
-  });
-};
+    const w = Math.exp(-((vi - xi) ** 2) / 1.6)
+    const base = Number(el.dataset.rest)
+    el.style.setProperty('--t', `${(base * (1 - w) + py * w).toFixed(2)}%`)
+  })
+}
 
 const onLeave = (e: React.PointerEvent<HTMLDivElement>) => {
-  tapesOf(e.currentTarget).forEach((el) =>
-    el.style.setProperty("--t", `${el.dataset.rest}%`),
-  );
-};
+  tapesOf(e.currentTarget).forEach((el) => el.style.setProperty('--t', `${el.dataset.rest}%`))
+}
 
 const HeroRack = () => (
   <div className="rack-band" aria-hidden="true">
@@ -75,9 +67,9 @@ const HeroRack = () => (
           data-rest={rest(i)}
           style={
             {
-              "--tape": t.c,
-              "--i": i,
-              "--t": `${rest(i)}%`,
+              '--tape': t.c,
+              '--i': i,
+              '--t': `${rest(i)}%`,
             } as React.CSSProperties
           }
         >
@@ -93,6 +85,6 @@ const HeroRack = () => (
       ))}
     </div>
   </div>
-);
+)
 
-export default HeroRack;
+export default HeroRack

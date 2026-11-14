@@ -2,6 +2,7 @@
 
 import Script from 'next/script'
 import { useCallback, useRef, useState } from 'react'
+import { logoSvg } from '@/lib/logo'
 
 declare global {
   interface Window {
@@ -10,10 +11,11 @@ declare global {
   }
 }
 
-const MAIN = { lat: 37.5706, lng: 127.0057 }
+// 건물(김상옥로 59) 좌표는 최신 사이트와 같고, 역 좌표는 실제 역 위치(OpenStreetMap)로 맞췄다.
+const MAIN = { lat: 37.5736, lng: 127.0045 }
 const STATIONS = [
-  { lat: 37.5699, lng: 127.0092, line: '1', color: '#0052A4', name: '종로5가역', walk: '도보 5분' },
-  { lat: 37.5712, lng: 127.0097, line: '4', color: '#00A5DE', name: '동대문역', walk: '도보 10분' },
+  { lat: 37.571, lng: 127.002, line: '1', color: '#0052A4', name: '종로5가역', walk: '도보 약 5분' },
+  { lat: 37.5719, lng: 127.0115, line: '4', color: '#00A5DE', name: '동대문역', walk: '도보 약 10분' },
 ]
 
 const FONT = `'Pretendard Variable',Pretendard,system-ui,sans-serif`
@@ -24,9 +26,7 @@ const MARKER_MAIN = `
     width:46px;height:46px;border-radius:50%;
     background:#23306B;border:3px solid #E3C47C;
     display:grid;place-items:center;
-    font-family:Archivo,${FONT};font-stretch:125%;font-weight:700;font-size:.95rem;
-    color:#fff;
-  ">DY</div>
+  ">${logoSvg('#fff', 28)}</div>
   <div style="width:3px;height:14px;background:#B58A3A;margin-top:-1px;border-radius:2px"></div>
 </div>`
 
@@ -117,6 +117,8 @@ const NaverMap = () => {
         position: maps.Position.TOP_RIGHT,
       },
       minZoom: 10,
+      // 페이지를 스크롤하다 지도 위를 지나도 지도가 확대·축소되지 않게(확대는 버튼·두 손가락으로)
+      scrollWheel: false,
     })
     maps.Event.once(map, 'init', () => setState('ready'))
 
