@@ -1,6 +1,6 @@
 import TapeCode from './TapeCode'
 import TapePicker from './TapePicker'
-import ZipperStrip from './ZipperStrip'
+import ZipperPlay from './ZipperPlay'
 
 // 서버 컴포넌트 — 자바스크립트 없이 동작한다.
 // 컬러와 마감은 기본 라디오 버튼이고, 선택에 따라 미리보기 색과 안내 문구를 CSS(:has)가 바꾼다.
@@ -20,6 +20,14 @@ const COLORS = [
 
 // 직접 고르기를 처음 눌렀을 때의 색(팔레트에 없는 바이올렛)
 const PICK_DEFAULT = '#7B4FD6'
+
+// 지퍼 형식: 미리보기 지퍼의 이빨 모양이 바뀐다(ZipperPlay 가 라디오 변경을 읽는다)
+const KINDS = [
+  { key: 'metal', label: '금속' },
+  { key: 'vislon', label: '비슬론' },
+  { key: 'coil', label: '코일' },
+  { key: 'conceal', label: '콘솔' },
+]
 
 const FINISHES = [
   {
@@ -48,6 +56,9 @@ const RULES = [
   ),
   `.custom:has(input[name="tape"][value="custom"]:checked){--cfg-tape:var(--cfg-pick,${PICK_DEFAULT})}` +
     `.custom:has(input[name="tape"][value="custom"]:checked) [data-tag-color="custom"]{display:inline}`,
+  ...KINDS.map(
+    (k) => `.custom:has(input[name="kind"][value="${k.key}"]:checked) [data-tag-kind="${k.key}"]{display:inline}`,
+  ),
   ...FINISHES.map(
     (f) =>
       `.custom:has(input[name="finish"][value="${f.key}"]:checked){${f.stops.map((s, i) => `--cfg-s${i}:${s}`).join(';')}}` +
@@ -61,15 +72,14 @@ const Custom = () => {
       <style>{RULES}</style>
       <div className="wrap custom">
         <div className="custom__preview">
-          <ZipperStrip
-            id="cfg"
-            kind="metal"
-            tape="var(--cfg-tape)"
-            stops={['var(--cfg-s0)', 'var(--cfg-s1)', 'var(--cfg-s2)', 'var(--cfg-s3)']}
-            title="선택한 컬러와 마감으로 그린 지퍼 미리보기"
-            bleed
-          />
+          <ZipperPlay />
           <p className="custom__tag" aria-hidden="true">
+            {KINDS.map((k) => (
+              <span key={k.key} data-tag-kind={k.key}>
+                {k.label}
+              </span>
+            ))}{' '}
+            지퍼,{' '}
             {COLORS.map((c) => (
               <span key={c.key} data-tag-color={c.key}>
                 {c.name}
@@ -104,6 +114,19 @@ const Custom = () => {
             <div className="config__row">
               <span className="config__k">길이</span>
               <span className="config__v">맞춤 재단</span>
+            </div>
+            <div className="config__row">
+              <span className="config__k" id="cfg-kind-k">
+                형식
+              </span>
+              <div className="config__v seg seg--kind" role="radiogroup" aria-labelledby="cfg-kind-k">
+                {KINDS.map((k, i) => (
+                  <label key={k.key} className="seg__btn">
+                    <input type="radio" name="kind" value={k.key} defaultChecked={i === 0} />
+                    {k.label}
+                  </label>
+                ))}
+              </div>
             </div>
             <div className="config__row">
               <span className="config__k" id="cfg-color-k">

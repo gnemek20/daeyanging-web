@@ -773,6 +773,136 @@ html[data-at-top] .top::before {
     height: 100%;
   }
 }
+/* 끌어서 여닫는 지퍼(ZipperPlay). 그림 좌표 1 단위 = 100cqw / 640.
+   창·안쪽 그림·슬라이더는 transform 만 바뀐다(첫 화면은 CSS 가, 이후엔 JS 가 px 로 직접 쓴다) */
+.zp {
+  --u: calc(100cqw / 640);
+  position: absolute;
+  inset: 0;
+  container-type: inline-size;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 70% at 50% 50%, rgb(255 255 255 / 0.06), transparent 70%),
+    #16171b;
+  touch-action: pan-y;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  &[data-drag] {
+    cursor: grabbing;
+  }
+  svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .zp__defs {
+    position: absolute;
+    width: 0;
+    height: 0;
+  }
+}
+.zp__win {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100cqw;
+  height: 100%;
+  overflow: hidden;
+  will-change: transform;
+}
+.zp__in {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100cqw;
+  height: 100%;
+  will-change: transform;
+}
+.zp__win--closed {
+  transform: translateX(calc((var(--s) - 640) * var(--u)));
+  > .zp__in {
+    transform: translateX(calc((640 - var(--s)) * var(--u)));
+  }
+}
+/* 벌어지는 구간 폭 L(170) + 이음매 겹침 2 */
+.zp__win--wedge {
+  width: calc(172 * var(--u));
+  transform: translateX(calc(var(--s) * var(--u)));
+  .zp__in {
+    transform: translateX(calc(var(--s) * -1 * var(--u)));
+  }
+}
+/* 반쪽이 L 동안 G(34) 만큼 벌어지는 기울기: atan(34 / 170) */
+.zp__skew {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 50%;
+}
+.zp__skew--up {
+  transform: skewY(-11.31deg);
+}
+.zp__skew--dn {
+  transform: skewY(11.31deg);
+}
+.zp__win--open {
+  transform: translateX(calc((var(--s) + 170) * var(--u)));
+  > .zp__in {
+    transform: translateX(calc((var(--s) + 170) * -1 * var(--u)));
+  }
+}
+.zp__slider {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transform: translateX(calc(var(--s) * var(--u)));
+  will-change: transform;
+}
+/* 손잡이: 슬라이더 몸통의 고리(그림 좌표 2, 가운데+8)를 축으로 흔들린다 */
+.zp__pull {
+  position: absolute;
+  inset: 0;
+  transform-origin: calc(2 * var(--u)) calc(50% + 8 * var(--u));
+  will-change: transform;
+}
+.zp__handle {
+  position: absolute;
+  left: calc(-44 * var(--u));
+  top: calc(50% - 46 * var(--u));
+  width: calc(112 * var(--u));
+  height: calc(92 * var(--u));
+  border-radius: 14px;
+  transform: translateX(calc(var(--s) * var(--u)));
+  &:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+}
+.zp__tape {
+  fill: var(--cfg-tape);
+}
+.zp__core {
+  fill: color-mix(in oklab, var(--cfg-tape) 70%, #000);
+}
+.zp__plastic {
+  fill: color-mix(in oklab, var(--cfg-tape) 80%, #000);
+}
+.zp__coil {
+  stroke: color-mix(in oklab, var(--cfg-tape) 72%, #fff);
+}
+/* 글자색: 테이프가 밝으면 어둡게, 어두우면 밝게 */
+.zp__word {
+  fill: #fff;
+  fill-opacity: 0.92;
+  font-family: var(--wide);
+  font-weight: 800;
+  font-stretch: 112%;
+  @supports (color: oklch(from red l c h)) {
+    fill: oklch(from var(--cfg-tape) clamp(0.18, (0.72 - l) * 1000, 0.98) 0.02 h);
+  }
+}
 .custom__tag {
   position: absolute;
   left: 1rem;
@@ -782,8 +912,10 @@ html[data-at-top] .top::before {
   background: rgb(255 255 255 / 0.9);
   font-size: 0.85rem;
   font-weight: 600;
+  pointer-events: none;
   [data-tag-color],
-  [data-tag-finish] {
+  [data-tag-finish],
+  [data-tag-kind] {
     display: none;
   }
 }
@@ -996,7 +1128,14 @@ html[data-at-top] .top::before {
 }
 @media (max-width: 860px) {
   .custom {
-    grid-template-columns: 1fr;
+    /* minmax(0, …): 안쪽 내용이 넓어도 열이 화면 밖으로 늘어나지 않게 */
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* 좁은 화면: 형식 4개가 한 줄에 들어가도록 버튼 여백을 줄인다 */
+@media (max-width: 640px) {
+  .seg__btn {
+    padding-inline: 0.68rem;
   }
 }
 
