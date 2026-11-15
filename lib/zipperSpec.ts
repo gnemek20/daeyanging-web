@@ -33,16 +33,16 @@ export const KINDS: { key: Kind; label: string; sizes: number[] }[] = [
 ]
 
 export const FORMS: { key: Form; label: string; hint: string }[] = [
-  { key: 'close', label: '클로즈형', hint: '아래가 막혀 분리되지 않아요 (바지·가방·주머니)' },
-  { key: 'open', label: '오픈형', hint: '아래가 완전히 분리돼요 (재킷·점퍼 앞여밈)' },
-  { key: 'twoway', label: '양방향 오픈', hint: '슬라이더 두 개로 위아래 모두 열리고 분리돼요 (롱패딩·코트)' },
-  { key: 'twoclose', label: '양방향 클로즈', hint: '양쪽 끝이 막혀 있고 슬라이더 두 개로 어느 쪽에서든 열려요 (가방·캐리어)' },
+  { key: 'close', label: '클로즈형', hint: '아래가 막혀 분리되지 않아요' },
+  { key: 'open', label: '오픈형', hint: '아래가 완전히 분리돼요' },
+  { key: 'twoway', label: '양방향 오픈', hint: '슬라이더 두 개, 아래가 분리돼요' },
+  { key: 'twoclose', label: '양방향 클로즈', hint: '슬라이더 두 개, 양쪽 끝이 막혀 있어요' },
 ]
 
 export const LOCKS: { key: Lock; label: string; hint: string }[] = [
-  { key: 'auto', label: '오토락', hint: '손잡이를 내리면 그 자리에 고정돼요. 바지 앞여밈처럼 저절로 열리면 안 되는 곳에.' },
-  { key: 'non', label: '논락', hint: '고정 없이 부드럽게 움직여요. 자주 여닫는 주머니·가방에.' },
-  { key: 'reverse', label: '양면', hint: '앞뒤 양쪽에 손잡이가 달려 안팎 어디서든 여닫을 수 있어요. 리버서블 아우터에.' },
+  { key: 'auto', label: '오토락', hint: '손잡이를 내리면 고정돼요. 바지 앞여밈 등' },
+  { key: 'non', label: '논락', hint: '고정 없이 부드럽게 움직여요. 주머니·가방 등' },
+  { key: 'reverse', label: '양면', hint: '앞뒤 양쪽에 손잡이가 있어요. 리버서블 옷 등' },
 ]
 
 export const USES: { key: string; label: string }[] = [

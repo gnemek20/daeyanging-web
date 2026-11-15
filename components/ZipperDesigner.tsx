@@ -96,37 +96,6 @@ const Row = ({ k, id, children, note }: { k: string; id?: string; children: Reac
   </div>
 )
 
-// 선택에 따라 바뀌는 설명: 모든 경우의 글을 한 칸에 겹쳐 두고 지금 것만 보인다.
-// 칸 높이는 늘 가장 긴 글에 맞춰지므로, 골라도 아래 내용이 밀리지 않는다(레이아웃 이동 없음).
-const Note = ({ texts, active }: { texts: Record<string, string>; active: string }) => (
-  <span className="stack" aria-live="polite">
-    {Object.entries(texts).map(([key, text]) => (
-      <span key={key} className="stack__item" data-on={key === active ? '' : undefined} aria-hidden={key !== active}>
-        {text}
-      </span>
-    ))}
-  </span>
-)
-
-const FORM_NOTES = {
-  ...Object.fromEntries(FORMS.map((f) => [f.key, f.hint])),
-  conceal: '콘실 지퍼는 클로즈형으로 만들어요.',
-}
-const LOCK_NOTES = Object.fromEntries(LOCKS.map((l) => [l.key, l.hint]))
-const WATER_NOTES = {
-  coil: '방수 지퍼는 테이프를 코팅하고 코일을 안쪽에 두어 물이 잘 스며들지 않아요.',
-  other: '방수 코팅은 나일론 지퍼에서 고를 수 있어요.',
-}
-const TEETH_NOTES = {
-  none: '',
-  conceal: '콘실 지퍼는 이가 봉제선 안쪽에 숨어 보이지 않아요.',
-  water: '방수 지퍼는 이가 테이프 안쪽에 있어 겉에서 보이지 않아요.',
-}
-const ENGRAVE_NOTES = {
-  yes: '브랜드 이름이나 로고 글자를 새겨 드려요.',
-  no: '링·끈 손잡이에는 각인할 자리가 없어요.',
-}
-
 const ZipperDesigner = ({ initial }: { initial: Spec }) => {
   const [spec, setSpec] = useState(initial)
   const [lenText, setLenText] = useState(String(initial.len))
@@ -186,7 +155,7 @@ const ZipperDesigner = ({ initial }: { initial: Spec }) => {
               onChange={(v) => set({ kind: v })}
             />
           </Row>
-          <Row k="호수" note="숫자가 클수록 이가 굵고 튼튼해요. 3호는 원피스·파우치, 5호는 바지·가방, 8호 이상은 아우터에 많이 써요.">
+          <Row k="호수">
             <Seg
               name={`${uid}-size`}
               label="호수"
@@ -196,7 +165,7 @@ const ZipperDesigner = ({ initial }: { initial: Spec }) => {
             />
           </Row>
           {/* 나일론에서만 고르지만 줄은 늘 둔다(종류를 바꿀 때 아래가 밀리지 않게) */}
-          <Row k="기능" note={<Note texts={WATER_NOTES} active={spec.kind === 'coil' ? 'coil' : 'other'} />}>
+          <Row k="기능">
             <Seg
               name={`${uid}-water`}
               label="기능"
@@ -216,12 +185,11 @@ const ZipperDesigner = ({ initial }: { initial: Spec }) => {
               quality={PHOTO_QUALITY}
               placeholder="blur"
             />
-            <figcaption>실제 제품 예시 · {spec.water ? '방수' : kind.label} 지퍼</figcaption>
           </figure>
         </Group>
 
         <Group n="02" title="형태와 길이">
-          <Row k="형태" note={<Note texts={FORM_NOTES} active={spec.kind === 'conceal' ? 'conceal' : spec.form} />}>
+          <Row k="형태">
             <Seg
               name={`${uid}-form`}
               label="형태"
@@ -230,7 +198,7 @@ const ZipperDesigner = ({ initial }: { initial: Spec }) => {
               onChange={(v) => set({ form: v })}
             />
           </Row>
-          <Row k="길이" id={`${uid}-len`} note={`${LEN_MIN}–${LEN_MAX}cm. 슬라이더 위쪽부터 아래 끝까지 잰 길이예요.`}>
+          <Row k="길이" id={`${uid}-len`}>
             <label className="tfield tfield--num">
               <input
                 value={lenText}
@@ -264,9 +232,12 @@ const ZipperDesigner = ({ initial }: { initial: Spec }) => {
               안 보이는 쪽은 inert 라서 눌리거나 포커스되지 않는다. */}
           <Row
             k="이"
-            note={<Note texts={TEETH_NOTES} active={spec.kind === 'conceal' ? 'conceal' : spec.water ? 'water' : 'none'} />}
+           
           >
             <div className="stack">
+              <p className="stack__item config__muted" data-on={teethMode === 'none' ? '' : undefined}>
+                겉에서 보이지 않음
+              </p>
               <div className="stack__item" data-on={teethMode === 'metal' ? '' : undefined} inert={teethMode !== 'metal'}>
                 <ColorSwatches
                   name={`${uid}-teeth-metal`}
@@ -301,7 +272,7 @@ const ZipperDesigner = ({ initial }: { initial: Spec }) => {
         </Group>
 
         <Group n="04" title="슬라이더와 손잡이">
-          <Row k="슬라이더 방식" note={<Note texts={LOCK_NOTES} active={spec.lock} />}>
+          <Row k="슬라이더 방식">
             <Seg
               name={`${uid}-lock`}
               label="슬라이더 방식"
@@ -322,13 +293,13 @@ const ZipperDesigner = ({ initial }: { initial: Spec }) => {
           <Row
             k="손잡이 각인"
             id={`${uid}-engrave`}
-            note={<Note texts={ENGRAVE_NOTES} active={pull.engravable ? 'yes' : 'no'} />}
+           
           >
             <label className="tfield">
               <input
                 value={spec.engrave}
                 maxLength={ENGRAVE_MAX}
-                placeholder="예: BRAND"
+                placeholder={pull.engravable ? '예: BRAND' : '링·끈은 각인 없음'}
                 disabled={!pull.engravable}
                 autoComplete="off"
                 spellCheck={false}
@@ -343,7 +314,7 @@ const ZipperDesigner = ({ initial }: { initial: Spec }) => {
           <Row
             k="인쇄 문구"
             id={`${uid}-print`}
-            note="브랜드 이름이나 문구를 테이프에 넣어요. 지퍼를 닫으면 위아래 글자가 하나로 이어져요."
+           
           >
             <label className="tfield">
               <input
@@ -398,10 +369,7 @@ const ZipperDesigner = ({ initial }: { initial: Spec }) => {
               처음 상태로
             </button>
           </div>
-          <p className="designer__fine">
-            <span className="ph">화면의 색은 모니터마다 다르게 보일 수 있어요.</span>{' '}
-            <span className="ph">정확한 색은 원단·컬러칩·샘플로 맞춰 드립니다.</span>
-          </p>
+          <p className="designer__fine">실제 색은 원단·컬러칩·샘플로 맞춰 드립니다.</p>
         </div>
       </div>
     </div>

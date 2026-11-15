@@ -121,12 +121,7 @@ const ContactForm = ({ email, spec, startFirst = false }: { email: string; spec:
         <fieldset className="fguide" id="first-guide">
           <legend className="sr-only">의류 창업이 처음인 분을 위한 작성 안내</legend>
           <div className="fguide__intro">
-            <p className="fguide__h">이 순서대로 적어 주시면 충분해요</p>
-            <p>
-              <span className="ph">사업자 등록 전이어도, 부자재 용어를 몰라도 괜찮아요.</span>{' '}
-              <span className="ph">아래 질문에 아는 만큼만 답해 주시면</span>{' '}
-              <span className="ph">필요한 사양은 저희가 정리해 드립니다.</span>
-            </p>
+            <p className="fguide__h">아는 만큼만 적어 주세요</p>
             <p className="fguide__progress" aria-live="polite">
               <span className="fguide__bar" style={{ '--p': done / total } as React.CSSProperties} aria-hidden="true" />
               {done}/{total} 작성
@@ -140,7 +135,6 @@ const ContactForm = ({ email, spec, startFirst = false }: { email: string; spec:
                 <p className="fguide__title" id="g-stage-h">
                   지금 어느 단계인가요?
                 </p>
-                <p className="fguide__why">단계에 맞춰 샘플 수량과 진행 순서를 안내해 드려요.</p>
                 <div className="seg" role="radiogroup" aria-labelledby="g-stage-h">
                   {STAGES.map((s) => (
                     <label key={s} className="seg__btn">
@@ -159,9 +153,6 @@ const ContactForm = ({ email, spec, startFirst = false }: { email: string; spec:
                     {s.title}
                     {s.required && <em className="fguide__req">필수</em>}
                   </label>
-                  <p className="fguide__why" id={`${s.name}-why`}>
-                    {s.why}
-                  </p>
                   <input
                     id={s.name}
                     name={s.name}
@@ -172,7 +163,6 @@ const ContactForm = ({ email, spec, startFirst = false }: { email: string; spec:
                     maxLength={GUIDE_MAX}
                     required={s.required}
                     autoComplete="off"
-                    aria-describedby={`${s.name}-why`}
                   />
                   {!guide[s.name] && (
                     <button type="button" className="fguide__fill" onClick={() => setStep(s.name, s.example)}>

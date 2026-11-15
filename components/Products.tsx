@@ -38,7 +38,6 @@ const Products = () => {
                   <h2 className="prow__name" id={`${p.id}-h`}>
                     {p.name}
                   </h2>
-                  <p className="body">{p.desc}</p>
                   <dl className="spec spec--table">
                     {p.specs.map((s) => (
                       <div key={s.k}>
@@ -83,7 +82,6 @@ const Products = () => {
                   </span>
                   <figcaption>
                     <strong>{g.title}</strong>
-                    {g.text}
                   </figcaption>
                 </figure>
               </li>
@@ -118,7 +116,6 @@ const Products = () => {
                   </span>
                   <figcaption>
                     <strong>{g.title}</strong>
-                    {g.text}
                   </figcaption>
                 </figure>
               </li>
