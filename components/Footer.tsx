@@ -1,30 +1,34 @@
 import Link from 'next/link'
 import Logo from './Logo'
-const STRIP = ['#EDE6D6', '#C9A27A', '#E0662F', '#C8202F', '#E9A6B4', '#8C7AC4', '#26367A', '#1F6FD1', '#0F7A5C', '#9AAF4A', '#F2C230', '#4A4038']
+import { SITE } from '@/lib/site'
+import { TABS } from '@/lib/tabs'
 
 const Footer = () => {
   return (
     <footer className="foot">
-      <div className="foot__strip" aria-hidden="true">
-        {STRIP.map((c) => (
-          <span key={c} style={{ background: c }} />
-        ))}
-      </div>
       <div className="wrap">
-        <p className="foot__line">패션에 새로운 날개를 달다.</p>
-        <div className="foot__grid">
-          <div className="foot__brand">
+        <div className="foot__top">
+          <Link className="foot__brand" href="/" aria-label="대양ING 처음으로">
             <Logo className="brand__logo" />
             <span>대양ING</span>
-          </div>
-          <nav className="foot__nav" aria-label="자료">
-            <Link href="/guide">지퍼·의류 부자재 가이드</Link>
+          </Link>
+          <nav className="foot__nav" aria-label="바닥글 메뉴">
+            {TABS.map((t) => (
+              <Link key={t.href} href={t.href}>
+                {t.label}
+              </Link>
+            ))}
           </nav>
-          <div className="foot__biz">
-            <p>주식회사 대양아이엔지 | 사업자번호 869-81-02857</p>
-            <p>도매·소매, 제조업: ZIPPER 외 의류 부자재</p>
-            <p>ⓒ 2026 주식회사 대양아이엔지. All rights reserved.</p>
-          </div>
+        </div>
+        <div className="foot__biz">
+          <p>
+            {SITE.legalName} <span aria-hidden="true">|</span> 사업자번호 {SITE.bizNo}
+          </p>
+          <p>{SITE.address.full}</p>
+          <p>
+            <a href={`mailto:${SITE.email}`}>{SITE.email}</a>
+          </p>
+          <p className="foot__copy">ⓒ 2026 {SITE.legalName}. All rights reserved.</p>
         </div>
       </div>
     </footer>

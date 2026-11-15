@@ -143,7 +143,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
                 메일 <a href={`mailto:${SITE.email}`}>{SITE.email}</a>
               </span>
             </p>
-            <Link className="btn btn--ink" href="/#contact">
+            <Link className="btn btn--ink" href="/contact">
               상담 문의하기
             </Link>
           </aside>

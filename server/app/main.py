@@ -51,7 +51,9 @@ def one_line(v: str) -> str:
 class Inquiry(BaseModel):
     name: Annotated[str, Field(min_length=1, max_length=80)]
     email: Annotated[str, Field(min_length=3, max_length=200)]
-    message: Annotated[str, Field(min_length=1, max_length=5000)]
+    message: Annotated[str, Field(min_length=1, max_length=6000)]
+    # 사이트의 "의류 창업이 처음이에요" — 켜지면 메일 제목을 [첫 창업 문의]로 바꿔 받은편지함에서 바로 구별한다
+    first_time: bool = False
     client_ip: Annotated[str | None, Field(default=None, max_length=64)] = None
 
     @field_validator("name")
@@ -87,15 +89,17 @@ def require_token(x_api_key: str | None) -> None:
 
 def build_message(q: Inquiry) -> EmailMessage:
     msg = EmailMessage()
-    msg["Subject"] = f"[홈페이지 문의] {q.name}"
+    msg["Subject"] = f"{'[첫 창업 문의]' if q.first_time else '[홈페이지 문의]'} {q.name}"
     msg["From"] = formataddr((SENDER_NAME, SMTP_USER))
     msg["To"] = ", ".join(MAIL_TO)
     user, _, domain = q.email.partition("@")
     msg["Reply-To"] = Address(display_name=q.name, username=user, domain=domain)
     msg["Message-ID"] = make_msgid(domain=SMTP_USER.partition("@")[2] or None)
-    text = f"성함 / 회사명: {q.name}\n이메일: {q.email}\n\n{q.message}\n"
+    first = "구분: 의류 창업이 처음인 분\n" if q.first_time else ""
+    text = f"성함 / 회사명: {q.name}\n이메일: {q.email}\n{first}\n{q.message}\n"
     html = (
-        f"<p><b>성함 / 회사명</b>: {escape(q.name)}<br><b>이메일</b>: {escape(q.email)}</p>"
+        f"<p><b>성함 / 회사명</b>: {escape(q.name)}<br><b>이메일</b>: {escape(q.email)}"
+        f"{'<br><b>구분</b>: 의류 창업이 처음인 분' if q.first_time else ''}</p>"
         f'<hr><p style="white-space:pre-wrap">{escape(q.message)}</p>'
     )
     msg.set_content(text)

@@ -46,7 +46,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko" className={archivo.variable}>
+    <html lang="ko" className={archivo.variable} data-scroll-behavior="smooth">
       <body>
         <TopSentinel />
         <Header />

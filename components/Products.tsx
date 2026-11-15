@@ -1,68 +1,148 @@
+import Image from 'next/image'
 import Link from 'next/link'
-import ZipperStrip, { type ToothFinish, type ZipperKind } from './ZipperStrip'
+import { PHOTO_QUALITY } from '@/lib/photos'
+import { PARTS, PRODUCTS, SPECIALS } from '@/lib/products'
 
-const PRODUCTS: {
-  kind: ZipperKind
-  name: string
-  en: string
-  desc: string[]
-  tape: string
-  teeth?: string
-  finish?: ToothFinish
-  bg: string
-}[] = [
-  { kind: 'metal', name: '메탈 지퍼', en: 'Metal', desc: ['데님·아우터에 어울리는', '묵직한 금속 질감과 견고함.'], tape: '#26367A', finish: 'metal', bg: '#1B2657' },
-  { kind: 'vislon', name: '비슬론 지퍼', en: 'Vislon', desc: ['가볍고 다채로운 컬러.', '캐주얼·스포츠웨어에 최적.'], tape: '#E8622A', teeth: '#FF9A55', finish: 'silver', bg: '#B8481A' },
-  { kind: 'conceal', name: '콘실 지퍼', en: 'Conceal', desc: ['봉제선에 숨어 깔끔하게.', '매끈한 실루엣의 완성.'], tape: '#E7B3B6', teeth: '#B97C82', finish: 'silver', bg: '#C98D93' },
-  { kind: 'nylon', name: '나일론 지퍼', en: 'Nylon', desc: ['부드러운 개폐감과 경량성.', '가장 폭넓게 쓰이는 표준.'], tape: '#0F7A5C', teeth: '#BFEBD8', finish: 'gloss', bg: '#0A5843' },
-]
-
+// 제품 화면: 지퍼 네 종류(사진 + 설명 + 사양표) → 슬라이더·손잡이 → 테이프 인쇄·방수 → 맞춤 제작으로
 const Products = () => {
   return (
-    <section className="sec" id="products" aria-labelledby="products-h">
-      <div className="wrap">
-        <header className="sec__head">
-          <h2 className="h2" id="products-h">
-            다양한 지퍼를
-            <br />
-            자유롭게.
-          </h2>
-          <p className="body">
-            <span className="ph">메탈부터 나일론까지,</span> <span className="ph">옷의 성격에 맞는 지퍼를 고르세요.</span>{' '}
-            <span className="ph">모든 제품은 컬러와 규격을</span> <span className="ph">맞춤으로 제작합니다.</span>
-          </p>
-        </header>
-        <ul className="products">
-          {PRODUCTS.map((p) => (
-            <li key={p.kind} className="product">
-              <div className="product__art" style={{ background: p.bg }}>
-                <ZipperStrip
-                  id={`p-${p.kind}`}
-                  kind={p.kind}
-                  tape={p.tape}
-                  teeth={p.teeth}
-                  finish={p.finish}
-                  title={`${p.name} 확대 그림`}
-                  bleed
-                />
-              </div>
-              <div className="product__body">
-                <h3>
-                  {p.name}
-                  <span lang="en">{p.en}</span>
-                </h3>
-                <p>
-                  <span className="ph">{p.desc[0]}</span> <span className="ph">{p.desc[1]}</span>
-                </p>
-              </div>
-            </li>
-          ))}
-        </ul>
-        <p className="products__more">
-          <Link href="/guide/zipper-types">지퍼 종류별 차이 자세히 보기</Link>
-        </p>
-      </div>
-    </section>
+    <>
+      <section className="sec sec--tight" aria-label="지퍼 종류">
+        <div className="wrap">
+          <nav className="jump" aria-label="지퍼 종류 바로가기">
+            {PRODUCTS.map((p) => (
+              <a key={p.id} href={`#${p.id}`}>
+                {p.name}
+              </a>
+            ))}
+          </nav>
+          <div className="plist">
+            {PRODUCTS.map((p, i) => (
+              <article key={p.id} id={p.id} className="prow" aria-labelledby={`${p.id}-h`}>
+                <div className="prow__img">
+                  <Image
+                    src={p.photo.src}
+                    alt={p.photo.alt}
+                    fill
+                    sizes="(max-width: 900px) 100vw, 640px"
+                    quality={PHOTO_QUALITY}
+                    placeholder="blur"
+                    loading={i === 0 ? 'eager' : 'lazy'}
+                    fetchPriority={i === 0 ? 'high' : 'auto'}
+                  />
+                </div>
+                <div className="prow__text">
+                  <p className="eyebrow">
+                    {String(i + 1).padStart(2, '0')} — {p.en}
+                  </p>
+                  <h2 className="prow__name" id={`${p.id}-h`}>
+                    {p.name}
+                  </h2>
+                  <p className="body">{p.desc}</p>
+                  <dl className="spec spec--table">
+                    {p.specs.map((s) => (
+                      <div key={s.k}>
+                        <dt>{s.k}</dt>
+                        <dd>{s.v}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="sec sec--soft" aria-labelledby="parts-h">
+        <div className="wrap">
+          <div className="split2">
+            <div>
+              <p className="eyebrow">Slider &amp; Puller</p>
+              <h2 className="h2" id="parts-h">
+                슬라이더와 손잡이
+              </h2>
+            </div>
+            <p className="body split2__body">
+              <span className="ph">슬라이더의 마감과 손잡이의 소재·모양,</span> <span className="ph">로고 각인까지 맞춰 드립니다.</span>
+            </p>
+          </div>
+          <ul className="gallery">
+            {PARTS.map((g) => (
+              <li key={g.title}>
+                <figure>
+                  <span className="gallery__img">
+                    <Image
+                      src={g.src}
+                      alt={g.alt}
+                      fill
+                      sizes="(max-width: 560px) 100vw, (max-width: 1100px) 50vw, 320px"
+                      quality={PHOTO_QUALITY}
+                      placeholder="blur"
+                    />
+                  </span>
+                  <figcaption>
+                    <strong>{g.title}</strong>
+                    {g.text}
+                  </figcaption>
+                </figure>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section className="sec" aria-labelledby="special-h">
+        <div className="wrap">
+          <div className="split2">
+            <div>
+              <p className="eyebrow">Special</p>
+              <h2 className="h2" id="special-h">
+                테이프 인쇄와 방수
+              </h2>
+            </div>
+          </div>
+          <ul className="gallery gallery--2">
+            {SPECIALS.map((g) => (
+              <li key={g.title}>
+                <figure>
+                  <span className="gallery__img">
+                    <Image
+                      src={g.src}
+                      alt={g.alt}
+                      fill
+                      sizes="(max-width: 560px) 100vw, 640px"
+                      quality={PHOTO_QUALITY}
+                      placeholder="blur"
+                    />
+                  </span>
+                  <figcaption>
+                    <strong>{g.title}</strong>
+                    {g.text}
+                  </figcaption>
+                </figure>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section className="strip" aria-labelledby="products-cta-h">
+        <div className="wrap strip__inner">
+          <div>
+            <h2 className="strip__h" id="products-cta-h">
+              모든 제품은 컬러와 규격을 맞춤으로 제작합니다.
+            </h2>
+            <p className="strip__p">
+              <span className="ph">종류부터 손잡이 각인까지</span> <span className="ph">직접 골라 보고 그대로 문의하세요.</span>
+            </p>
+          </div>
+          <Link className="btn btn--light" href="/design">
+            맞춤 제작 시작하기
+          </Link>
+        </div>
+      </section>
+    </>
   )
 }
 

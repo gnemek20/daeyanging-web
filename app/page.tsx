@@ -1,11 +1,5 @@
 import Hero from '@/components/Hero'
-import Company from '@/components/Company'
-import Products from '@/components/Products'
-import Custom from '@/components/Custom'
-import Craft from '@/components/Craft'
-import Numbers from '@/components/Numbers'
-import Contact from '@/components/Contact'
-import Location from '@/components/Location'
+import { HomeContact, HomeCustom, HomeProducts } from '@/components/HomeSections'
 import { SITE, jsonLd } from '@/lib/site'
 
 // 검색엔진이 회사·매장 정보를 이해하도록 넣는 구조화 데이터(사이트에 이미 공개된 정보만)
@@ -39,9 +33,10 @@ const businessLd = {
   ],
   areaServed: 'KR',
   knowsAbout: ['지퍼', '의류 부자재', '메탈 지퍼', '비슬론 지퍼', '나일론 지퍼', '콘실 지퍼', '지퍼 맞춤 제작'],
+  // 가격을 공개하지 않는 맞춤 제작이므로 Product(가격·리뷰가 필수인 제품 스니펫 대상)가 아니라 Service 로 알린다
   makesOffer: ['메탈 지퍼', '비슬론 지퍼', '콘실 지퍼', '나일론 지퍼'].map((name) => ({
     '@type': 'Offer',
-    itemOffered: { '@type': 'Product', name, category: '의류 부자재 > 지퍼' },
+    itemOffered: { '@type': 'Service', name: `${name} 맞춤 제작`, serviceType: '의류 부자재 > 지퍼 제작' },
   })),
 }
 
@@ -51,13 +46,9 @@ export default function Page() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(businessLd) }} />
       <main>
         <Hero />
-        <Company />
-        <Products />
-        <Custom />
-        <Craft />
-        <Numbers />
-        <Contact />
-        <Location />
+        <HomeProducts />
+        <HomeCustom />
+        <HomeContact />
       </main>
     </>
   )
