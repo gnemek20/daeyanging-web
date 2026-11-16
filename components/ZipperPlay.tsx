@@ -2,10 +2,10 @@
 
 import { useCallback, useState } from 'react'
 
-// 맞춤 제작 미리보기: 끌어서 여닫는 지퍼. 지퍼가 맞물린 구간에서만 테이프 위 글자가 하나로 이어진다.
+// 맞춤 제작 미리보기: 끌어서 여닫는 지퍼(테이프에 글자는 넣지 않는다).
 //
 // 성능 설계
-// - 지퍼 그림(테이프·글자·이빨)은 한 번만 그려 두고 <use> 로 재사용한다. 움직일 때 SVG 를 다시 그리지 않는다.
+// - 지퍼 그림(테이프·이빨)은 한 번만 그려 두고 <use> 로 재사용한다. 움직일 때 SVG 를 다시 그리지 않는다.
 // - 화면은 세 구간으로 나눈다: 슬라이더 뒤 "닫힘", 바로 앞 "벌어짐"(위·아래 반쪽을 skewY 로 V 자), 그 앞 "열림".
 //   각 구간은 "창(overflow:hidden)을 x 만큼, 안쪽 그림을 -x 만큼" 옮겨 잘라낸다 → 프레임마다 transform 만 바뀐다
 //   (레이아웃·페인트 없음, 합성만).
@@ -19,13 +19,10 @@ const H = 512
 const CY = 256
 const L = 170 // 벌어지는 구간 길이
 const G = 34 // 완전히 열렸을 때 반쪽이 위·아래로 벌어지는 거리
-const S0 = 598 // 첫 화면: 닫힌 상태(글자 완성)
+const S0 = 598 // 첫 화면: 닫힌 상태
 const S_OPEN = 300 // 섹션에 들어오면 여기까지 저절로 열린다
 const SMIN = 24
 const SMAX = 620
-
-const WORD = 'YOUR BRAND'
-const FS = 150
 
 // 이빨 줄 반폭(가운데 줄에서 테이프 끝까지)과 한 칸 간격
 const BAND: Record<ZipKind, number> = { metal: 9, vislon: 10, coil: 7, conceal: 0 }
@@ -50,7 +47,7 @@ const Teeth = ({ kind, half }: { kind: ZipKind; half: 'up' | 'dn' }) => {
   )
 }
 
-// 테이프 반쪽: 바탕 + 결 + 가운데로 갈수록 그늘 + 박음질 + 글자(그 반쪽 안만)
+// 테이프 반쪽: 바탕 + 결 + 가운데로 갈수록 그늘 + 박음질
 const Tape = ({ kind, half }: { kind: ZipKind; half: 'up' | 'dn' }) => {
   const up = half === 'up'
   const b = BAND[kind]
@@ -69,17 +66,6 @@ const Tape = ({ kind, half }: { kind: ZipKind; half: 'up' | 'dn' }) => {
         strokeWidth={1.4}
         strokeDasharray="7 5"
       />
-      <text
-        className="zp__word"
-        x={40}
-        y={CY + FS * 0.36}
-        fontSize={FS}
-        textLength={W - 80}
-        lengthAdjust="spacingAndGlyphs"
-        clipPath={`url(#zp-clip-${half})`}
-      >
-        {WORD}
-      </text>
     </g>
   )
 }
@@ -401,12 +387,6 @@ const ZipperPlay = () => {
             <path d="M0 1h4" stroke="#fff" strokeOpacity="0.07" strokeWidth="1" />
             <path d="M0 3h4" stroke="#000" strokeOpacity="0.06" strokeWidth="1" />
           </pattern>
-          <clipPath id="zp-clip-up" clipPathUnits="userSpaceOnUse">
-            <rect x={-60} y={-320} width={W + 120} height={CY + 320} />
-          </clipPath>
-          <clipPath id="zp-clip-dn" clipPathUnits="userSpaceOnUse">
-            <rect x={-60} y={CY} width={W + 120} height={H + 320 - CY} />
-          </clipPath>
           <filter id="zp-hsh" filterUnits="userSpaceOnUse" x={-80} y={-340} width={W + 160} height={H + 680}>
             <feDropShadow dx="0" dy="3" stdDeviation="3.5" floodColor="#000" floodOpacity="0.4" />
           </filter>

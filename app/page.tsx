@@ -1,4 +1,6 @@
+import Company from '@/components/Company'
 import Hero from '@/components/Hero'
+import Numbers from '@/components/Numbers'
 import { SITE, jsonLd } from '@/lib/site'
 
 // 검색엔진이 회사·매장 정보를 이해하도록 넣는 구조화 데이터(사이트에 이미 공개된 정보만)
@@ -45,6 +47,8 @@ export default function Page() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(businessLd) }} />
       <main>
         <Hero />
+        <Company />
+        <Numbers />
       </main>
     </>
   )

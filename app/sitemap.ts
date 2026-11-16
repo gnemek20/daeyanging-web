@@ -8,7 +8,7 @@ const UPDATED = new Date('2026-11-15')
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: SITE.url, lastModified: UPDATED, changeFrequency: 'monthly', priority: 1 },
-    ...TABS.map((t) => ({
+    ...TABS.filter((t) => t.href !== '/').map((t) => ({
       url: `${SITE.url}${t.href}`,
       lastModified: UPDATED,
       changeFrequency: 'monthly' as const,

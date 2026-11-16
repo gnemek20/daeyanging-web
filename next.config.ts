@@ -3,6 +3,8 @@ import type { NextConfig } from 'next'
 const nextConfig: NextConfig = {
   // iwinv VPS 의 Docker 이미지가 쓰는 최소 실행 묶음(.next/standalone).
   output: 'standalone',
+  // 회사소개는 첫 화면에 합쳤다 — 예전 주소로 들어와도 첫 화면으로(영구 이동)
+  redirects: async () => [{ source: '/company', destination: '/', permanent: true }],
   images: {
     // AVIF 를 먼저(같은 화질에 더 작다), 못 읽는 브라우저는 WebP.
     formats: ['image/avif', 'image/webp'],

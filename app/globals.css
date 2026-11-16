@@ -960,17 +960,6 @@ select {
 .zp__coil {
   stroke: color-mix(in oklab, var(--cfg-tape) 72%, #fff);
 }
-/* 글자색: 테이프가 밝으면 어둡게, 어두우면 밝게 */
-.zp__word {
-  fill: #fff;
-  fill-opacity: 0.92;
-  font-family: var(--wide);
-  font-weight: 800;
-  font-stretch: 112%;
-  @supports (color: oklch(from red l c h)) {
-    fill: oklch(from var(--cfg-tape) clamp(0.18, (0.72 - l) * 1000, 0.98) 0.02 h);
-  }
-}
 .custom__tag {
   position: absolute;
   left: 1rem;
