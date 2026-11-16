@@ -2,11 +2,12 @@ import NaverMap from './NaverMap'
 
 const Location = () => {
   return (
-    <section className="sec sec--soft" id="location" aria-labelledby="location-h">
+    <section className="sec" id="location" aria-labelledby="location-h">
       <div className="wrap loc">
         <div className="loc__info">
-          <p className="eyebrow">Location</p>
           <h2 className="h2" id="location-h">
+            대양ING
+            <br />
             찾아오시는 길
           </h2>
 
@@ -45,7 +46,7 @@ const Location = () => {
 
           <div className="loc__actions">
             <a
-              className="btn btn--ink"
+              className="btn btn--solid"
               href="https://map.naver.com/p/search/서울특별시 종로구 김상옥로 59"
               target="_blank"
               rel="noopener noreferrer"

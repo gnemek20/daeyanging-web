@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Company from '@/components/Company'
-import PageHead from '@/components/PageHead'
+import Numbers from '@/components/Numbers'
 import { OG_BASE } from '@/lib/site'
 
 export const metadata: Metadata = {
@@ -14,8 +14,9 @@ export const metadata: Metadata = {
 export default function CompanyPage() {
   return (
     <main className="tabpage">
-      <PageHead en="Company" title="회사소개" />
+      <h1 className="sr-only">회사소개</h1>
       <Company />
+      <Numbers />
     </main>
   )
 }

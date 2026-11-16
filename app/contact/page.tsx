@@ -1,9 +1,7 @@
 import type { Metadata } from 'next'
 import Contact from '@/components/Contact'
 import Location from '@/components/Location'
-import PageHead from '@/components/PageHead'
 import { OG_BASE } from '@/lib/site'
-import { describeSpec, hasSpec, parseSpec, toQuery } from '@/lib/zipperSpec'
 
 export const metadata: Metadata = {
   title: '상담 문의',
@@ -14,24 +12,12 @@ export const metadata: Metadata = {
 }
 
 export default async function ContactPage({ searchParams }: PageProps<'/contact'>) {
-  const params = await searchParams
-  // 맞춤 제작 화면에서 "이 사양으로 문의하기"로 왔으면 그 사양을 폼에 담는다
-  const spec = hasSpec(params) ? parseSpec(params) : null
   // 가이드의 "의류 창업이 처음이에요"로 왔으면 작성 안내 양식을 열어 둔 채로 시작한다
-  const first = params.first === '1'
+  const first = (await searchParams).first === '1'
   return (
     <main className="tabpage">
-      <PageHead
-        en="Contact"
-        title="상담 문의"
-        lead={
-          <>
-            <span className="ph">샘플 요청, 단가 문의, 맞춤 제작 상담 —</span>{' '}
-            <span className="ph">어떤 단계든 편하게 연락 주세요.</span>
-          </>
-        }
-      />
-      <Contact spec={spec ? { query: toQuery(spec), rows: describeSpec(spec) } : null} first={first} />
+      <h1 className="sr-only">상담 문의</h1>
+      <Contact first={first} />
       <Location />
     </main>
   )
