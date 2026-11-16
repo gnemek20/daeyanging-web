@@ -13,7 +13,7 @@ export type SpecInfo = { query: string; rows: { k: string; v: string }[] }
 // 실패하면 적은 내용을 그대로 다시 채워 둔다(React 는 액션 뒤에 폼을 초기값으로 되돌리므로 초기값을 상태에서 준다).
 //
 // "의류 창업이 처음이에요"를 고르면
-// - 무엇을 어떻게 적으면 되는지 짚어 주는 단계별 작성 양식이 열린다(각 칸마다 이유·작성 요령·예시, "예시 넣기").
+// - 무엇을 어떻게 적으면 되는지 짚어 주는 단계별 작성 양식이 열린다(각 칸의 자리표시 글에 예시).
 // - 메일 제목이 [첫 창업 문의]로 바뀌고, 양식 내용이 정리되어 본문 맨 앞에 붙는다.
 const INITIAL: InquiryState = { status: 'idle', message: '' }
 
@@ -164,11 +164,6 @@ const ContactForm = ({ email, spec, startFirst = false }: { email: string; spec:
                     required={s.required}
                     autoComplete="off"
                   />
-                  {!guide[s.name] && (
-                    <button type="button" className="fguide__fill" onClick={() => setStep(s.name, s.example)}>
-                      예시 넣기
-                    </button>
-                  )}
                 </div>
               </li>
             ))}

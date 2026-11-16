@@ -2315,22 +2315,6 @@ select {
   font-weight: 600;
   color: rgb(255 255 255 / 0.8);
 }
-.fguide__fill {
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #fff;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
-  opacity: 0.85;
-  &:hover {
-    opacity: 1;
-  }
-}
 /* 지금 단계 고르기: 남색 위의 칩 */
 .form .seg {
   display: flex;
