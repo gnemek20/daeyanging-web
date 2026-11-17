@@ -15,7 +15,6 @@ const businessLd = {
   image: `${SITE.url}/opengraph-image`,
   email: SITE.email,
   taxID: SITE.bizNo,
-  foundingDate: SITE.founded,
   address: {
     '@type': 'PostalAddress',
     streetAddress: SITE.address.street,

@@ -1,8 +1,10 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback } from 'react'
+import { sizeScale } from '@/lib/zipperSpec'
 
-// 맞춤 제작 미리보기: 끌어서 여닫는 지퍼(테이프에 글자는 넣지 않는다).
+// 가이드 "직접 골라 보기"의 가까이 보기: 끌어서 여닫는 지퍼(테이프에 글자는 넣지 않는다).
+// 종류(kind)는 부모가 넘기고, 색은 부모 상자의 CSS 변수(--cfg-tape, --cfg-s0~3)를 읽는다.
 //
 // 성능 설계
 // - 지퍼 그림(테이프·이빨)은 한 번만 그려 두고 <use> 로 재사용한다. 움직일 때 SVG 를 다시 그리지 않는다.
@@ -29,7 +31,10 @@ const BAND: Record<ZipKind, number> = { metal: 9, vislon: 10, coil: 7, conceal: 
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
 
-const Teeth = ({ kind, half }: { kind: ZipKind; half: 'up' | 'dn' }) => {
+// f: 호수에 따른 배율(5호 = 1). 이빨 줄은 가운데(W/2, CY)를 축으로 키우고 줄인다
+const grow = (f: number) => `translate(${W / 2} ${CY}) scale(${f}) translate(${-W / 2} ${-CY})`
+
+const Teeth = ({ kind, half, f }: { kind: ZipKind; half: 'up' | 'dn'; f: number }) => {
   const up = half === 'up'
   if (kind === 'conceal') {
     // 숨은 지퍼: 이빨 대신 접힌 가장자리만
@@ -43,14 +48,17 @@ const Teeth = ({ kind, half }: { kind: ZipKind; half: 'up' | 'dn' }) => {
     )
   }
   return (
-    <rect x={-60} y={CY - 34} width={W + 120} height={68} fill={`url(#zp-p-${kind}-${half})`} filter="url(#zp-tsh)" />
+    <g transform={grow(f)}>
+      {/* 줄였을 때도 화면 끝까지 닿도록 그림 폭의 세 배로 */}
+      <rect x={-W} y={CY - 34} width={W * 3} height={68} fill={`url(#zp-p-${kind}-${half})`} filter="url(#zp-tsh)" />
+    </g>
   )
 }
 
 // 테이프 반쪽: 바탕 + 결 + 가운데로 갈수록 그늘 + 박음질
-const Tape = ({ kind, half }: { kind: ZipKind; half: 'up' | 'dn' }) => {
+const Tape = ({ kind, half, f }: { kind: ZipKind; half: 'up' | 'dn'; f: number }) => {
   const up = half === 'up'
-  const b = BAND[kind]
+  const b = BAND[kind] * f
   const y = up ? -320 : CY
   const h = up ? CY + 320 : H + 320 - CY
   return (
@@ -135,21 +143,24 @@ const ToothPatterns = () => (
 )
 
 // 슬라이더 몸통(슬라이더 위치 s = 0 기준 좌표)
-const SliderBody = () => (
-  <g transform={`translate(-20 ${CY})`} filter="url(#zp-ssh)">
+// 슬라이더·손잡이도 호수만큼: 몸통 가운데(그림 좌표 11)를 축으로
+const slide = (f: number) => `translate(11 ${CY}) scale(${f}) translate(-31 0)`
+
+const SliderBody = ({ f }: { f: number }) => (
+  <g transform={slide(f)} filter="url(#zp-ssh)">
     <path
       d="M-8 -34 H54 Q70 -34 74 -20 L80 0 L74 20 Q70 34 54 34 H-8 Q-18 34 -18 24 V-24 Q-18 -34 -8 -34 Z"
-      fill="url(#zp-metal)"
+      fill="url(#zp-slider)"
     />
     <path d="M-6 -24 H52" stroke="#fff" strokeOpacity={0.6} strokeWidth={2.4} strokeLinecap="round" />
-    <circle cx={22} cy={8} r={7} fill="url(#zp-metal)" stroke="#000" strokeOpacity={0.25} />
+    <circle cx={22} cy={8} r={7} fill="url(#zp-slider)" stroke="#000" strokeOpacity={0.25} />
   </g>
 )
 
-const Pull = () => (
-  <g transform={`translate(-20 ${CY})`} filter="url(#zp-ssh)">
+const Pull = ({ f }: { f: number }) => (
+  <g transform={slide(f)} filter="url(#zp-ssh)">
     <g transform="rotate(-72 22 8)">
-      <rect x={6} y={2} width={32} height={104} rx={14} fill="url(#zp-metal)" />
+      <rect x={6} y={2} width={32} height={104} rx={14} fill="url(#zp-slider)" />
       <rect x={10} y={10} width={4} height={86} rx={2} fill="#fff" opacity={0.45} />
       <rect x={15} y={66} width={14} height={28} rx={7} className="zp__tape" />
     </g>
@@ -162,8 +173,8 @@ const Layer = ({ children }: { children: React.ReactNode }) => (
   </svg>
 )
 
-const ZipperPlay = () => {
-  const [kind, setKind] = useState<ZipKind>('metal')
+const ZipperPlay = ({ kind, size = 5 }: { kind: ZipKind; size?: number }) => {
+  const f = sizeScale(size)
 
   // 한 번만 붙인다(형식이 바뀌어 다시 그려져도 슬라이더 위치·스프링 상태 유지)
   const setup = useCallback((root: HTMLDivElement | null) => {
@@ -178,7 +189,6 @@ const ZipperPlay = () => {
     const slider = $('.zp__slider')
     const pull = $('.zp__pull')
     const handle = $('.zp__handle')
-    const scope = root.closest<HTMLElement>('.custom')
     const reduce = matchMedia('(prefers-reduced-motion: reduce)')
 
     let u = root.clientWidth / W // 그림 1 단위 = u px
@@ -314,10 +324,6 @@ const ZipperPlay = () => {
       touched = true
       root.removeAttribute('data-hint')
     }
-    const onKind = (e: Event) => {
-      const t = e.target as HTMLInputElement
-      if (t.name === 'kind') setKind(t.value as ZipKind)
-    }
 
     const ro = new ResizeObserver(() => {
       u = root.clientWidth / W
@@ -345,9 +351,6 @@ const ZipperPlay = () => {
     root.addEventListener('pointerup', onUp)
     root.addEventListener('pointercancel', onCancel)
     handle.addEventListener('keydown', onKey)
-    scope?.addEventListener('change', onKind)
-    const checked = scope?.querySelector<HTMLInputElement>('input[name="kind"]:checked')
-    if (checked) setKind(checked.value as ZipKind)
     paint()
 
     return () => {
@@ -359,7 +362,6 @@ const ZipperPlay = () => {
       root.removeEventListener('pointerup', onUp)
       root.removeEventListener('pointercancel', onCancel)
       handle.removeEventListener('keydown', onKey)
-      scope?.removeEventListener('change', onKind)
     }
   }, [])
 
@@ -374,6 +376,13 @@ const ZipperPlay = () => {
             <stop offset="0.35" style={{ stopColor: 'var(--cfg-s1)' }} />
             <stop offset="0.75" style={{ stopColor: 'var(--cfg-s2)' }} />
             <stop offset="1" style={{ stopColor: 'var(--cfg-s3)' }} />
+          </linearGradient>
+          {/* 슬라이더·손잡이: 마감 색(--cfg-k*). 메탈 지퍼면 이와 같은 색, 그 밖에는 슬라이더만 금속 */}
+          <linearGradient id="zp-slider" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" style={{ stopColor: 'var(--cfg-k0)' }} />
+            <stop offset="0.35" style={{ stopColor: 'var(--cfg-k1)' }} />
+            <stop offset="0.75" style={{ stopColor: 'var(--cfg-k2)' }} />
+            <stop offset="1" style={{ stopColor: 'var(--cfg-k3)' }} />
           </linearGradient>
           <linearGradient id="zp-shade-up" gradientUnits="userSpaceOnUse" x1="0" y1={CY - 140} x2="0" y2={CY}>
             <stop offset="0" stopColor="#000" stopOpacity="0" />
@@ -390,7 +399,7 @@ const ZipperPlay = () => {
           <filter id="zp-hsh" filterUnits="userSpaceOnUse" x={-80} y={-340} width={W + 160} height={H + 680}>
             <feDropShadow dx="0" dy="3" stdDeviation="3.5" floodColor="#000" floodOpacity="0.4" />
           </filter>
-          <filter id="zp-tsh" filterUnits="userSpaceOnUse" x={-80} y={CY - 60} width={W + 160} height={120}>
+          <filter id="zp-tsh" filterUnits="userSpaceOnUse" x={-W - 20} y={CY - 60} width={W * 3 + 40} height={120}>
             <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" floodColor="#000" floodOpacity="0.35" />
           </filter>
           <filter id="zp-ssh" x="-40%" y="-40%" width="180%" height="180%">
@@ -399,12 +408,12 @@ const ZipperPlay = () => {
           <ToothPatterns />
           {(['up', 'dn'] as const).map((h) => (
             <g key={h} id={`zp-tape-${h}`}>
-              <Tape kind={kind} half={h} />
+              <Tape kind={kind} half={h} f={f} />
             </g>
           ))}
           {(['up', 'dn'] as const).map((h) => (
             <g key={h} id={`zp-teeth-${h}`}>
-              <Teeth kind={kind} half={h} />
+              <Teeth kind={kind} half={h} f={f} />
             </g>
           ))}
         </defs>
@@ -448,11 +457,11 @@ const ZipperPlay = () => {
 
       <div className="zp__slider" aria-hidden="true">
         <Layer>
-          <SliderBody />
+          <SliderBody f={f} />
         </Layer>
         <div className="zp__pull">
           <Layer>
-            <Pull />
+            <Pull f={f} />
           </Layer>
         </div>
         {/* 직접 해 보라는 안내: 슬라이더를 따라다니고, 처음 만지면 사라진다 */}

@@ -8,8 +8,17 @@ const CY = 66
 const X0 = 70 // 아래 끝(이가 시작하는 곳)
 const X1 = 584 // 위 끝
 const TAPE = 25 // 테이프 반폭
+const LABEL_Y = 18 // 이름표 모드: 슬라이더 이름 줄
+// 이름표 모드의 아래 끝 확대 창: 그림의 (X0 - left) 부터 오른쪽으로 w/k 만큼을 k 배로
+const LOUPE = { x: 22, y: 136, w: 300, h: 110, k: 2.6, left: 30 }
 
-type SliderProps = { x: number; th: number; dir: 1 | -1; pull: Spec['pull']; idp: string }
+type SliderProps = {
+  x: number
+  th: number
+  dir: 1 | -1
+  pull: Spec['pull']
+  idp: string
+}
 
 // 슬라이더: 넓은 어깨가 위(dir=1이면 오른쪽)를 향한다. 손잡이는 테이프 위로 아래쪽에 늘어진다.
 const Slider = ({ x, th, dir, pull, idp }: SliderProps) => {
@@ -44,7 +53,12 @@ const Slider = ({ x, th, dir, pull, idp }: SliderProps) => {
 }
 
 // idp: 한 페이지에 여러 장 그릴 때 그림 안 id 가 겹치지 않게 붙이는 앞머리
-const ZipperOverview = ({ spec, idp = 'zo' }: { spec: Spec; idp?: string }) => {
+// dims: 'len' 이면 아래에 길이 치수선, 'none' 이면 지퍼만(위아래 여백을 잘라 낸다),
+// 'callout' 이면 형태마다 달라지는 곳(아래 끝 · 슬라이더 개수)에 이름표
+type Dims = 'len' | 'none' | 'callout'
+const VIEW: Record<Dims, string> = { len: `0 0 ${W} 168`, none: `0 26 ${W} 104`, callout: `0 0 ${W} 256` }
+
+const ZipperOverview = ({ spec, idp = 'zo', dims = 'len' }: { spec: Spec; idp?: string; dims?: Dims }) => {
   const f = sizeScale(spec.size)
   const th = 9 * f // 이 줄 폭
   const conceal = spec.kind === 'conceal' || spec.water
@@ -54,7 +68,7 @@ const ZipperOverview = ({ spec, idp = 'zo' }: { spec: Spec; idp?: string }) => {
   const two = spec.form === 'twoway' || spec.form === 'twoclose'
 
   return (
-    <svg className="zo" viewBox={`0 0 ${W} 168`} role="img" aria-label={`지퍼 전체 모양: ${spec.len}cm`}>
+    <svg className="zo" viewBox={VIEW[dims]} role="img" aria-label={dims === 'len' ? `지퍼 전체 모양: ${spec.len}cm` : '지퍼 전체 모양'}>
       <defs>
         <linearGradient id={`${idp}-metal`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" style={{ stopColor: 'var(--cfg-s0)' }} />
@@ -73,53 +87,104 @@ const ZipperOverview = ({ spec, idp = 'zo' }: { spec: Spec; idp?: string }) => {
         </linearGradient>
         <pattern id={`${idp}-teeth`} patternUnits="userSpaceOnUse" width={pw} height={168}>
           <rect x={0.3} y={CY - th / 2} width={pw * 0.56} height={th * 0.6} rx={0.8} fill={teethFill} className={teethFill ? undefined : 'zo__tooth'} />
-          <rect x={pw / 2 + 0.3} y={CY - th * 0.1} width={pw * 0.56} height={th * 0.6} rx={0.8} fill={teethFill} className={teethFill ? undefined : 'zo__tooth'} />
+          <rect
+            x={pw / 2 + 0.3}
+            y={CY - th * 0.1}
+            width={pw * 0.56}
+            height={th * 0.6}
+            rx={0.8}
+            fill={teethFill}
+            className={teethFill ? undefined : 'zo__tooth'}
+          />
         </pattern>
       </defs>
 
-      {/* 테이프 */}
-      <rect x={X0 - 30} y={CY - TAPE} width={X1 - X0 + 58} height={TAPE * 2} rx={2} className="zo__tape" />
-      <rect x={X0 - 30} y={CY - TAPE} width={X1 - X0 + 58} height={TAPE * 2} rx={2} fill={`url(#${idp}-shade)`} />
+      {/* 지퍼 그림(이름표 모드에서는 아래 확대 창이 이 그림을 다시 쓴다) */}
+      <g id={`${idp}-art`}>
+        {/* 테이프 */}
+        <rect x={X0 - 30} y={CY - TAPE} width={X1 - X0 + 58} height={TAPE * 2} rx={2} className="zo__tape" />
+        <rect x={X0 - 30} y={CY - TAPE} width={X1 - X0 + 58} height={TAPE * 2} rx={2} fill={`url(#${idp}-shade)`} />
 
-      {/* 이(콘실은 겉으로 이가 보이지 않고 봉제선만) */}
-      {conceal ? (
-        <path d={`M${X0} ${CY} H${X1}`} stroke="#000" strokeOpacity={0.35} strokeWidth={1.4} />
-      ) : (
-        <rect x={X0} y={CY - th / 2} width={X1 - X0} height={th} fill={`url(#${idp}-teeth)`} />
+        {/* 이(콘실은 겉으로 이가 보이지 않고 봉제선만) */}
+        {conceal ? (
+          <path d={`M${X0} ${CY} H${X1}`} stroke="#000" strokeOpacity={0.35} strokeWidth={1.4} />
+        ) : (
+          <rect x={X0} y={CY - th / 2} width={X1 - X0} height={th} fill={`url(#${idp}-teeth)`} />
+        )}
+
+        {spec.water && <rect x={X0 - 30} y={CY - TAPE} width={X1 - X0 + 58} height={TAPE} fill="#fff" opacity={0.12} />}
+        {/* 위 멈춤쇠 */}
+        <rect x={X1} y={CY - th / 2 - 2} width={5} height={th / 2 + 1} rx={1} fill={`url(#${idp}-metal)`} />
+        <rect x={X1} y={CY + 1} width={5} height={th / 2 + 1} rx={1} fill={`url(#${idp}-metal)`} />
+
+        {/* 아래 끝: 클로즈형은 멈춤쇠, 오픈형·양방향은 박스와 핀 */}
+        {open ? (
+          <>
+            <rect x={X0 - 22} y={CY - th / 2 - 5} width={22} height={th / 2 + 4} rx={2} fill={`url(#${idp}-metal)`} />
+            <rect x={X0 - 22} y={CY + 2} width={22} height={th / 2 + 3} rx={2} fill={`url(#${idp}-metal)`} />
+            <path d={`M${X0 - 22} ${CY} H${X0}`} stroke="#000" strokeOpacity={0.4} strokeWidth={1.2} strokeDasharray="2 2" />
+          </>
+        ) : (
+          <rect x={X0 - 7} y={CY - th / 2 - 3} width={8} height={th + 6} rx={2} fill={`url(#${idp}-metal)`} />
+        )}
+
+        <Slider x={X1 - 44} th={th} dir={1} pull={spec.pull} idp={idp} />
+        {two && <Slider x={X0 + 36} th={th} dir={-1} pull={spec.pull} idp={idp} />}
+      </g>
+
+      {/* 이름표 모드: 슬라이더마다 이름표 + 형태를 가르는 아래 끝을 확대 창으로 */}
+      {dims === 'callout' && (
+        <g className="zo__call">
+          {[X1 - 44, ...(two ? [X0 + 36] : [])].map((x) => (
+            <g key={x}>
+              <path d={`M${x} ${CY - th / 2 - 9} V${LABEL_Y + 7}`} />
+              <text x={x} y={LABEL_Y} textAnchor="middle">
+                슬라이더
+              </text>
+            </g>
+          ))}
+          {/* 아래 끝 표시(흰 테두리 + 점선) → 확대 창으로 이어지는 선 */}
+          <circle cx={X0 - 11} cy={CY} r={th / 2 + 14} className="zo__ring-halo" />
+          <circle cx={X0 - 11} cy={CY} r={th / 2 + 14} className="zo__ring" />
+          <path d={`M${X0 - 11} ${CY + th / 2 + 15} V${LOUPE.y}`} />
+          <clipPath id={`${idp}-loupe`}>
+            <rect x={LOUPE.x} y={LOUPE.y} width={LOUPE.w} height={LOUPE.h} rx={8} />
+          </clipPath>
+          <g clipPath={`url(#${idp}-loupe)`}>
+            <rect x={LOUPE.x} y={LOUPE.y} width={LOUPE.w} height={LOUPE.h} className="zo__loupe-bg" />
+            <use
+              href={`#${idp}-art`}
+              transform={`translate(${LOUPE.x} ${LOUPE.y}) scale(${LOUPE.k}) translate(${-(X0 - LOUPE.left)} ${-(CY - LOUPE.h / LOUPE.k / 2)})`}
+            />
+          </g>
+          <rect x={LOUPE.x} y={LOUPE.y} width={LOUPE.w} height={LOUPE.h} rx={8} className="zo__loupe-line" />
+          <text x={LOUPE.x + LOUPE.w + 24} y={LOUPE.y + 30} className="zo__k">
+            아래 끝
+          </text>
+          <text x={LOUPE.x + LOUPE.w + 24} y={LOUPE.y + 62} className="zo__v">
+            {open ? '박스·핀으로 분리' : '멈춤쇠로 막힘'}
+          </text>
+          <text x={LOUPE.x + LOUPE.w + 24} y={LOUPE.y + 92} className="zo__k">
+            {`슬라이더 ${two ? 2 : 1}개`}
+          </text>
+        </g>
       )}
-
-      {spec.water && <rect x={X0 - 30} y={CY - TAPE} width={X1 - X0 + 58} height={TAPE} fill="#fff" opacity={0.12} />}
-      {/* 위 멈춤쇠 */}
-      <rect x={X1} y={CY - th / 2 - 2} width={5} height={th / 2 + 1} rx={1} fill={`url(#${idp}-metal)`} />
-      <rect x={X1} y={CY + 1} width={5} height={th / 2 + 1} rx={1} fill={`url(#${idp}-metal)`} />
-
-      {/* 아래 끝: 클로즈형은 멈춤쇠, 오픈형·양방향은 박스와 핀 */}
-      {open ? (
-        <>
-          <rect x={X0 - 22} y={CY - th / 2 - 5} width={22} height={th / 2 + 4} rx={2} fill={`url(#${idp}-metal)`} />
-          <rect x={X0 - 22} y={CY + 2} width={22} height={th / 2 + 3} rx={2} fill={`url(#${idp}-metal)`} />
-          <path d={`M${X0 - 22} ${CY} H${X0}`} stroke="#000" strokeOpacity={0.4} strokeWidth={1.2} strokeDasharray="2 2" />
-        </>
-      ) : (
-        <rect x={X0 - 7} y={CY - th / 2 - 3} width={8} height={th + 6} rx={2} fill={`url(#${idp}-metal)`} />
-      )}
-
-      <Slider x={X1 - 44} th={th} dir={1} pull={spec.pull} idp={idp} />
-      {two && <Slider x={X0 + 36} th={th} dir={-1} pull={spec.pull} idp={idp} />}
 
       {/* 길이 */}
-      <g className="zo__dim">
-        <path d={`M${X0} 132 H${X1 + 5} M${X0} 126 V138 M${X1 + 5} 126 V138`} />
-        <text x={(X0 + X1) / 2} y={156} textAnchor="middle" className="zo__len">
-          {spec.len}cm
-        </text>
-        <text x={X0} y={156} textAnchor="start">
-          아래
-        </text>
-        <text x={X1 + 5} y={156} textAnchor="end">
-          위
-        </text>
-      </g>
+      {dims === 'len' && (
+        <g className="zo__dim">
+          <path d={`M${X0} 132 H${X1 + 5} M${X0} 126 V138 M${X1 + 5} 126 V138`} />
+          <text x={(X0 + X1) / 2} y={156} textAnchor="middle" className="zo__len">
+            {spec.len}cm
+          </text>
+          <text x={X0} y={156} textAnchor="start">
+            아래
+          </text>
+          <text x={X1 + 5} y={156} textAnchor="end">
+            위
+          </text>
+        </g>
+      )}
     </svg>
   )
 }

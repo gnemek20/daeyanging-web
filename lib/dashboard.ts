@@ -48,17 +48,42 @@ export const api = async <T>(path: string, init?: { method?: string; body?: unkn
   return (await res.json()) as T
 }
 
+// 첨부 파일처럼 JSON 이 아닌 응답(응답 그대로 돌려준다)
+export const apiRaw = (path: string) =>
+  internalFetch(`${API_URL}${path}`, {
+    headers: { 'x-api-key': API_TOKEN ?? '' },
+    signal: AbortSignal.timeout(60_000),
+    cache: 'no-store',
+  })
+
+export type InquiryFile = { name: string; type: string; size: number }
+export type InquiryItem = {
+  id: number
+  ts: number
+  ref: string
+  name: string
+  email: string
+  mode: string // form | free | '' (예전 기록)
+  first_time: number
+  mailed: number
+  handled: number
+  files: number
+  snippet: string
+}
+export type InquiryList = { items: InquiryItem[]; matched: number; total: number; new: number }
+export type InquiryDetail = Omit<InquiryItem, 'files' | 'snippet'> & { ip: string; message: string; files: InquiryFile[] }
+
 export type Row = { k: string; views: number; visitors: number }
 export type Stats = {
   days: number
   since: string
   collecting_since: number | null
-  totals: { views: number; visitors: number; inquiries: number; first_time: number }
+  totals: { views: number; visitors: number; inquiries: number; first_time: number; unhandled: number }
   series: { day: string; views: number; visitors: number; inquiries: number }[]
   pages: Row[]
   referrers: Row[]
   devices: Row[]
   browsers: Row[]
   oses: Row[]
-  inquiries: { ts: number; name: string; email: string; first_time: number; ip: string; mailed: number }[]
+  inquiries: { id: number; ts: number; ref: string; name: string; email: string; first_time: number; ip: string; mailed: number; handled: number }[]
 }

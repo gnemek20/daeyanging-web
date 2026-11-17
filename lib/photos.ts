@@ -5,16 +5,23 @@
 // 고품질(Lanczos) 확대 + 약한 선명화를 한 파일이다.
 import type { StaticImageData } from 'next/image'
 import companyMetalZippers from '@/public/images/company-metal-zippers.jpg'
+import coilBlackLogo from '@/public/images/coil-black-logo.jpg'
 import conceal from '@/public/images/conceal.jpg'
 import metalAntique from '@/public/images/metal-antique.jpg'
+import metalBlackSet from '@/public/images/metal-black-set.jpg'
+import metalBlackSilver from '@/public/images/metal-black-silver.jpg'
+import metalGrayBronze from '@/public/images/metal-gray-bronze.jpg'
 import metalTapes from '@/public/images/metal-tapes.jpg'
+import metalVislonTapes from '@/public/images/metal-vislon-tapes.jpg'
 import nylon from '@/public/images/nylon.jpg'
 import pullerCord from '@/public/images/puller-cord.jpg'
 import pullerLeather from '@/public/images/puller-leather.jpg'
 import pullerRubber from '@/public/images/puller-rubber.jpg'
+import pullersAssorted from '@/public/images/pullers-assorted.jpg'
 import slidersFinishes from '@/public/images/sliders-finishes.jpg'
 import tapePrint from '@/public/images/tape-print.jpg'
 import vislonColor from '@/public/images/vislon-color.jpg'
+import vislonWaterproof from '@/public/images/vislon-waterproof.jpg'
 import waterproof from '@/public/images/waterproof.jpg'
 
 export type Photo = { src: StaticImageData; alt: string }
@@ -35,6 +42,14 @@ export const PHOTOS = {
   pullerRubber: { src: pullerRubber, alt: '브랜드 로고가 들어간 러버·테이프 손잡이' },
   pullerLeather: { src: pullerLeather, alt: '갈색·검정·카키·남색 가죽 손잡이' },
   pullerCord: { src: pullerCord, alt: '파란 테이프에 달린 여러 가지 끈 손잡이' },
+  // 아래는 갤러리(제품 화면)에만 쓰는 사진
+  pullersAssorted: { src: pullersAssorted, alt: '삼각·사각 러버 손잡이와 메탈 슬라이더를 늘어놓은 모습' },
+  metalVislonTapes: { src: metalVislonTapes, alt: '남색·카키·베이지 테이프의 메탈 지퍼와 파란 비슬론 지퍼, 건메탈 슬라이더' },
+  vislonWaterproof: { src: vislonWaterproof, alt: '물방울이 맺힌 검정 코팅 테이프의 비슬론 지퍼와 메탈 슬라이더' },
+  metalBlackSet: { src: metalBlackSet, alt: '검정 테이프에 골드·실버·건메탈 이를 단 메탈 지퍼 여러 줄' },
+  coilBlackLogo: { src: coilBlackLogo, alt: '빨간 선이 들어간 검정 테이프 지퍼와 로고가 새겨진 러버 손잡이' },
+  metalGrayBronze: { src: metalGrayBronze, alt: '회색 테이프에 브론즈 메탈 이와 검정 슬라이더' },
+  metalBlackSilver: { src: metalBlackSilver, alt: '검정 테이프에 실버 메탈 이와 로고가 새겨진 슬라이더' },
 } satisfies Record<string, Photo>
 
 // 맞춤 제작에서 고른 종류의 실물 예시

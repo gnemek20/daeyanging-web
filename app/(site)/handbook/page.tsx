@@ -6,7 +6,7 @@ import { OG_BASE } from '@/lib/site'
 export const metadata: Metadata = {
   title: '지퍼 가이드',
   description:
-    '지퍼의 구조와 종류, 호수와 형태, 슬라이더와 손잡이, 컬러와 마감, 옷 종류별 추천, 길이 재는 법, 사용과 관리, 주문 순서, 용어 사전까지. 지퍼를 처음 다루는 분을 위한 가이드입니다.',
+    '설정을 바꿔 가며 직접 확인하는 지퍼 미리보기와 지퍼의 구조와 종류, 호수와 형태, 슬라이더와 손잡이, 컬러와 마감, 옷 종류별 추천, 길이 재는 법, 사용과 관리, 주문 순서, 용어 사전까지. 지퍼를 처음 다루는 분을 위한 가이드입니다.',
   alternates: { canonical: '/handbook' },
   openGraph: { ...OG_BASE, url: '/handbook', title: '지퍼 가이드 | 대양ING' },
 }

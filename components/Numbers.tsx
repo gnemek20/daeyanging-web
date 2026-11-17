@@ -1,6 +1,6 @@
 const STATS = [
   { n: '20+', l: '협업 브랜드', c: '#E0662F' },
-  { n: '2004', l: '창업 연도', c: '#26367A' },
+  { n: '2004', l: 'SINCE', c: '#26367A' },
   { n: '15+', l: '제조 파트너', c: '#0F7A5C' },
 ]
 
@@ -16,7 +16,7 @@ const Numbers = () => {
           </h2>
           <div className="sec__headbody">
             <p className="lede">
-              <span className="ph">2004년 창업 이래 20년 넘게</span> <span className="ph">패션 브랜드와 함께 성장해 왔습니다.</span>
+              <span className="ph">2004년부터 업계에서 20년 넘게</span> <span className="ph">패션 브랜드와 함께 성장해 왔습니다.</span>
             </p>
             <p className="body">
               <span className="ph">브랜드 파트너십과는 별개로,</span> <span className="ph">대양ING는 국내외 15개 이상의</span>{' '}

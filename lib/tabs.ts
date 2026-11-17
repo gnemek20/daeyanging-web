@@ -4,7 +4,6 @@
 export const TABS = [
   { href: '/', label: '회사소개' },
   { href: '/products', label: '제품' },
-  { href: '/design', label: '맞춤 제작' },
   { href: '/handbook', label: '가이드' },
   { href: '/contact', label: '상담문의' },
 ] as const

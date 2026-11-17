@@ -1,8 +1,9 @@
 'use server'
 
+import { refresh } from 'next/cache'
 import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { COOKIE, SESSION_HOURS, api, dashboardReady, makeSession } from '@/lib/dashboard'
+import { COOKIE, SESSION_HOURS, api, dashboardReady, makeSession, readSession } from '@/lib/dashboard'
 
 // 대시보드 로그인 단계: 이메일 → (메일로 온) 인증번호 → 쿠키
 export type LoginState = { step: 'email' | 'code'; email: string; message: string; error?: boolean }
@@ -61,4 +62,12 @@ export async function verifyCode(_prev: LoginState, form: FormData): Promise<Log
 export async function logout() {
   ;(await cookies()).delete({ name: COOKIE, path: '/dashboard' })
   redirect('/dashboard')
+}
+
+// 문의 "처리 완료" 표시를 켜고 끈다(폼에서 bind 로 번호와 값을 넘긴다). 로그인한 사람만.
+export async function setHandled(id: number, handled: boolean) {
+  if (!(await readSession())) return
+  if (!Number.isInteger(id) || id < 1) return
+  await api(`/inquiries/${id}/handled`, { method: 'POST', body: { handled } })
+  refresh()
 }

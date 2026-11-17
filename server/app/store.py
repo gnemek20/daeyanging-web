@@ -3,12 +3,15 @@
 - 파일: DB_PATH(기본 /data/daeyanging.db). 서버에서는 /home/ubuntu/web/daeyanging-api/data 를 /data 로 붙여
   컨테이너를 새로 띄워도 남는다.
 - 방문자는 IP 를 그대로 남기지 않는다: IP·브라우저·날짜를 섞은 해시(vid)만 남겨 "그날의 방문자 수"만 센다.
-- 문의는 메일과 같은 내용 중 목록에 필요한 것(시각·이름·이메일·처음 창업 여부·IP·메일 성공 여부)만 남긴다.
+- 문의는 메일과 같은 내용(시각·이름·이메일·작성 방식·본문·접수 번호·IP·메일 성공 여부)과 첨부 파일을 남겨
+  대시보드에서 다시 볼 수 있게 한다. 첨부는 DB 옆 files/<문의 번호>/<순번> 에 원본 그대로.
+- 대시보드에서 "처리 완료"를 표시한다(handled).
 """
 
 from __future__ import annotations
 
 import hashlib
+import json
 import hmac
 import os
 import re
@@ -21,6 +24,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Iterator
 
 DB_PATH = os.environ.get("DB_PATH", "/data/daeyanging.db")
+FILES_DIR = os.path.join(os.path.dirname(DB_PATH) or ".", "files")
 KST = timezone(timedelta(hours=9))
 _lock = threading.Lock()
 
@@ -68,10 +72,24 @@ def db() -> Iterator[sqlite3.Connection]:
         con.close()
 
 
+# 예전 DB 에 없던 문의 칸(있으면 건너뜀)
+INQUIRY_COLUMNS = {
+    "ref": "TEXT NOT NULL DEFAULT ''",
+    "mode": "TEXT NOT NULL DEFAULT ''",
+    "message": "TEXT NOT NULL DEFAULT ''",
+    "files": "TEXT NOT NULL DEFAULT '[]'",  # [{"name","type","size"}] — 순번이 파일 이름
+    "handled": "INTEGER NOT NULL DEFAULT 0",
+}
+
+
 def init() -> None:
     os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
     with _lock, db() as con:
         con.executescript(SCHEMA)
+        have = {r["name"] for r in con.execute("PRAGMA table_info(inquiries)")}
+        for col, decl in INQUIRY_COLUMNS.items():
+            if col not in have:
+                con.execute(f"ALTER TABLE inquiries ADD COLUMN {col} {decl}")
 
 
 # ───────── 방문 기록 ─────────
@@ -143,12 +161,82 @@ def add_pageview(path: str, ref: str, ip: str, ua: str) -> None:
 # ───────── 문의 기록 ─────────
 
 
-def add_inquiry(name: str, email: str, first_time: bool, ip: str, mailed: bool) -> None:
+def add_inquiry(
+    name: str, email: str, first_time: bool, ip: str, mailed: bool, message: str = "", mode: str = ""
+) -> int:
+    """기록하고 번호(id)를 돌려준다 — 접수 번호에 쓴다."""
     with _lock, db() as con:
-        con.execute(
-            "INSERT INTO inquiries(ts, name, email, first_time, ip, mailed) VALUES (?,?,?,?,?,?)",
-            (int(time.time()), name, email, int(first_time), ip, int(mailed)),
+        cur = con.execute(
+            "INSERT INTO inquiries(ts, name, email, first_time, ip, mailed, message, mode) VALUES (?,?,?,?,?,?,?,?)",
+            (int(time.time()), name, email, int(first_time), ip, int(mailed), message, mode),
         )
+        return int(cur.lastrowid or 0)
+
+
+def save_files(inquiry_id: int, ref: str, files: list[tuple[str, str, bytes]]) -> None:
+    """접수 번호와 첨부(이름, 형식, 내용)를 남긴다. 파일은 FILES_DIR/<id>/<순번>."""
+    meta = []
+    if files:
+        folder = os.path.join(FILES_DIR, str(inquiry_id))
+        os.makedirs(folder, exist_ok=True)
+        for n, (fname, ctype, data) in enumerate(files):
+            with open(os.path.join(folder, str(n)), "wb") as f:
+                f.write(data)
+            meta.append({"name": fname, "type": ctype, "size": len(data)})
+    with _lock, db() as con:
+        con.execute("UPDATE inquiries SET ref=?, files=? WHERE id=?", (ref, json.dumps(meta, ensure_ascii=False), inquiry_id))
+
+
+def _row(r: sqlite3.Row, full: bool) -> dict:
+    d = dict(r)
+    files = json.loads(d.pop("files") or "[]")
+    d["files"] = files if full else len(files)
+    if not full:
+        # 목록 미리보기: "— 문의 사양 —" 같은 구분 줄은 빼고 이어 붙인다
+        lines = [ln.strip() for ln in d.pop("message").splitlines() if ln.strip() and not ln.strip().startswith("—")]
+        d["snippet"] = " · ".join(lines)[:160]
+    return d
+
+
+def list_inquiries(status: str = "all", limit: int = 30, offset: int = 0) -> dict:
+    where = {"new": "WHERE handled=0", "done": "WHERE handled=1"}.get(status, "")
+    with db() as con:
+        rows = con.execute(
+            f"SELECT id, ts, ref, name, email, mode, first_time, mailed, handled, files, message FROM inquiries {where} "
+            "ORDER BY id DESC LIMIT ? OFFSET ?",
+            (limit, offset),
+        ).fetchall()
+        counts = con.execute("SELECT COUNT(*) AS total, SUM(handled=0) AS new FROM inquiries").fetchone()
+        n = con.execute(f"SELECT COUNT(*) FROM inquiries {where}").fetchone()[0]
+    return {
+        "items": [_row(r, False) for r in rows],
+        "matched": n,
+        "total": counts["total"] or 0,
+        "new": counts["new"] or 0,
+    }
+
+
+def get_inquiry(inquiry_id: int) -> dict | None:
+    with db() as con:
+        r = con.execute(
+            "SELECT id, ts, ref, name, email, mode, first_time, ip, mailed, handled, files, message FROM inquiries WHERE id=?",
+            (inquiry_id,),
+        ).fetchone()
+    return _row(r, True) if r else None
+
+
+def file_path(inquiry_id: int, n: int) -> str:
+    return os.path.join(FILES_DIR, str(int(inquiry_id)), str(int(n)))
+
+
+def set_handled(inquiry_id: int, handled: bool) -> bool:
+    with _lock, db() as con:
+        return con.execute("UPDATE inquiries SET handled=? WHERE id=?", (int(handled), inquiry_id)).rowcount > 0
+
+
+def set_mailed(inquiry_id: int, mailed: bool) -> None:
+    with _lock, db() as con:
+        con.execute("UPDATE inquiries SET mailed=? WHERE id=?", (int(mailed), inquiry_id))
 
 
 # ───────── 대시보드 로그인 인증번호 ─────────
@@ -208,6 +296,7 @@ def stats(days: int) -> dict:
             "SELECT strftime('%Y-%m-%d', ts, 'unixepoch', '+9 hours') AS day, COUNT(*) AS n FROM inquiries WHERE ts>=? GROUP BY day",
             since_ts,
         )}
+        unhandled = con.execute("SELECT COUNT(*) FROM inquiries WHERE handled=0").fetchone()[0]
         series = []
         for i in range(days):
             d = (start + timedelta(days=i)).isoformat()
@@ -221,7 +310,7 @@ def stats(days: int) -> dict:
             "SELECT COUNT(*) AS views, COUNT(DISTINCT vid || day) AS visitors FROM pageviews WHERE day>=?", s
         )[0]
         inquiries = q(
-            "SELECT ts, name, email, first_time, ip, mailed FROM inquiries WHERE ts>=? ORDER BY ts DESC LIMIT 100", since_ts
+            "SELECT id, ts, ref, name, email, first_time, ip, mailed, handled FROM inquiries WHERE ts>=? ORDER BY ts DESC LIMIT 100", since_ts
         )
         first_seen = con.execute("SELECT MIN(ts) FROM pageviews").fetchone()[0]
         groups = {
@@ -235,7 +324,12 @@ def stats(days: int) -> dict:
         "days": days,
         "since": s,
         "collecting_since": first_seen,
-        "totals": {**totals, "inquiries": len(inquiries), "first_time": sum(i["first_time"] for i in inquiries)},
+        "totals": {
+            **totals,
+            "inquiries": len(inquiries),
+            "first_time": sum(i["first_time"] for i in inquiries),
+            "unhandled": unhandled,  # 기간과 상관없이 아직 처리하지 않은 문의
+        },
         "series": series,
         **groups,
         "inquiries": inquiries,

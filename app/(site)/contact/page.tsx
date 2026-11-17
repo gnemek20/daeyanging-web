@@ -11,13 +11,11 @@ export const metadata: Metadata = {
   openGraph: { ...OG_BASE, url: '/contact', title: '상담 문의 | 대양ING' },
 }
 
-export default async function ContactPage({ searchParams }: PageProps<'/contact'>) {
-  // 가이드의 "의류 창업이 처음이에요"로 왔으면 작성 안내 양식을 열어 둔 채로 시작한다
-  const first = (await searchParams).first === '1'
+export default function ContactPage() {
   return (
     <main className="tabpage">
       <h1 className="sr-only">상담 문의</h1>
-      <Contact first={first} />
+      <Contact />
       <Location />
     </main>
   )

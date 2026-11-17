@@ -9,7 +9,8 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
     <>
       <TopSentinel />
       <Header />
-      {children}
+      {/* 탭 화면이 옆에서 미끄러져 들어올 때 비어져 나온 부분을 잘라 가로 스크롤이 생기지 않게 한다(움직이지 않는 겉상자) */}
+      <div className="stage">{children}</div>
       <Footer />
       <Analytics />
     </>

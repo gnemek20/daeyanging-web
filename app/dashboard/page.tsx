@@ -2,8 +2,9 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import DailyChart from '@/components/dashboard/DailyChart'
 import Login from '@/components/dashboard/Login'
+import Top from '@/components/dashboard/Top'
 import { api, readSession, type Row, type Stats } from '@/lib/dashboard'
-import { logout } from './actions'
+import { kst, num } from '@/lib/dashboardFormat'
 
 // 대양ING 대시보드 — 주소로만 들어온다(사이트 어디에서도 링크하지 않음, 검색 제외, 사이트맵 제외).
 export const metadata: Metadata = {
@@ -22,17 +23,6 @@ const PAGE_NAMES: Record<string, string> = {
   '/guide': '검색용 가이드 목록',
 }
 const pageName = (p: string) => PAGE_NAMES[p] ?? (p.startsWith('/guide/') ? `검색용 가이드 ${p.slice(7)}` : p)
-
-const kst = new Intl.DateTimeFormat('ko-KR', {
-  timeZone: 'Asia/Seoul',
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: false,
-})
-const num = new Intl.NumberFormat('ko-KR')
 
 const Table = ({ title, rows, name, empty }: { title: string; rows: Row[]; name?: (k: string) => string; empty: string }) => {
   const total = rows.reduce((s, r) => s + r.views, 0) || 1
@@ -83,11 +73,7 @@ export default async function DashboardPage({ searchParams }: PageProps<'/dashbo
 
   return (
     <main className="dash">
-      <header className="dash__top">
-        <div>
-          <p className="dash__brand">대양ING</p>
-          <h1 className="dash__title">대시보드</h1>
-        </div>
+      <Top email={email} current="stats" unhandled={s?.totals.unhandled}>
         <nav className="dash__ranges" aria-label="기간">
           {RANGES.map((r) => (
             <Link key={r} href={`/dashboard?days=${r}`} aria-current={r === days ? 'page' : undefined}>
@@ -95,11 +81,7 @@ export default async function DashboardPage({ searchParams }: PageProps<'/dashbo
             </Link>
           ))}
         </nav>
-        <form action={logout} className="dash__who">
-          <span>{email}</span>
-          <button type="submit">로그아웃</button>
-        </form>
-      </header>
+      </Top>
 
       {!s ? (
         <p className="dash__empty">데이터를 불러오지 못했습니다. 잠시 후 새로고침해 주세요.</p>
@@ -124,8 +106,10 @@ export default async function DashboardPage({ searchParams }: PageProps<'/dashbo
               <dd>{num.format(s.totals.inquiries)}</dd>
             </div>
             <div>
-              <dt>첫 창업 문의</dt>
-              <dd>{num.format(s.totals.first_time)}</dd>
+              <dt>
+                <Link href="/dashboard/inquiries?status=new">미처리 문의 (전체 기간)</Link>
+              </dt>
+              <dd>{num.format(s.totals.unhandled)}</dd>
             </div>
           </dl>
 
@@ -166,7 +150,12 @@ export default async function DashboardPage({ searchParams }: PageProps<'/dashbo
           </div>
 
           <section className="dash__panel">
-            <h2>상담 문의 기록</h2>
+            <div className="dash__head">
+              <h2>상담 문의</h2>
+              <Link className="dash__link" href="/dashboard/inquiries">
+                전체 보기
+              </Link>
+            </div>
             {s.inquiries.length === 0 ? (
               <p className="dash__empty">이 기간에 들어온 문의가 없습니다.</p>
             ) : (
@@ -177,22 +166,22 @@ export default async function DashboardPage({ searchParams }: PageProps<'/dashbo
                       <th scope="col">시각</th>
                       <th scope="col">성함 / 회사명</th>
                       <th scope="col">이메일</th>
-                      <th scope="col">구분</th>
-                      <th scope="col">IP</th>
-                      <th scope="col">메일</th>
+                      <th scope="col">상태</th>
+                      <th scope="col">알림 메일</th>
                     </tr>
                   </thead>
                   <tbody>
                     {s.inquiries.map((q) => (
-                      <tr key={q.ts + q.email}>
-                        <th scope="row">{kst.format(q.ts * 1000)}</th>
-                        <td>{q.name}</td>
+                      <tr key={q.id}>
+                        <th scope="row">
+                          <Link href={`/dashboard/inquiries/${q.id}`}>{kst.format(q.ts * 1000)}</Link>
+                        </th>
                         <td>
-                          <a href={`mailto:${q.email}`}>{q.email}</a>
+                          <Link href={`/dashboard/inquiries/${q.id}`}>{q.name}</Link>
                         </td>
-                        <td>{q.first_time ? '첫 창업' : '일반'}</td>
-                        <td className="dash__mono">{q.ip || '—'}</td>
-                        <td>{q.mailed ? '보냄' : '실패'}</td>
+                        <td>{q.email}</td>
+                        <td>{q.handled ? '처리 완료' : '미처리'}</td>
+                        <td>{q.mailed ? '발송됨' : '실패'}</td>
                       </tr>
                     ))}
                   </tbody>

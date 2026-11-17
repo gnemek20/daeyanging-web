@@ -1,3 +1,5 @@
 fastapi==0.162.0
 pydantic==2.14.2
 uvicorn==0.54.0
+# 상담 문의 첨부 파일(multipart/form-data)
+python-multipart==0.0.20

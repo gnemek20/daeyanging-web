@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import HandbookToc from './HandbookToc'
+import ZipperLab from './ZipperLab'
 import ZipperOverview from './ZipperOverview'
 import { ORDER_CHECKLIST } from '@/lib/guides'
 import { CARE, COLOR_TIPS, FAQ, MEASURE, ORDER_STEPS, PARTS, PICKS, SIZES, TOC, WORDS } from '@/lib/handbook'
@@ -8,8 +9,8 @@ import { PHOTOS, PHOTO_QUALITY, type Photo } from '@/lib/photos'
 import { PRODUCTS, PARTS as PULLER_PHOTOS } from '@/lib/products'
 import { DEFAULT_SPEC, FORMS, LOCKS, METALS, specVars, type Spec } from '@/lib/zipperSpec'
 
-// 가이드 화면: 왼쪽 목차(지금 보는 꼭지를 진하게) + 오른쪽 본문 열두 꼭지.
-// 보조 설명은 두지 않고 표·목록·그림·사진만으로 보여 준다.
+// 가이드 화면: 왼쪽 목차(지금 보는 꼭지를 진하게) + 오른쪽 본문.
+// 맨 위 "직접 골라 보기"에서 설정을 바꿔 가며 그림으로 확인하고, 아래 꼭지들은 표·목록·그림·사진으로 자세히 본다.
 
 const BASE: Spec = { ...DEFAULT_SPEC, tape: '#26367A', len: 60 }
 
@@ -36,6 +37,10 @@ const Handbook = () => {
       <HandbookToc items={TOC} />
 
       <div className="hb__main">
+        <Sec id="lab" n={n('lab')} title="직접 골라 보기">
+          <ZipperLab />
+        </Sec>
+
         <Sec id="parts" n={n('parts')} title="지퍼의 구조">
           <div className="hb__fig">
             <ZipperOverview spec={{ ...BASE, form: 'open' }} idp="hb-parts" />
@@ -163,9 +168,9 @@ const Handbook = () => {
             </table>
           </div>
           <p>
-            <Link className="more" href="/design">
-              맞춤 제작에서 골라 보기
-            </Link>
+            <a className="more" href="#lab">
+              위에서 직접 골라 보기
+            </a>
           </p>
         </Sec>
 
@@ -210,14 +215,8 @@ const Handbook = () => {
             ))}
           </dl>
           <div className="hb__ctas">
-            <Link className="btn btn--ink" href="/design">
-              맞춤 제작
-            </Link>
-            <Link className="btn btn--line" href="/contact">
+            <Link className="btn btn--ink" href="/contact">
               상담 문의
-            </Link>
-            <Link className="btn btn--line" href="/contact?first=1">
-              의류 창업이 처음이에요
             </Link>
           </div>
         </Sec>
