@@ -15,6 +15,8 @@ export const metadata: Metadata = {
 
 // 화면에 바로 띄우는 사진 형식(나머지는 내려받기)
 const PREVIEW = /^image\/(jpeg|png|gif|webp|avif|bmp)$/
+// 이 중 sharp 로 줄여 WebP 로 받는 형식(BMP 는 원본)
+const SHRINK = /^image\/(jpeg|png|gif|webp|avif)$/
 
 export default async function InquiryPage({ params }: PageProps<'/dashboard/inquiries/[id]'>) {
   const email = await readSession()
@@ -100,9 +102,9 @@ export default async function InquiryPage({ params }: PageProps<'/dashboard/inqu
                 {q.files.map((f, n) => (
                   <li key={n}>
                     {PREVIEW.test(f.type) ? (
-                      <a className="inqd__thumb" href={`${base}/${n}`} target="_blank" rel="noopener">
-                        {/* eslint-disable-next-line @next/next/no-img-element -- 로그인한 사람만 받는 비공개 파일(이미지 최적화 대상 아님) */}
-                        <img src={`${base}/${n}`} alt={f.name} loading="lazy" />
+                      <a className="inqd__thumb" href={`${base}/${n}${SHRINK.test(f.type) ? '?w=1600' : ''}`} target="_blank" rel="noopener">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- 로그인한 사람만 받는 비공개 파일: next/image 최적화기는 로그인 쿠키를 넘기지 않아, 같은 sharp 로 라우트에서 직접 줄인다 */}
+                        <img src={`${base}/${n}${SHRINK.test(f.type) ? '?w=480' : ''}`} alt={f.name} loading="lazy" decoding="async" />
                       </a>
                     ) : (
                       <span className="inqd__thumb inqd__thumb--doc" aria-hidden="true">
