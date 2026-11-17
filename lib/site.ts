@@ -36,7 +36,7 @@ export const SITE = {
   // 서치 어드바이저 소유 확인 코드 — 받으면 채운다(빈 값이면 메타 태그를 넣지 않는다).
   verification: {
     google: '',
-    naver: '',
+    naver: '1755fdf8c4e93ebcd26932817764d614d1e07c9a',
   },
 } as const
 
