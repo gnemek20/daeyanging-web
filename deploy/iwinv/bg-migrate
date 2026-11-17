@@ -1,0 +1,16 @@
+#!/bin/bash
+# 서비스를 지금 태그 그대로 blue/green 으로 옮기면서(또는 다시 교체하면서) 바깥 응답을 지켜본다.
+#   bg-migrate <서비스> <prod|dev> <확인할 주소> [태그]
+set -u
+SVC="$1" ENVN="$2" URL="$3"; E="$(echo "$ENVN" | tr a-z A-Z)"
+cd /home/ubuntu/web/$SVC
+TAG="${4:-$(sed -n "s/^${E}_TAG=//p" .env | tail -1)}"
+C="$(sed -n "s/^${E}_COLOR=//p" .env | tail -1)"
+[[ -n "$C" ]] && TAG="${4:-$(sed -n "s/^${E}_TAG_$(echo $C | tr a-z A-Z)=//p" .env | tail -1)}"
+LOG="/tmp/bg-watch-$SVC-$ENVN.log"
+bg-watch "$URL" "$LOG" & W=$!
+sleep 2
+sudo -u ubuntu /opt/webdeploy/switch "$SVC" "$ENVN" "$TAG"; RC=$?
+sleep 3; kill $W 2>/dev/null; wait $W 2>/dev/null
+echo "switch exit=$RC  requests=$(wc -l < "$LOG")  non-2xx/3xx/4xx=$(awk "\$2 !~ /^[234]/" "$LOG" | wc -l)"
+awk "\$2 !~ /^[234]/" "$LOG" | head -5

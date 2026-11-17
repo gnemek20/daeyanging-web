@@ -1,0 +1,32 @@
+#!/bin/bash
+# 웹 서비스 배포 관문(2026-11-08) — GitHub Actions 배포 키의 강제 명령.
+#   /home/ubuntu/.ssh/authorized_keys:
+#     restrict,command="/opt/webdeploy/gate <서비스>" ssh-ed25519 ... github-actions-web-<서비스>
+# 그 키로 할 수 있는 일은 하나뿐이다:
+#   ssh ubuntu@서버 deploy <prod|dev> <커밋sha>  < 이미지.tar.gz   (docker save <이미지ID> | gzip)
+# 이미지는 태그 없이 와야 한다(태그가 붙어 오면 거부 — 남의 이미지 이름을 덮어쓰지 못하게).
+# 여기서 web-<서비스>:<env>-<sha7> 로 태그를 붙이고 /home/ubuntu/web/<서비스> 의 compose 로 교체한다.
+set -euo pipefail
+SVC="${1:-}"; BASE="/home/ubuntu/web/$SVC"
+[[ "$SVC" =~ ^[a-z0-9-]+$ && -f "$BASE/docker-compose.yml" ]] || { echo "unknown service" >&2; exit 2; }
+read -r -a A <<< "${SSH_ORIGINAL_COMMAND:-}"
+[[ "${A[0]:-}" == deploy ]] || { echo "allowed: deploy <prod|dev> <sha> < image.tar.gz" >&2; exit 2; }
+ENVN="${A[1]:-}"; SHA="${A[2]:-}"
+[[ "$ENVN" =~ ^(prod|dev)$ ]] || { echo "env must be prod|dev" >&2; exit 2; }
+[[ "$SHA" =~ ^[0-9a-f]{7,40}$ ]] || { echo "bad sha" >&2; exit 2; }
+grep -q "^  $ENVN-blue:" "$BASE/docker-compose.yml" || { echo "$SVC has no $ENVN environment" >&2; exit 2; }
+
+TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
+gzip -dc > "$TMP/image.tar"
+tar -xOf "$TMP/image.tar" manifest.json > "$TMP/manifest.json"
+python3 - "$TMP/manifest.json" <<'PY'
+import json, sys
+m = json.load(open(sys.argv[1]))
+if len(m) != 1 or m[0].get("RepoTags"):
+    sys.exit("image must be exactly one untagged image (docker save <image-id>)")
+PY
+ID="$(docker load -q -i "$TMP/image.tar" | sed -n 's/^Loaded image ID: //p')"
+[[ -n "$ID" ]] || { echo "docker load gave no image id" >&2; exit 1; }
+TAG="$ENVN-${SHA:0:7}"
+docker tag "$ID" "web-$SVC:$TAG"
+exec /opt/webdeploy/switch "$SVC" "$ENVN" "$TAG"

@@ -1,6 +1,7 @@
 'use server'
 
 import { headers } from 'next/headers'
+import { internalFetch } from '@/lib/internalApi'
 import { GUIDE_MAX, GUIDE_STEPS, STAGES, composeGuide } from '@/lib/firstGuide'
 import { describeSpec, parseSpec } from '@/lib/zipperSpec'
 
@@ -98,7 +99,7 @@ export async function sendInquiry(_prev: InquiryState, form: FormData): Promise<
   }
 
   try {
-    const res = await fetch(`${API_URL}/inquiries`, {
+    const res = await internalFetch(`${API_URL}/inquiries`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-api-key': API_TOKEN },
       body: JSON.stringify({

@@ -1,6 +1,9 @@
 """대양ING 백엔드 API (FastAPI).
 
-지금 하는 일: 홈페이지 상담 문의를 hyunwoo.kim@daeyanging.com 으로 메일 발송.
+지금 하는 일
+- 홈페이지 상담 문의를 hyunwoo.kim@daeyanging.com 으로 메일 발송(+ 대시보드용 문의 기록)
+- 방문 기록 저장과 집계(/events, /stats) — 대시보드(/dashboard)가 쓴다
+- 대시보드 로그인 인증번호 메일(/otp/request, /otp/verify) — DASHBOARD_EMAILS 에 있는 주소만
 - 사이트(Next.js 서버 액션)만 부른다. iwinv 의 전용 내부 네트워크(daeyanging-internal)에만 붙어 있어
   인터넷과 서버의 다른 컨테이너에서는 닿지 않고, 그래도 공유 토큰(X-Api-Key)을 한 번 더 확인한다.
 - 환경변수(서버 /home/ubuntu/web/daeyanging-api/prod.env, 이미지·저장소에는 없음):
@@ -9,6 +12,8 @@
     SMTP_USER   보내는 계정(기본 hyunwoo.kim@daeyanging.com)
     SMTP_HOST   기본 smtppro.zoho.com · SMTP_PORT 기본 465(SSL)
     MAIL_TO     문의를 받을 주소(쉼표로 여러 개, 기본 SMTP_USER)
+    DASHBOARD_EMAILS  대시보드에 들어올 수 있는 주소(쉼표로 여러 개) — 저장소가 공개라 여기에만 둔다
+    DB_PATH     SQLite 파일(기본 /data/daeyanging.db, 서버의 ./data 를 /data 로 붙임)
 """
 
 from __future__ import annotations
@@ -25,8 +30,10 @@ from email.utils import formataddr, make_msgid
 from html import escape
 from typing import Annotated
 
-from fastapi import FastAPI, Header, HTTPException, status
+from fastapi import FastAPI, Header, HTTPException, Query, status
 from pydantic import BaseModel, Field, field_validator
+
+from . import store
 
 log = logging.getLogger("daeyanging.api")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -40,7 +47,10 @@ SENDER_NAME = "대양ING 홈페이지"
 EMAIL_RE = re.compile(r"^[^\s@<>()\",;:]+@[^\s@<>()\",;:]+\.[^\s@<>()\",;:]{2,}$")
 CONTROL_RE = re.compile(r"[\x00-\x1f\x7f]+")
 
+DASHBOARD_EMAILS = {a.strip().lower() for a in os.environ.get("DASHBOARD_EMAILS", "").split(",") if a.strip()}
+
 app = FastAPI(title="daeyanging-api", docs_url=None, redoc_url=None, openapi_url=None)
+store.init()
 
 
 def one_line(v: str) -> str:
@@ -136,6 +146,92 @@ def create_inquiry(q: Inquiry, x_api_key: Annotated[str | None, Header()] = None
         send(build_message(q))
     except Exception as err:  # noqa: BLE001 — 원인은 로그에만 남기고 사이트에는 실패만 알린다
         log.error("inquiry mail failed (ip=%s): %s: %s", q.client_ip, type(err).__name__, err)
+        record_inquiry(q, mailed=False)
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, "mail failed") from None
     log.info("inquiry mail sent (ip=%s)", q.client_ip)
+    record_inquiry(q, mailed=True)
     return {"ok": True}
+
+
+def record_inquiry(q: Inquiry, mailed: bool) -> None:
+    # 기록이 실패해도 문의 메일 자체에는 영향을 주지 않는다
+    try:
+        store.add_inquiry(q.name, q.email, q.first_time, q.client_ip or "", mailed)
+    except Exception as err:  # noqa: BLE001
+        log.error("inquiry record failed: %s: %s", type(err).__name__, err)
+
+
+# ───────── 방문 기록 ─────────
+
+
+class PageView(BaseModel):
+    path: Annotated[str, Field(min_length=1, max_length=300)]
+    ref: Annotated[str, Field(max_length=200)] = ""
+    ip: Annotated[str, Field(max_length=64)] = ""
+    ua: Annotated[str, Field(max_length=500)] = ""
+
+
+@app.post("/events", status_code=status.HTTP_202_ACCEPTED)
+def create_event(e: PageView, x_api_key: Annotated[str | None, Header()] = None) -> dict[str, bool]:
+    require_token(x_api_key)
+    if store.is_bot(e.ua) or not e.path.startswith("/"):
+        return {"ok": False}
+    store.add_pageview(one_line(e.path), one_line(e.ref), e.ip, e.ua)
+    return {"ok": True}
+
+
+@app.get("/stats")
+def get_stats(
+    days: Annotated[int, Query(ge=1, le=366)] = 30, x_api_key: Annotated[str | None, Header()] = None
+) -> dict:
+    require_token(x_api_key)
+    return store.stats(days)
+
+
+# ───────── 대시보드 로그인(메일 인증번호) ─────────
+
+
+class OtpRequest(BaseModel):
+    email: Annotated[str, Field(min_length=3, max_length=200)]
+
+
+class OtpVerify(OtpRequest):
+    code: Annotated[str, Field(min_length=6, max_length=6, pattern=r"^\d{6}$")]
+
+
+@app.post("/otp/request", status_code=status.HTTP_202_ACCEPTED)
+def otp_request(r: OtpRequest, x_api_key: Annotated[str | None, Header()] = None) -> dict[str, bool]:
+    """허용된 주소면 인증번호 메일을 보낸다. 허용되지 않은 주소도 같은 응답을 돌려준다(목록을 알 수 없게)."""
+    require_token(x_api_key)
+    email = one_line(r.email).lower()
+    if email not in DASHBOARD_EMAILS:
+        log.warning("dashboard code requested for a non-allowed address")
+        return {"ok": True}
+    code = store.new_otp(email)
+    if code is None:  # 1분 안에 다시 요청
+        return {"ok": True}
+    msg = EmailMessage()
+    msg["Subject"] = f"[대양ING 대시보드] 인증번호 {code}"
+    msg["From"] = formataddr((SENDER_NAME, SMTP_USER))
+    msg["To"] = email
+    msg["Message-ID"] = make_msgid(domain=SMTP_USER.partition("@")[2] or None)
+    msg.set_content(
+        f"대양ING 대시보드 로그인 인증번호: {code}\n\n"
+        "10분 동안 쓸 수 있습니다. 직접 요청하지 않았다면 이 메일은 무시하세요.\n"
+    )
+    try:
+        send(msg)
+    except Exception as err:  # noqa: BLE001
+        log.error("dashboard code mail failed: %s: %s", type(err).__name__, err)
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, "mail failed") from None
+    log.info("dashboard code sent")
+    return {"ok": True}
+
+
+@app.post("/otp/verify")
+def otp_verify(r: OtpVerify, x_api_key: Annotated[str | None, Header()] = None) -> dict[str, bool]:
+    require_token(x_api_key)
+    email = one_line(r.email).lower()
+    ok = email in DASHBOARD_EMAILS and store.check_otp(email, r.code)
+    log.info("dashboard login %s", "ok" if ok else "rejected")
+    return {"ok": ok}

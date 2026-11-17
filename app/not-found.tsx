@@ -1,7 +1,12 @@
 import Link from 'next/link'
+import Footer from '@/components/Footer'
+import Header from '@/components/Header'
 
 export default function NotFound() {
+  // 없는 주소는 사이트 틀(app/(site)/layout) 밖에서 그려지므로 머리글·바닥글을 직접 둔다
   return (
+    <>
+      <Header />
     <main className="doc">
       <div className="wrap doc__wrap">
         <h1 className="doc__title">페이지를 찾을 수 없습니다</h1>
@@ -19,5 +24,7 @@ export default function NotFound() {
         </div>
       </div>
     </main>
+      <Footer />
+    </>
   )
 }

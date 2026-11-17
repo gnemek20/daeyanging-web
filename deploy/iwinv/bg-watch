@@ -1,0 +1,4 @@
+#!/bin/bash
+# 무중단 확인용: 주소를 0.2초마다 부르며 상태 코드를 센다.  bg-watch <url> <파일> (멈출 때 kill)
+url="$1"; out="$2"; : > "$out"
+while true; do c=$(curl -s -o /dev/null -m 20 -w "%{http_code} %{time_total}" "$url" || echo 000); echo "$(date +%T.%N | cut -c1-12) $c" >> "$out"; sleep 0.2; done
