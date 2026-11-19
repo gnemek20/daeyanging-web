@@ -49,8 +49,8 @@ export default function Page() {
       <main>
         <Hero />
         <Company />
-        <Craft />
         <Numbers />
+        <Craft />
         <VisitCta />
       </main>
     </>
