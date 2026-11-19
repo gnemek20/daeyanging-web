@@ -10,8 +10,8 @@ export type Spec = {
   size: number // 호수
   len: number // cm
   tape: string // '#RRGGBB'
-  teeth: string // 메탈: MetalKey · 그 밖: 'same'(테이프와 같은 색) 또는 '#RRGGBB'
-  slider: MetalKey | 'paint' // paint: 테이프 색으로 도장
+  teeth: string // 메탈: 슬라이더와 같은 값 · 그 밖: 'same'(슬라이더 컬러를 따름) 또는 '#RRGGBB'
+  slider: string // 슬라이더 컬러: MetalKey(도금) 또는 '#RRGGBB'(도장), 'paint' 는 테이프 색
   pull: Pull
   engrave: string // 손잡이 각인
   print: string // 테이프 인쇄 문구
@@ -95,35 +95,33 @@ export const isLight = (hex: string) => {
   return l > 0.4
 }
 
-const isMetal = (v: string): v is MetalKey => METALS.some((m) => m.key === v)
+export const isMetal = (v: string): v is MetalKey => METALS.some((m) => m.key === v)
 const metal = (k: MetalKey) => METALS.find((m) => m.key === k)!
 
-// 종류에 맞지 않는 값은 그 종류의 기본값으로 바로잡는다(호수·이 색)
+// 종류에 맞지 않는 값은 그 종류의 기본값으로 바로잡는다(호수 · 이 색: 메탈 이는 슬라이더와 같은 컬러)
 export const fixSpec = (s: Spec): Spec => {
   const kind = KINDS.find((k) => k.key === s.kind)!
   const size = kind.sizes.includes(s.size) ? s.size : kind.sizes.includes(5) ? 5 : kind.sizes[0]
   const water = s.kind === 'coil' && s.water
-  let teeth = s.teeth
-  if (s.kind === 'metal' && !isMetal(teeth)) teeth = isMetal(s.slider) ? s.slider : 'gold'
-  if (s.kind !== 'metal' && teeth !== 'same' && !normalizeHex(teeth)) teeth = 'same'
+  const teeth = s.kind === 'metal' ? s.slider : s.teeth === 'same' || normalizeHex(s.teeth) ? s.teeth : 'same'
   return { ...s, size, teeth, water }
 }
 
+// 직접 고른 색(도장)의 밝은 면 → 그늘 네 단계
+const shades = (hex: string) => [
+  `color-mix(in oklab, ${hex} 55%, #fff)`,
+  hex,
+  `color-mix(in oklab, ${hex} 72%, #000)`,
+  `color-mix(in oklab, ${hex} 45%, #000)`,
+]
+
 // 미리보기 그림이 읽는 CSS 변수
 export const specVars = (s: Spec): Record<string, string> => {
-  // 이 색: 메탈은 고른 금속, 비슬론·나일론도 기본은 슬라이더와 같은 금속 색(데님 지퍼처럼)
-  const finish = metal(s.slider === 'paint' ? 'gold' : s.slider).stops
-  const teethStops = s.kind === 'metal' ? metal(s.teeth as MetalKey).stops : finish
-  const teethHex = s.kind === 'metal' ? s.tape : s.teeth === 'same' ? finish[1] : s.teeth
-  const k: readonly string[] =
-    s.slider === 'paint'
-      ? [
-          `color-mix(in oklab, ${s.tape} 55%, #fff)`,
-          s.tape,
-          `color-mix(in oklab, ${s.tape} 72%, #000)`,
-          `color-mix(in oklab, ${s.tape} 45%, #000)`,
-        ]
-      : metal(s.slider).stops
+  // 슬라이더 컬러: 도금(금속 네 단계) 또는 직접 고른 색. 이 색: 메탈은 슬라이더와 같고, 비슬론·나일론도 기본은 슬라이더 컬러
+  const stopsOf = (v: string): readonly string[] => (isMetal(v) ? metal(v).stops : shades(v === 'paint' ? s.tape : (normalizeHex(v) ?? '#D4AE5E')))
+  const k = stopsOf(s.slider)
+  const teethStops = s.kind === 'metal' ? stopsOf(s.teeth) : k
+  const teethHex = s.kind === 'metal' ? s.tape : s.teeth === 'same' ? k[1] : s.teeth
   const vars: Record<string, string> = { '--cfg-tape': s.tape, '--cfg-teeth': teethHex }
   teethStops.forEach((c, i) => (vars[`--cfg-s${i}`] = c))
   k.forEach((c, i) => (vars[`--cfg-k${i}`] = c))

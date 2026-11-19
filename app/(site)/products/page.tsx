@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Craft from '@/components/Craft'
 import Gallery from '@/components/Gallery'
 import { OG_BASE } from '@/lib/site'
 
@@ -16,7 +15,6 @@ export default function ProductsPage() {
     <main className="tabpage">
       <h1 className="sr-only">제품</h1>
       <Gallery />
-      <Craft />
     </main>
   )
 }

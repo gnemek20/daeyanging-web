@@ -42,13 +42,24 @@ const Handbook = () => {
         </Sec>
 
         <Sec id="parts" n={n('parts')} title="지퍼의 구조">
-          <div className="hb__fig">
-            <ZipperOverview spec={BASE} idp="hb-parts" />
-          </div>
-          <dl className="spec spec--table">
+          {/* 실제 메탈 지퍼 사진 위에 부품 번호를 단다 */}
+          <figure className="hb__parts">
+            <Image src={PHOTOS.metal.src} alt={PHOTOS.metal.alt} fill sizes="(max-width: 900px) 100vw, 860px" quality={PHOTO_QUALITY} placeholder="blur" />
+            {PARTS.filter((p) => p.pin).map((p) => (
+              <span key={p.n} className="hb__pin" style={{ left: `${p.pin!.x}%`, top: `${p.pin!.y}%` }} aria-hidden="true">
+                {p.n}
+              </span>
+            ))}
+          </figure>
+          <dl className="spec spec--table hb__partlist">
             {PARTS.map((p) => (
               <div key={p.name}>
-                <dt>{p.name}</dt>
+                <dt>
+                  <span className="hb__pin hb__pin--s" aria-hidden="true">
+                    {p.n}
+                  </span>
+                  {p.name}
+                </dt>
                 <dd>{p.role}</dd>
               </div>
             ))}
@@ -105,7 +116,11 @@ const Handbook = () => {
         </Sec>
 
         <Sec id="color" n={n('color')} title="컬러와 마감">
-          <ul className="hb__metals" aria-label="금속 마감">
+          <p>
+            컬러에는 제한이 없습니다. 테이프는 원하는 색으로 염색하고, 슬라이더와 메탈 이는 도금이나 도장으로 원하는 색을 냅니다. 아래는 자주
+            쓰는 금속 도금입니다.
+          </p>
+          <ul className="hb__metals" aria-label="자주 쓰는 금속 도금">
             {METALS.map((m) => (
               <li key={m.key}>
                 <span

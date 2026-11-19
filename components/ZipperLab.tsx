@@ -1,33 +1,22 @@
 'use client'
 
 import { useState } from 'react'
-import Picker from './Picker'
+import { PopBox } from './Picker'
 import ZipperPlay from './ZipperPlay'
-import { DEFAULT_SPEC, KINDS, LOCKS, METALS, PULLS, TAPE_COLORS, fixSpec, isLight, specVars, type Spec } from '@/lib/zipperSpec'
+import { DEFAULT_SPEC, KINDS, METALS, PULLS, TAPE_COLORS, fixSpec, isLight, isMetal, specVars, type Spec } from '@/lib/zipperSpec'
 
-// 가이드 맨 위 "직접 골라 보기": 설정을 바꾸면 사진으로 만든 지퍼가 바로 바뀐다.
-// 주문용이 아니라 이해를 돕는 보충 자료다(고른 값은 어디로도 보내지 않는다).
-// 짧은 선택지는 전환 버튼, 그림으로 봐야 이해되는 선택지(마감·손잡이)는 3열 선택 상자.
+// 가이드 맨 위 "직접 골라 보기": 상담 문의 양식처럼 종류 · 슬라이더 두 가지만 고른다.
+//   종류 상자: 지퍼 종류 4가지 + 컬러(테이프) / 슬라이더 상자: 손잡이 6가지 + 컬러(도금 또는 원하는 색)
+// 고르면 사진으로 만든 지퍼가 바로 바뀐다. 주문용이 아니라 이해를 돕는 보충 자료다(고른 값은 어디로도 보내지 않는다).
 // 맨 아래 한 줄에 방금 바꾼 항목의 뜻을 보여 준다.
 
-type Key = 'kind' | 'size' | 'tape' | 'finish' | 'lock' | 'pull'
+type Key = 'kind' | 'tape' | 'pull' | 'slider'
 
 const KIND_NOTE: Record<Spec['kind'], string> = {
-  metal: '금속 이. 단단하고 고급스러운 마감. 청바지, 재킷, 가방',
-  vislon: '수지(플라스틱) 이. 가볍고 컬러가 자유로움. 아우터, 패딩',
+  metal: '금속 이. 단단하고 고급스러운 인상. 청바지, 재킷, 가방',
+  vislon: '수지(플라스틱) 이. 가볍고 이까지 원하는 컬러로. 아우터, 패딩',
   coil: '나일론 코일 이. 부드럽고 유연함. 주머니, 파우치, 아웃도어',
   conceal: '이가 안쪽에 숨는 지퍼. 겉에서 보이지 않음. 스커트, 원피스',
-}
-const SIZE_NOTE: Record<number, string> = {
-  3: '가늘고 가벼움. 스커트, 원피스, 파우치',
-  5: '가장 많이 쓰는 굵기. 바지, 재킷, 가방',
-  8: '굵고 튼튼함. 아우터, 패딩, 큰 가방',
-  10: '가장 굵음. 대형 가방, 텐트, 작업복',
-}
-const LOCK_NOTE: Record<Spec['lock'], string> = {
-  auto: '손잡이를 내리면 고정. 바지 앞여밈',
-  non: '고정 없이 부드럽게 이동. 주머니, 가방',
-  reverse: '앞뒤 양면 손잡이. 리버서블 의류',
 }
 const PULL_NOTE: Record<Spec['pull'], string> = {
   tab: '가장 흔한 막대형. 로고 각인 가능',
@@ -38,16 +27,22 @@ const PULL_NOTE: Record<Spec['pull'], string> = {
   rubber: '러버 손잡이. 로고 각인, 스포츠·아웃도어',
 }
 
-// 손잡이 고르기 아이콘: slider.png 에서 자른 실제 사진(세로)
-const PullIcon = ({ pull }: { pull: Spec['pull'] }) => (
-  // eslint-disable-next-line @next/next/no-img-element -- 112px 짜리 고정 썸네일(이미 WebP 로 줄여 둠)
-  <img src={`/zipper/pull-${pull}-gold.webp`} alt="" className="pick__photo" loading="lazy" decoding="async" />
-)
-
 const metalBg = (stops: readonly string[]) => `linear-gradient(150deg, ${stops[0]}, ${stops[1]} 45%, ${stops[2]} 80%, ${stops[3]})`
 
-// 전환 버튼(같은 폭으로 나눈 한 줄)
-function Seg<T extends string | number>({
+// 미리 줄여 둔 작은 WebP 썸네일(종류: 이 부분 확대 사진, 손잡이: slider.png 에서 자른 사진)
+/* eslint-disable @next/next/no-img-element */
+const KindIcon = ({ kind }: { kind: Spec['kind'] }) => (
+  <img src={`/zipper/kind-${kind}-icon.webp`} alt="" className="pick__photo pick__photo--kind" loading="lazy" decoding="async" />
+)
+const PullIcon = ({ pull }: { pull: Spec['pull'] }) => (
+  <img src={`/zipper/pull-${pull}-gold.webp`} alt="" className="pick__photo" loading="lazy" decoding="async" />
+)
+/* eslint-enable @next/next/no-img-element */
+
+type Swatch = { value: string; name: string; bg: string; light?: boolean }
+
+// 컬러 고르기: 자주 쓰는 컬러 + 원하는 컬러 직접 선택(무엇이든)
+const Swatches = ({
   name,
   label,
   items,
@@ -56,21 +51,41 @@ function Seg<T extends string | number>({
 }: {
   name: string
   label: string
-  items: { value: T; label: string; disabled?: boolean }[]
-  value: T
-  onPick: (v: T) => void
-}) {
+  items: Swatch[]
+  value: string
+  onPick: (v: string) => void
+}) => {
+  const picked = !items.some((c) => c.value === value)
   return (
-    <div className="seg2" role="radiogroup" aria-label={label}>
-      {items.map((it) => (
-        <label key={it.value} className="seg2__btn" data-disabled={it.disabled || undefined}>
-          <input type="radio" name={name} checked={value === it.value} disabled={it.disabled} onChange={() => onPick(it.value)} />
-          {it.label}
+    <div className="swatches pop__swatches" role="radiogroup" aria-label={label}>
+      {items.map((c) => (
+        <label key={c.value} className="swatch" style={{ background: c.bg }} title={c.name} data-light={c.light || undefined}>
+          <input type="radio" name={name} checked={value === c.value} onChange={() => onPick(c.value)} />
+          <span className="sr-only">{c.name}</span>
         </label>
       ))}
+      <label
+        className="swatch swatch--pick"
+        title="원하는 컬러 직접 선택"
+        data-picked={picked || undefined}
+        style={picked ? ({ '--cfg-tape': value } as React.CSSProperties) : undefined}
+      >
+        <input
+          type="color"
+          className="swatch__color"
+          value={(picked ? value : '#7B4FD6').toLowerCase()}
+          aria-label={`${label} 직접 선택`}
+          onChange={(e) => onPick(e.currentTarget.value.toUpperCase())}
+        />
+      </label>
     </div>
   )
 }
+
+const TAPE_SW: Swatch[] = TAPE_COLORS.map((c) => ({ value: c.hex, name: c.name, bg: c.hex, light: isLight(c.hex) }))
+const SLIDER_SW: Swatch[] = METALS.map((m) => ({ value: m.key, name: m.name, bg: metalBg(m.stops), light: m.key === 'silver' }))
+const colorName = (sw: Swatch[], v: string) => sw.find((c) => c.value === v)?.name ?? '직접 고른 컬러'
+const Dot = ({ bg }: { bg: string }) => <span className="pop__dot" style={{ background: bg }} aria-hidden="true" />
 
 const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="lab__row">
@@ -87,17 +102,19 @@ const ZipperLab = () => {
     setLast(key)
   }
   const kind = KINDS.find((k) => k.key === spec.kind)!
-  const finish = spec.slider === 'paint' ? 'gold' : spec.slider
-  const picked = !TAPE_COLORS.some((c) => c.hex === spec.tape)
-  const metal = METALS.find((m) => m.key === finish)!
+  const pull = PULLS.find((p) => p.key === spec.pull)!
+  const tapeName = colorName(TAPE_SW, spec.tape)
+  const sliderName = colorName(SLIDER_SW, spec.slider)
+  const sliderBg = SLIDER_SW.find((c) => c.value === spec.slider)?.bg ?? spec.slider
 
   const caption: Record<Key, [string, string]> = {
     kind: [`${kind.label} 지퍼`, KIND_NOTE[spec.kind]],
-    size: [`${spec.size}호`, SIZE_NOTE[spec.size]],
-    tape: [TAPE_COLORS.find((c) => c.hex === spec.tape)?.name ?? '직접 선택', '원단 샘플, 컬러칩, 팬톤 번호로 정확히 맞춤'],
-    finish: [metal.name, '이와 슬라이더를 같은 금속 컬러로'],
-    lock: [LOCKS.find((l) => l.key === spec.lock)!.label, LOCK_NOTE[spec.lock]],
-    pull: [PULLS.find((p) => p.key === spec.pull)!.label + ' 손잡이', PULL_NOTE[spec.pull]],
+    tape: [tapeName, '테이프는 원하는 컬러 무엇이든. 원단 샘플·컬러칩·팬톤 번호로 맞춥니다'],
+    pull: [`${pull.label} 손잡이`, PULL_NOTE[spec.pull]],
+    slider: [
+      sliderName,
+      isMetal(spec.slider) ? '도금 컬러. 메탈 지퍼는 이도 같은 컬러로 맞춥니다' : '원하는 컬러로 도장. 메탈 지퍼는 이도 같은 컬러로 맞춥니다',
+    ],
   }
   const [capK, capV] = caption[last]
 
@@ -111,66 +128,74 @@ const ZipperLab = () => {
 
       <div className="lab__panel">
         <Row label="종류">
-          <Seg
-            name="lab-kind"
+          <PopBox
             label="종류"
-            items={KINDS.map((k) => ({ value: k.key, label: k.label }))}
-            value={spec.kind}
-            onPick={(v) => set('kind', { kind: v, teeth: v === 'metal' ? finish : 'same', slider: finish })}
-          />
-        </Row>
-        <Row label="호수">
-          <Seg
-            name="lab-size"
-            label="호수"
-            items={[3, 5, 8, 10].map((n) => ({ value: n, label: `${n}호`, disabled: !kind.sizes.includes(n) }))}
-            value={spec.size}
-            onPick={(v) => set('size', { size: v })}
-          />
-        </Row>
-        <Row label="컬러">
-          <div className="swatches lab__swatches" role="radiogroup" aria-label="테이프 컬러">
-            {TAPE_COLORS.map((c) => (
-              <label key={c.hex} className="swatch" style={{ background: c.hex }} title={c.name} data-light={isLight(c.hex) || undefined}>
-                <input type="radio" name="lab-tape" checked={spec.tape === c.hex} onChange={() => set('tape', { tape: c.hex })} />
-                <span className="sr-only">{c.name}</span>
-              </label>
-            ))}
-            <label className="swatch swatch--pick" title="컬러 직접 선택" data-picked={picked || undefined}>
-              <input
-                type="color"
-                className="swatch__color"
-                value={(picked ? spec.tape : '#7B4FD6').toLowerCase()}
-                aria-label="컬러 직접 선택"
-                onChange={(e) => set('tape', { tape: e.currentTarget.value.toUpperCase() })}
-              />
-            </label>
-          </div>
-        </Row>
-        <Row label="마감">
-          <Picker
-            label="마감"
-            items={METALS.map((m) => ({ value: m.key, label: m.name, icon: <span className="pick__metal" style={{ background: metalBg(m.stops) }} /> }))}
-            value={finish}
-            onPick={(v) => set('finish', { slider: v, teeth: spec.kind === 'metal' ? v : spec.teeth })}
-          />
+            summary={
+              <>
+                <KindIcon kind={spec.kind} />
+                {kind.label}
+                <span className="pop__sep" aria-hidden="true" />
+                <Dot bg={spec.tape} />
+                {tapeName}
+              </>
+            }
+          >
+            <p className="pop__h">종류</p>
+            <div className="pop__grid pop__grid--4" role="radiogroup" aria-label="종류">
+              {KINDS.map((k) => (
+                <button
+                  key={k.key}
+                  type="button"
+                  role="radio"
+                  aria-checked={spec.kind === k.key}
+                  className="pick__opt"
+                  onClick={() => set('kind', { kind: k.key })}
+                >
+                  <span className="pick__icon">
+                    <KindIcon kind={k.key} />
+                  </span>
+                  <span className="pick__name">{k.label}</span>
+                </button>
+              ))}
+            </div>
+            <p className="pop__h">컬러</p>
+            <Swatches name="lab-tape" label="지퍼 컬러" items={TAPE_SW} value={spec.tape} onPick={(v) => set('tape', { tape: v })} />
+          </PopBox>
         </Row>
         <Row label="슬라이더">
-          <Seg
-            name="lab-lock"
+          <PopBox
             label="슬라이더"
-            items={LOCKS.map((l) => ({ value: l.key, label: l.label }))}
-            value={spec.lock}
-            onPick={(v) => set('lock', { lock: v })}
-          />
-        </Row>
-        <Row label="손잡이">
-          <Picker
-            label="손잡이"
-            items={PULLS.map((p) => ({ value: p.key, label: p.label, hint: PULL_NOTE[p.key], icon: <PullIcon pull={p.key} /> }))}
-            value={spec.pull}
-            onPick={(v) => set('pull', { pull: v })}
-          />
+            summary={
+              <>
+                <PullIcon pull={spec.pull} />
+                {pull.label}
+                <span className="pop__sep" aria-hidden="true" />
+                <Dot bg={sliderBg} />
+                {sliderName}
+              </>
+            }
+          >
+            <p className="pop__h">손잡이</p>
+            <div className="pop__grid" role="radiogroup" aria-label="손잡이">
+              {PULLS.map((p) => (
+                <button
+                  key={p.key}
+                  type="button"
+                  role="radio"
+                  aria-checked={spec.pull === p.key}
+                  className="pick__opt"
+                  onClick={() => set('pull', { pull: p.key })}
+                >
+                  <span className="pick__icon">
+                    <PullIcon pull={p.key} />
+                  </span>
+                  <span className="pick__name">{p.label}</span>
+                </button>
+              ))}
+            </div>
+            <p className="pop__h">컬러</p>
+            <Swatches name="lab-slider" label="슬라이더 컬러" items={SLIDER_SW} value={spec.slider} onPick={(v) => set('slider', { slider: v })} />
+          </PopBox>
         </Row>
 
         <p className="lab__cap" aria-live="polite">

@@ -1,4 +1,5 @@
 import Company from '@/components/Company'
+import Craft from '@/components/Craft'
 import Hero from '@/components/Hero'
 import Numbers from '@/components/Numbers'
 import VisitCta from '@/components/VisitCta'
@@ -48,6 +49,7 @@ export default function Page() {
       <main>
         <Hero />
         <Company />
+        <Craft />
         <Numbers />
         <VisitCta />
       </main>

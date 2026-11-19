@@ -4430,3 +4430,129 @@ html:has(.gal__dlg[open]) {
   color: #ffb4a6;
   font-weight: 600;
 }
+
+/* 가이드 "직접 골라 보기": 종류·슬라이더 상자(안에 종류/손잡이 + 컬러) */
+.pop__panel {
+  display: block;
+  padding: 0.75rem 0.75rem 0.85rem;
+}
+.pop__h {
+  margin: 0 0 0.45rem 0.15rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  &:not(:first-child) {
+    margin-top: 0.9rem;
+  }
+}
+.pop__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+.pop__grid--4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.pop .pick__opt {
+  align-content: center;
+  border-color: var(--line);
+  background: var(--bg);
+  box-shadow: inset 0 2px 4px rgb(18 19 22 / 0.06);
+  &:hover {
+    border-color: var(--line-2);
+  }
+  &[aria-checked='true'] {
+    border-color: var(--ink);
+    background: var(--card);
+    box-shadow: 0 0 0 1px var(--ink);
+  }
+  .pick__photo {
+    height: 3.25rem;
+  }
+  .pick__photo--kind {
+    width: 100%;
+    max-width: 4.5rem;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 5px;
+  }
+}
+.pop__swatches {
+  gap: 0.45rem;
+}
+.pop .pick__btn {
+  .pick__photo {
+    height: 26px;
+  }
+  .pick__photo--kind {
+    width: 34px;
+    height: 26px;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+}
+.pop__sep {
+  width: 1px;
+  height: 1rem;
+  background: var(--line-2);
+}
+.pop__dot {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex: none;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.15);
+}
+
+/* 지퍼의 구조: 실제 지퍼 사진 + 부품 번호 */
+.hb__parts {
+  position: relative;
+  margin: 0 0 1.25rem;
+  aspect-ratio: 3 / 2;
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--card);
+  img {
+    object-fit: cover;
+  }
+}
+.hb__pin {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: var(--brand);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  box-shadow:
+    0 0 0 3px rgb(255 255 255 / 0.9),
+    0 4px 12px rgb(0 0 0 / 0.3);
+}
+.hb__pin--s {
+  position: static;
+  display: inline-grid;
+  width: 1.35rem;
+  height: 1.35rem;
+  margin-right: 0.5rem;
+  translate: none;
+  font-size: 0.72rem;
+  box-shadow: none;
+  vertical-align: 0.05em;
+}
+@media (max-width: 560px) {
+  .hb__pin {
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: 0.75rem;
+    box-shadow:
+      0 0 0 2px rgb(255 255 255 / 0.9),
+      0 3px 8px rgb(0 0 0 / 0.3);
+  }
+}
