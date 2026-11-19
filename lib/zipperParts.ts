@@ -1,11 +1,11 @@
-// 자동 생성: scratchpad extract_v2.py (tape.png · slider.png → public/zipper). 직접 고치지 말 것.
-// 단위는 가이드 지퍼 그림 좌표(가로 640). y 는 가운데 줄 기준(위가 음수).
+// 자동 생성: scratchpad extract_v2.py · strips_v4.py (tape.png · texture.png · slider.png → public/zipper). 직접 고치지 말 것.
+// 단위는 가이드 지퍼 그림 좌표(가로 640). y 는 가운데 줄 기준(위가 음수). 줄 그림(full·up·dn)은 모두 같은 자리·크기. 줄 그림(full·up·dn)은 모두 같은 자리·크기. 줄 그림(full·up·dn)은 모두 같은 자리·크기. 줄 그림(full·up·dn)은 모두 같은 자리·크기. 줄 그림(full·up·dn)은 모두 같은 자리·크기. 줄 그림(full·up·dn)은 모두 같은 자리·크기.
 
 export const STRIP = {
-  metal: { len: 1920.0, up: { y: -121.0, h: 148.0 }, dn: { y: -29.0, h: 162.0 }, tape: 1.711, teeth: 1.478, mask: true },
-  vislon: { len: 1920.0, up: { y: -135.0, h: 170.0 }, dn: { y: -35.0, h: 174.0 }, tape: 1.723, teeth: 1.475, mask: true },
-  coil: { len: 1920.0, up: { y: -123.0, h: 124.0 }, dn: { y: -1.0, h: 114.0 }, tape: 2.107, teeth: 1.7, mask: true },
-  conceal: { len: 1920.0, up: { y: -145.0, h: 146.0 }, dn: { y: -1.0, h: 154.0 }, tape: 1.796, teeth: 1.796, mask: false },
+  metal: { len: 1920.0, y: -121.0, h: 238.0, tape: 1.947, teeth: 1.7, mask: true },
+  vislon: { len: 1920.0, y: -119.0, h: 236.0, tape: 1.932, teeth: 1.7, mask: true },
+  coil: { len: 1920.0, y: -123.0, h: 238.0, tape: 2.107, teeth: 1.7, mask: true },
+  conceal: { len: 1920.0, y: -115.0, h: 230.0, tape: 1.962, teeth: 1.7, mask: false },
 } as const
 
 // 손잡이별 슬라이더 사진: 폭·높이, 흔들림 축(그림 왼쪽 위 기준), 손잡이가 금속인지(금속이면 마감 색으로 물들인다)

@@ -33,16 +33,16 @@ const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v
 // f: 호수에 따른 배율(5호 = 1). 지퍼 줄은 가운데(W/2, CY)를 축으로 키우고 줄인다
 const grow = (f: number) => `translate(${W / 2} ${CY}) scale(${f}) translate(${-W / 2} ${-CY})`
 
-// 지퍼 반쪽(테이프 + 그 반쪽의 이) 사진. 위·아래 두 장은 닫히면 빈틈없이 맞물린다.
+// 지퍼 줄 사진(테이프는 데님 결, 이는 tape.png 에서 하나씩 주인을 가른 것). 세 장 모두 같은 자리·크기다.
+//   full: 닫힌 구간(맞물린 그대로 한 장) / up·dn: 열린 구간의 반쪽(테이프 + 자기 이만, 이 사이 틈은 비어 있다)
 // 테이프는 테이프 색으로 물들이고, 그 위에 이만 따로 자른 사진(-t)을 이 색으로 물들여 얹는다.
-const Half = ({ kind, half, f }: { kind: ZipKind; half: 'up' | 'dn'; f: number }) => {
+const Strip = ({ kind, part, f }: { kind: ZipKind; part: 'full' | 'up' | 'dn'; f: number }) => {
   const st = STRIP[kind]
-  const g = st[half]
-  const img = { x: -W, y: CY + g.y, width: st.len, height: g.h, preserveAspectRatio: 'none' as const }
+  const img = { x: -W, y: CY + st.y, width: st.len, height: st.h, preserveAspectRatio: 'none' as const }
   return (
     <g transform={grow(f)} filter="url(#zp-hsh)">
-      <image href={`/zipper/${kind}-${half}.webp`} {...img} filter="url(#zp-tint-tape)" />
-      {st.mask && <image href={`/zipper/${kind}-${half}-t.webp`} {...img} filter="url(#zp-tint-teeth)" />}
+      <image href={`/zipper/${kind}-${part}.webp`} {...img} filter="url(#zp-tint-tape)" />
+      {st.mask && <image href={`/zipper/${kind}-${part}-t.webp`} {...img} filter="url(#zp-tint-teeth)" />}
     </g>
   )
 }
@@ -307,7 +307,7 @@ const ZipperPlay = ({ kind, size = 5, pull = 'tab' }: { kind: ZipKind; size?: nu
     }
   }, [])
 
-  const half = (h: 'up' | 'dn', dy = 0) => <use href={`#zp-half-${h}`} y={dy} />
+  const half = (h: 'full' | 'up' | 'dn', dy = 0) => <use href={`#zp-half-${h}`} y={dy} />
   const st = STRIP[kind]
   const teethColor = kind === 'metal' ? 'var(--cfg-s1)' : 'var(--cfg-teeth)'
 
@@ -324,9 +324,9 @@ const ZipperPlay = ({ kind, size = 5, pull = 'tab' }: { kind: ZipKind; size?: nu
           <Tint id="zp-tint-tape" color="var(--cfg-tape)" slope={st.tape} />
           <Tint id="zp-tint-teeth" color={teethColor} slope={st.teeth} />
           <Tint id="zp-tint-k" color="var(--cfg-k1)" slope={1.25} shadow />
-          {(['up', 'dn'] as const).map((h) => (
+          {(['full', 'up', 'dn'] as const).map((h) => (
             <g key={h} id={`zp-half-${h}`}>
-              <Half kind={kind} half={h} f={f} />
+              <Strip kind={kind} part={h} f={f} />
             </g>
           ))}
         </defs>
@@ -345,10 +345,7 @@ const ZipperPlay = ({ kind, size = 5, pull = 'tab' }: { kind: ZipKind; size?: nu
       {/* 닫힌 구간: 두 반쪽이 맞물린 그대로 */}
       <div className="zp__win zp__win--closed">
         <div className="zp__in">
-          <Layer>
-            {half('up')}
-            {half('dn')}
-          </Layer>
+          <Layer>{half('full')}</Layer>
         </div>
       </div>
       {/* 열린 구간: 반쪽을 위·아래로 G 만큼 */}
