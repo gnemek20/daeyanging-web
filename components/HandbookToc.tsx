@@ -17,7 +17,7 @@ const HandbookToc = ({ items }: { items: readonly Item[] }) => {
 
   useEffect(() => {
     const root = getComputedStyle(document.documentElement)
-    const header = parseFloat(root.getPropertyValue('--header-h')) || 72
+    const header = parseFloat(root.getPropertyValue('--header-h')) || 64
     // 좁은 화면에서는 목차 막대만큼 더 내려간 곳부터 본다
     const bar = nav.current?.querySelector<HTMLElement>('.hb__toc-bar')?.offsetHeight ?? 0
     const visible = new Set<string>()

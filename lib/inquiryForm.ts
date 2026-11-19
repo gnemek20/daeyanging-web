@@ -41,6 +41,20 @@ export const validChoice = (name: string, v: string) => {
 }
 export const isChoice = (name: string) => CHOICES.some((c) => c.name === name)
 
+export const EMAIL_RE = /^[^\s@<>()",;:]+@[^\s@<>()",;:]+\.[^\s@<>()",;:]{2,}$/
+
+// 꼭 받아야 하는 항목(화면에 * 표시): 성함·이메일, 양식으로 작성이면 고르는 항목(종류·슬라이더·호수, "미정"도 답),
+// 자유롭게 작성이면 문의 내용. 나머지(길이·컬러·수량·납기·추가 요청사항·첨부)는 비워도 보낼 수 있다.
+// 비어 있는 첫 항목의 이름과 안내 문구를 돌려준다(폼과 서버 액션이 같이 쓴다).
+export const findMissing = (get: (name: string) => string, mode: Mode): { name: string; message: string } | null => {
+  if (!get('name').trim()) return { name: 'name', message: '성함 / 회사명을 입력해 주세요.' }
+  if (!EMAIL_RE.test(get('email').trim())) return { name: 'email', message: '이메일 주소를 확인해 주세요.' }
+  if (mode === 'form') {
+    for (const c of CHOICES) if (!get(c.name)) return { name: c.name, message: `${c.label}를 선택해 주세요.` }
+  } else if (!get('message').trim()) return { name: 'message', message: '문의 내용을 입력해 주세요.' }
+  return null
+}
+
 // 메일 본문에 붙일 정리된 사양(빈 칸은 "-")
 export const composeAnswers = (a: Record<string, string>) =>
   ['— 문의 사양 —', ...MAIL_ORDER.map((n) => `${ALL.find((f) => f.name === n)!.label}: ${a[n] || '-'}`)].join('\n')

@@ -3,7 +3,7 @@
 import { startTransition, useActionState, useState } from 'react'
 import { sendInquiry, type InquiryState } from '@/app/actions/inquiry'
 import Picker from './Picker'
-import { ANSWER_MAX, CHOICES, FILES_MAX, FILES_MAX_TOTAL, FILE_ACCEPT, MODES, TEXTS, UNDECIDED, fileAllowed, formatBytes, type Mode } from '@/lib/inquiryForm'
+import { ANSWER_MAX, CHOICES, FILES_MAX, FILES_MAX_TOTAL, FILE_ACCEPT, MODES, TEXTS, UNDECIDED, fileAllowed, findMissing, formatBytes, type Mode } from '@/lib/inquiryForm'
 import { PULLS } from '@/lib/zipperSpec'
 
 // 상담 문의 폼. 서버 액션(sendInquiry) → 백엔드 API 가 hyunwoo.kim@daeyanging.com 으로 메일(첨부 포함)을 보내고,
@@ -73,6 +73,19 @@ const Clearable = ({ children }: { children: React.ReactNode }) => (
   </div>
 )
 
+// 필수 항목 표시와 초점 옮기기
+const Req = () => (
+  <b className="req" aria-hidden="true">
+    *
+  </b>
+)
+const focusField = (form: HTMLFormElement, name: string) => {
+  const el = form.querySelector<HTMLElement>(`[data-field="${name}"] :is(.pick__btn, input:not([type=hidden]), textarea)`)
+  if (!el) return
+  el.focus({ preventScroll: true })
+  el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+}
+
 // 좁은 화면의 선택지 열 수: 짧은 말(3자 이하)이 5개 이하면 한 줄에 다 놓고, 아니면 3열(남는 칸이 덜 생기게)
 const mobileCols = (opts: string[]) => (opts.length <= 5 && opts.every((o) => o.length <= 3) ? opts.length : 3)
 
@@ -84,12 +97,17 @@ const ContactForm = ({ email }: { email: string }) => {
   const [files, setFiles] = useState<File[]>([])
   const [fileErr, setFileErr] = useState('')
   const [drag, setDrag] = useState(false)
+  const [bad, setBad] = useState<string | null>(null) // 비어 있는 필수 항목(강조)
+  const [badMsg, setBadMsg] = useState('')
+  const fld = (name: string) => ({ 'data-field': name, 'data-invalid': bad === name || undefined })
 
   // 보내기에 성공하면 모두 비운다(렌더 중 상태 조정 — 이펙트 없이 한 번만)
   const [seen, setSeen] = useState(state)
   const [round, setRound] = useState(0) // 성공할 때마다 늘려 폼을 새로 그린다(빈 칸으로)
   if (seen !== state) {
     setSeen(state)
+    setBad(state.status === 'invalid' ? (state.missing ?? null) : null)
+    setBadMsg('')
     if (state.status === 'sent') {
       setAnswers({})
       setFiles([])
@@ -98,7 +116,10 @@ const ContactForm = ({ email }: { email: string }) => {
     }
   }
 
-  const setAnswer = (name: string, v: string) => setAnswers((a) => ({ ...a, [name]: v.slice(0, ANSWER_MAX) }))
+  const setAnswer = (name: string, v: string) => {
+    setAnswers((a) => ({ ...a, [name]: v.slice(0, ANSWER_MAX) }))
+    if (name === bad) setBad(null)
+  }
 
   const total = files.reduce((n, x) => n + x.size, 0)
   const addFiles = (list: FileList | null) => {
@@ -134,13 +155,30 @@ const ContactForm = ({ email }: { email: string }) => {
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const data = new FormData(e.currentTarget)
+    // 필수 항목이 비어 있으면 보내지 않고 그 칸을 강조해 초점을 옮긴다
+    const miss = findMissing((n) => String(data.get(n) ?? ''), mode)
+    if (miss) {
+      setBad(miss.name)
+      setBadMsg(miss.message)
+      focusField(e.currentTarget, miss.name)
+      return
+    }
+    setBad(null)
     data.delete('files')
     files.forEach((file) => data.append('files', file, file.name))
     startTransition(() => action(data))
   }
 
   return (
-    <form key={round} className="form" action={action} onSubmit={onSubmit} data-status={state.status} data-mode={mode} aria-busy={pending}>
+    <form
+      key={round}
+      className="form"
+      action={action}
+      onSubmit={onSubmit}
+      noValidate
+      onChange={(e) => {
+        if (bad && (e.target as EventTarget as HTMLInputElement).name === bad) setBad(null)
+      }} data-status={state.status} data-mode={mode} aria-busy={pending}>
       {/* 봇만 채우는 칸 — 화면과 보조기기 모두에서 숨긴다 */}
       <div className="form__trap" aria-hidden="true">
         <label>
@@ -159,14 +197,18 @@ const ContactForm = ({ email }: { email: string }) => {
       </div>
 
       <div className="form__row">
-        <label>
-          <span>성함 / 회사명</span>
+        <label {...fld('name')}>
+          <span>
+            성함 / 회사명 <Req />
+          </span>
           <Clearable>
             <input name="name" type="text" placeholder="홍길동 / (주)○○" autoComplete="name" maxLength={80} required defaultValue={f?.name} />
           </Clearable>
         </label>
-        <label>
-          <span>이메일</span>
+        <label {...fld('email')}>
+          <span>
+            이메일 <Req />
+          </span>
           <Clearable>
             <input name="email" type="email" placeholder="you@company.com" autoComplete="email" maxLength={200} required defaultValue={f?.email} />
           </Clearable>
@@ -178,9 +220,9 @@ const ContactForm = ({ email }: { email: string }) => {
         <legend className="sr-only">사양</legend>
         {CHOICES.map((c) =>
           POP.has(c.name) ? (
-            <div key={c.name} className="spec-f__fld">
+            <div key={c.name} className="spec-f__fld" {...fld(c.name)}>
               <span className="spec-f__k" id={`${c.name}-k`}>
-                {c.label}
+                {c.label} <Req />
               </span>
               <Picker
                 label={c.label}
@@ -192,9 +234,9 @@ const ContactForm = ({ email }: { email: string }) => {
               <input type="hidden" name={c.name} value={answers[c.name] ?? ''} />
             </div>
           ) : (
-            <div key={c.name} className="spec-f__fld" role="radiogroup" aria-labelledby={`${c.name}-k`}>
+            <div key={c.name} className="spec-f__fld" role="radiogroup" aria-labelledby={`${c.name}-k`} aria-required="true" {...fld(c.name)}>
               <span className="spec-f__k" id={`${c.name}-k`}>
-                {c.label}
+                {c.label} <Req />
               </span>
               <div className="opts" style={{ '--m-cols': mobileCols([...c.options!, UNDECIDED]) } as React.CSSProperties}>
                 {[...c.options!, UNDECIDED].map((o) => (
@@ -235,8 +277,8 @@ const ContactForm = ({ email }: { email: string }) => {
         </div>
       </fieldset>
 
-      <label className="form__msg">
-        <span>{mode === 'form' ? '추가 요청사항' : '문의 내용'}</span>
+      <label className="form__msg" {...fld('message')}>
+        <span>{mode === 'form' ? '추가 요청사항' : <>문의 내용 <Req /></>}</span>
         <textarea
           name="message"
           rows={mode === 'form' ? 3 : 8}
@@ -318,7 +360,9 @@ const ContactForm = ({ email }: { email: string }) => {
         {pending ? '보내는 중…' : '문의 보내기'}
       </button>
       <p className="form__note" role="status" aria-live="polite">
-        {state.status === 'idle' ? (
+        {bad && badMsg ? (
+          <span className="form__err">{badMsg}</span>
+        ) : state.status === 'idle' ? (
           '접수 즉시 확인 메일이 발송되며, 검토 후 메일로 회신드립니다.'
         ) : state.status === 'error' ? (
           <>
