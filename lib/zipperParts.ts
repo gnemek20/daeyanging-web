@@ -4,7 +4,7 @@
 export const STRIP = {
   metal: { len: 1920.0, up: { y: -121.0, h: 148.0 }, dn: { y: -29.0, h: 162.0 }, tape: 1.711, teeth: 1.478, mask: true },
   vislon: { len: 1920.0, up: { y: -135.0, h: 170.0 }, dn: { y: -35.0, h: 174.0 }, tape: 1.723, teeth: 1.475, mask: true },
-  coil: { len: 1920.0, up: { y: -115.0, h: 116.0 }, dn: { y: -1.0, h: 106.0 }, tape: 1.861, teeth: 1.858, mask: true },
+  coil: { len: 1920.0, up: { y: -123.0, h: 124.0 }, dn: { y: -1.0, h: 114.0 }, tape: 2.107, teeth: 1.7, mask: true },
   conceal: { len: 1920.0, up: { y: -145.0, h: 146.0 }, dn: { y: -1.0, h: 154.0 }, tape: 1.796, teeth: 1.796, mask: false },
 } as const
 
