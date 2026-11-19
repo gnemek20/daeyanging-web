@@ -1,15 +1,13 @@
 // 지퍼의 선택지와 사양 — 가이드(/handbook)의 그림과 맨 위 "직접 골라 보기"(ZipperLab)가 쓴다.
 
 export type Kind = 'metal' | 'vislon' | 'coil' | 'conceal'
-export type Form = 'close' | 'open' | 'twoway' | 'twoclose'
 export type Lock = 'auto' | 'non' | 'reverse'
-export type Pull = 'tab' | 'plate' | 'ring' | 'cord'
+export type Pull = 'tab' | 'plate' | 'ring' | 'cord' | 'leather' | 'rubber'
 export type MetalKey = 'gold' | 'silver' | 'antique' | 'black' | 'gun'
 
 export type Spec = {
   kind: Kind
   size: number // 호수
-  form: Form
   len: number // cm
   tape: string // '#RRGGBB'
   teeth: string // 메탈: MetalKey · 그 밖: 'same'(테이프와 같은 색) 또는 '#RRGGBB'
@@ -28,13 +26,6 @@ export const KINDS: { key: Kind; label: string; sizes: number[] }[] = [
   { key: 'conceal', label: '콘실', sizes: [3, 5] },
 ]
 
-export const FORMS: { key: Form; label: string; hint: string }[] = [
-  { key: 'close', label: '클로즈형', hint: '아래가 막혀 분리되지 않아요' },
-  { key: 'open', label: '오픈형', hint: '아래가 완전히 분리돼요' },
-  { key: 'twoway', label: '양방향 오픈', hint: '슬라이더 두 개, 아래가 분리돼요' },
-  { key: 'twoclose', label: '양방향 클로즈', hint: '슬라이더 두 개, 양쪽 끝이 막혀 있어요' },
-]
-
 export const LOCKS: { key: Lock; label: string; hint: string }[] = [
   { key: 'auto', label: '오토락', hint: '손잡이를 내리면 고정돼요. 바지 앞여밈 등' },
   { key: 'non', label: '논락', hint: '고정 없이 부드럽게 움직여요. 주머니·가방 등' },
@@ -46,6 +37,8 @@ export const PULLS: { key: Pull; label: string; engravable: boolean }[] = [
   { key: 'plate', label: '로고판', engravable: true },
   { key: 'ring', label: '링', engravable: false },
   { key: 'cord', label: '끈', engravable: false },
+  { key: 'leather', label: '가죽', engravable: true },
+  { key: 'rubber', label: '러버', engravable: true },
 ]
 
 export const TAPE_COLORS: { name: string; hex: string }[] = [
@@ -72,7 +65,6 @@ export const METALS: { key: MetalKey; name: string; stops: [string, string, stri
 export const DEFAULT_SPEC: Spec = {
   kind: 'metal',
   size: 5,
-  form: 'close',
   len: 20,
   tape: '#26367A',
   teeth: 'gold',
@@ -106,16 +98,15 @@ export const isLight = (hex: string) => {
 const isMetal = (v: string): v is MetalKey => METALS.some((m) => m.key === v)
 const metal = (k: MetalKey) => METALS.find((m) => m.key === k)!
 
-// 종류에 맞지 않는 값은 그 종류의 기본값으로 바로잡는다(호수·형태·이 색)
+// 종류에 맞지 않는 값은 그 종류의 기본값으로 바로잡는다(호수·이 색)
 export const fixSpec = (s: Spec): Spec => {
   const kind = KINDS.find((k) => k.key === s.kind)!
   const size = kind.sizes.includes(s.size) ? s.size : kind.sizes.includes(5) ? 5 : kind.sizes[0]
-  const form = s.kind === 'conceal' ? 'close' : s.form
   const water = s.kind === 'coil' && s.water
   let teeth = s.teeth
   if (s.kind === 'metal' && !isMetal(teeth)) teeth = isMetal(s.slider) ? s.slider : 'gold'
   if (s.kind !== 'metal' && teeth !== 'same' && !normalizeHex(teeth)) teeth = 'same'
-  return { ...s, size, form, teeth, water }
+  return { ...s, size, teeth, water }
 }
 
 // 미리보기 그림이 읽는 CSS 변수

@@ -2,7 +2,9 @@
 
 import { startTransition, useActionState, useState } from 'react'
 import { sendInquiry, type InquiryState } from '@/app/actions/inquiry'
+import Picker from './Picker'
 import { ANSWER_MAX, CHOICES, FILES_MAX, FILES_MAX_TOTAL, FILE_ACCEPT, MODES, TEXTS, UNDECIDED, fileAllowed, formatBytes, type Mode } from '@/lib/inquiryForm'
+import { LOCKS, METALS } from '@/lib/zipperSpec'
 
 // 상담 문의 폼. 서버 액션(sendInquiry) → 백엔드 API 가 hyunwoo.kim@daeyanging.com 으로 메일(첨부 포함)을 보내고,
 // 보낸 분께는 접수 확인 메일을 보낸다.
@@ -31,6 +33,23 @@ const Thumb = ({ file }: { file: File }) =>
       {(file.name.split('.').pop() ?? '').slice(0, 4).toUpperCase()}
     </span>
   )
+
+// 미리보기를 보며 고르는 항목(3열 선택 상자): 종류는 실제 지퍼 사진, 마감은 금속 색, 슬라이더는 설명
+const KIND_ICON: Record<string, string> = { 메탈: 'metal', 비슬론: 'vislon', 나일론: 'coil', 콘실: 'conceal', 방수: 'water' }
+const metalBg = (stops: readonly string[]) => `linear-gradient(150deg, ${stops[0]}, ${stops[1]} 45%, ${stops[2]} 80%, ${stops[3]})`
+const preview = (name: string, option: string): { icon?: React.ReactNode; hint?: string } => {
+  if (option === UNDECIDED) return { hint: '상담하며 정해요' }
+  if (name === 'q_kind' && KIND_ICON[option])
+    // eslint-disable-next-line @next/next/no-img-element -- 미리 줄여 둔 작은 WebP 썸네일
+    return { icon: <img src={`/zipper/kind-${KIND_ICON[option]}-icon.webp`} alt="" className="pick__photo" loading="lazy" decoding="async" /> }
+  if (name === 'q_finish') {
+    const m = METALS.find((x) => x.name === option)
+    return m ? { icon: <span className="pick__metal" style={{ background: metalBg(m.stops) }} /> } : {}
+  }
+  if (name === 'q_lock') return { hint: LOCKS.find((l) => l.label === option)?.hint }
+  return {}
+}
+const POP = new Set(['q_kind', 'q_finish', 'q_lock'])
 
 // 좁은 화면의 선택지 열 수: 짧은 말(3자 이하)이 5개 이하면 한 줄에 다 놓고, 아니면 3열(남는 칸이 덜 생기게)
 const mobileCols = (opts: string[]) => (opts.length <= 5 && opts.every((o) => o.length <= 3) ? opts.length : 3)
@@ -131,29 +150,45 @@ const ContactForm = ({ email }: { email: string }) => {
       {/* 양식으로 작성: 자바스크립트가 없어도 CSS(:has)로 방식에 맞는 칸만 보인다 */}
       <fieldset className="spec-f" disabled={mode !== 'form'}>
         <legend className="sr-only">사양</legend>
-        {CHOICES.map((c) => (
-          <div key={c.name} className="spec-f__fld" role="radiogroup" aria-labelledby={`${c.name}-k`}>
-            <span className="spec-f__k" id={`${c.name}-k`}>
-              {c.label}
-            </span>
-            <div className="opts" style={{ '--m-cols': mobileCols([...c.options!, UNDECIDED]) } as React.CSSProperties}>
-              {[...c.options!, UNDECIDED].map((o) => (
-                <label key={o} className="opt" data-muted={o === UNDECIDED || undefined}>
-                  <input
-                    type="radio"
-                    name={c.name}
-                    value={o}
-                    checked={answers[c.name] === o}
-                    onChange={() => setAnswer(c.name, o)}
-                    // 고른 것을 다시 누르면 선택 해제
-                    onClick={() => answers[c.name] === o && setAnswer(c.name, '')}
-                  />
-                  {o}
-                </label>
-              ))}
+        {CHOICES.map((c) =>
+          POP.has(c.name) ? (
+            <div key={c.name} className="spec-f__fld">
+              <span className="spec-f__k" id={`${c.name}-k`}>
+                {c.label}
+              </span>
+              <Picker
+                label={c.label}
+                className="pick--form"
+                items={[...c.options!, UNDECIDED].map((o) => ({ value: o, label: o, ...preview(c.name, o) }))}
+                value={answers[c.name] ?? ''}
+                onPick={(v) => setAnswer(c.name, v)}
+              />
+              <input type="hidden" name={c.name} value={answers[c.name] ?? ''} />
             </div>
-          </div>
-        ))}
+          ) : (
+            <div key={c.name} className="spec-f__fld" role="radiogroup" aria-labelledby={`${c.name}-k`}>
+              <span className="spec-f__k" id={`${c.name}-k`}>
+                {c.label}
+              </span>
+              <div className="opts" style={{ '--m-cols': mobileCols([...c.options!, UNDECIDED]) } as React.CSSProperties}>
+                {[...c.options!, UNDECIDED].map((o) => (
+                  <label key={o} className="opt" data-muted={o === UNDECIDED || undefined}>
+                    <input
+                      type="radio"
+                      name={c.name}
+                      value={o}
+                      checked={answers[c.name] === o}
+                      onChange={() => setAnswer(c.name, o)}
+                      // 고른 것을 다시 누르면 선택 해제
+                      onClick={() => answers[c.name] === o && setAnswer(c.name, '')}
+                    />
+                    {o}
+                  </label>
+                ))}
+              </div>
+            </div>
+          ),
+        )}
         <div className="spec-f__texts">
           {TEXTS.map((t) => (
             <label key={t.name} className="spec-f__fld">
@@ -177,7 +212,7 @@ const ContactForm = ({ email }: { email: string }) => {
         <textarea
           name="message"
           rows={mode === 'form' ? 3 : 8}
-          placeholder={mode === 'form' ? '용도, 참고 사항 등' : '종류, 호수, 길이, 형태, 컬러, 마감, 수량, 납기 등'}
+          placeholder={mode === 'form' ? '용도, 참고 사항 등' : '종류, 호수, 길이, 컬러, 마감, 수량, 납기 등'}
           maxLength={5000}
           required={mode === 'free'}
           defaultValue={f?.message}
@@ -186,7 +221,10 @@ const ContactForm = ({ email }: { email: string }) => {
 
       <div className="files">
         <p className="files__h">
-          첨부 파일 <span className="files__limit">이미지·PDF · 최대 {FILES_MAX}개 · {formatBytes(FILES_MAX_TOTAL)}</span>
+          첨부 파일{' '}
+          <span className="files__limit">
+            이미지·PDF · 최대 {FILES_MAX}개 · {formatBytes(FILES_MAX_TOTAL)}
+          </span>
         </p>
         <label
           className="files__drop"

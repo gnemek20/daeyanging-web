@@ -33,7 +33,9 @@ const Gallery = () => {
     <section className="sec gal" id="gallery" aria-labelledby="gallery-h">
       <div className="wrap">
         <h2 className="h2" id="gallery-h">
-          갤러리
+          다양한 지퍼를
+          <br />
+          자유롭게.
         </h2>
 
         <div className="seg2 gal__seg" role="radiogroup" aria-label="종류">

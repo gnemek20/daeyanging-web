@@ -1,10 +1,12 @@
 'use client'
 
 import { useCallback } from 'react'
-import { sizeScale } from '@/lib/zipperSpec'
+import { PULL_PHOTO, STRIP } from '@/lib/zipperParts'
+import { sizeScale, type Pull } from '@/lib/zipperSpec'
 
 // 가이드 "직접 골라 보기"의 가까이 보기: 끌어서 여닫는 지퍼(테이프에 글자는 넣지 않는다).
-// 종류(kind)는 부모가 넘기고, 색은 부모 상자의 CSS 변수(--cfg-tape, --cfg-s0~3)를 읽는다.
+// 그림은 모두 사진(public/zipper, tape.png · slider.png 에서 자른 것)이다. 종류·손잡이는 부모가 넘기고,
+// 색은 부모 상자의 CSS 변수(--cfg-tape 테이프, --cfg-s1 메탈 이, --cfg-teeth 수지·코일 이, --cfg-k1 슬라이더)로 물들인다.
 //
 // 성능 설계
 // - 지퍼 그림(테이프·이빨)은 한 번만 그려 두고 <use> 로 재사용한다. 움직일 때 SVG 를 다시 그리지 않는다.
@@ -28,146 +30,61 @@ const SMAX = 620
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
 
-// 사진 부품(public/zipper, 원본 사진 한 장에서 잘라 가로 방향으로 돌린 것). 사진 1px = PX 그림 단위.
-// 이(메탈)·테이프 결·슬라이더를 설정 색으로 물들여 조합한다.
-const PX = 0.75
-const PHOTO = {
-  pitch: 29 * PX, // 한쪽 이 간격
-  tooth: { w: 14 * PX, h: 46 * PX, up: -35.5 * PX, dn: -9.5 * PX, dnShift: 15 * PX }, // up/dn: CY 기준 위쪽 끝
-  slider: { w: 398 * PX, h: 178 * PX, right: 80 }, // 넓은 머리(오른쪽 끝)가 몸통 그림의 x=80 에
-  pivot: { x: 243, y: 89 }, // 손잡이가 몸통 걸이 고리에 걸린 점(사진 px) = 흔들림 축
-  tape: { up: 178, dn: 189 }, // 테이프 반쪽 폭(사진 px, 바깥 가장자리 → 가운데 줄)
-}
-
-// f: 호수에 따른 배율(5호 = 1). 이빨 줄은 가운데(W/2, CY)를 축으로 키우고 줄인다
+// f: 호수에 따른 배율(5호 = 1). 지퍼 줄은 가운데(W/2, CY)를 축으로 키우고 줄인다
 const grow = (f: number) => `translate(${W / 2} ${CY}) scale(${f}) translate(${-W / 2} ${-CY})`
 
-const Teeth = ({ kind, half, f }: { kind: ZipKind; half: 'up' | 'dn'; f: number }) => {
-  const up = half === 'up'
-  if (kind === 'conceal') {
-    // 숨은 지퍼: 이빨 대신 접힌 가장자리만
-    return (
-      <path
-        d={`M-60 ${up ? CY - 1.5 : CY + 1.5} H${W + 60}`}
-        stroke={up ? '#fff' : '#000'}
-        strokeOpacity={up ? 0.28 : 0.22}
-        strokeWidth={2}
-      />
-    )
-  }
+// 지퍼 반쪽(테이프 + 그 반쪽의 이) 사진. 위·아래 두 장은 닫히면 빈틈없이 맞물린다.
+// 테이프는 테이프 색으로 물들이고, 그 위에 이만 따로 자른 사진(-t)을 이 색으로 물들여 얹는다.
+const Half = ({ kind, half, f }: { kind: ZipKind; half: 'up' | 'dn'; f: number }) => {
+  const st = STRIP[kind]
+  const g = st[half]
+  const img = { x: -W, y: CY + g.y, width: st.len, height: g.h, preserveAspectRatio: 'none' as const }
   return (
-    <g transform={grow(f)}>
-      {/* 줄였을 때도 화면 끝까지 닿도록 그림 폭의 세 배로 */}
-      <rect
-        x={-W}
-        y={CY - 34}
-        width={W * 3}
-        height={68}
-        fill={`url(#zp-p-${kind}-${half})`}
-        filter={kind === 'metal' ? 'url(#zp-tint-s)' : 'url(#zp-tsh)'}
-      />
+    <g transform={grow(f)} filter="url(#zp-hsh)">
+      <image href={`/zipper/${kind}-${half}.webp`} {...img} filter="url(#zp-tint-tape)" />
+      {st.mask && <image href={`/zipper/${kind}-${half}-t.webp`} {...img} filter="url(#zp-tint-teeth)" />}
     </g>
   )
 }
 
-// 테이프 반쪽: 사진 테이프(원본 색 그대로, 바깥 가장자리 포함)를 깐다. 위아래로 바닥이 보여 지퍼 한 줄임이 드러난다.
-const Tape = ({ half }: { half: 'up' | 'dn' }) => {
-  const up = half === 'up'
-  const h = (up ? PHOTO.tape.up : PHOTO.tape.dn) * PX
-  return (
-    <g filter="url(#zp-hsh)">
-      <image href={`/zipper/tape-${half}.webp`} x={-64} y={up ? CY - h : CY} width={1024 * PX} height={h} preserveAspectRatio="none" />
-    </g>
-  )
-}
-
-const ToothPatterns = () => (
-  <>
-    {/* 금속: 사진에서 자른 이 하나를 반복(색은 zp-tint-s 필터가 마감 색으로 물들인다) */}
-    {(['up', 'dn'] as const).map((h) => (
-      <pattern
-        key={`m${h}`}
-        id={`zp-p-metal-${h}`}
-        patternUnits="userSpaceOnUse"
-        x={h === 'up' ? 0 : PHOTO.tooth.dnShift}
-        y={0}
-        width={PHOTO.pitch}
-        height={H}
-      >
-        <image
-          href={`/zipper/tooth-${h}.webp`}
-          x={(PHOTO.pitch - PHOTO.tooth.w) / 2}
-          y={CY + (h === 'up' ? PHOTO.tooth.up : PHOTO.tooth.dn)}
-          width={PHOTO.tooth.w}
-          height={PHOTO.tooth.h}
-          preserveAspectRatio="none"
-        />
-      </pattern>
-    ))}
-    {/* 비슬론(플라스틱): 테이프보다 조금 진한 같은 색 */}
-    {(['up', 'dn'] as const).map((h) => (
-      <pattern
-        key={`v${h}`}
-        id={`zp-p-vislon-${h}`}
-        patternUnits="userSpaceOnUse"
-        x={h === 'up' ? 0 : 12}
-        y={0}
-        width={24}
-        height={H}
-      >
-        <rect x={4} y={h === 'up' ? CY - 28 : CY - 10} width={16} height={38} rx={5} className="zp__plastic" />
-        <rect x={7} y={h === 'up' ? CY - 24 : CY - 6} width={3.5} height={30} rx={1.75} fill="#fff" opacity={0.3} />
-      </pattern>
-    ))}
-    {/* 나일론 코일 */}
-    {(['up', 'dn'] as const).map((h) => {
-      const d =
-        h === 'up'
-          ? `M1 ${CY - 15} C 10 ${CY - 13}, 10 ${CY + 3}, 3 ${CY + 6}`
-          : `M1 ${CY + 15} C 10 ${CY + 13}, 10 ${CY - 3}, 3 ${CY - 6}`
-      return (
-        <pattern
-          key={`c${h}`}
-          id={`zp-p-coil-${h}`}
-          patternUnits="userSpaceOnUse"
-          x={h === 'up' ? 0 : 6}
-          y={0}
-          width={12}
-          height={H}
-        >
-          <path d={d} fill="none" strokeWidth={4.6} strokeLinecap="round" className="zp__coil" />
-          <path
-            d={d}
-            fill="none"
-            stroke="#fff"
-            strokeOpacity={0.35}
-            strokeWidth={1.4}
-            strokeLinecap="round"
-            transform="translate(-1 -1)"
-          />
-        </pattern>
-      )
-    })}
-  </>
+// 사진 색 입히기: 사진 밝기(회색)를 평균이 1 이 되게 늘린 뒤 색을 곱한다(명암·결은 사진 그대로)
+const Tint = ({ id, color, slope, shadow }: { id: string; color: string; slope: number; shadow?: boolean }) => (
+  <filter id={id} x="-20%" y="-20%" width="140%" height="140%" colorInterpolationFilters="sRGB">
+    <feColorMatrix in="SourceGraphic" type="saturate" values="0" result="g" />
+    <feFlood style={{ floodColor: color }} result="c" />
+    <feBlend in="c" in2="g" mode="multiply" result="m" />
+    <feComponentTransfer in="m" result="b">
+      <feFuncR type="linear" slope={slope} />
+      <feFuncG type="linear" slope={slope} />
+      <feFuncB type="linear" slope={slope} />
+    </feComponentTransfer>
+    <feComposite in="b" in2="SourceAlpha" operator="in" result="t" />
+    {shadow && <feDropShadow in="t" dx="0" dy="3" stdDeviation="2.6" floodColor="#000" floodOpacity="0.35" />}
+  </filter>
 )
 
-// 슬라이더 몸통(슬라이더 위치 s = 0 기준 좌표)
-// 슬라이더·손잡이도 호수만큼: 몸통 가운데(그림 좌표 11)를 축으로
+// 슬라이더(슬라이더 위치 s = 0 기준 좌표). 호수만큼: 몸통 가운데(그림 좌표 11)를 축으로
 const slide = (f: number) => `translate(11 ${CY}) scale(${f}) translate(-31 0)`
+const NOSE = 80 // 슬라이더 넓은 머리(오른쪽 끝)의 x
 
-// 슬라이더 사진은 몸통(위층, 고정)과 손잡이(아래층, 걸이 고리를 축으로 흔들림) 두 장
-const SliderPart = ({ f, part }: { f: number; part: 'body' | 'pull' }) => (
-  <g transform={slide(f)}>
-    <image
-      href={`/zipper/slider-${part}.webp`}
-      x={PHOTO.slider.right - PHOTO.slider.w}
-      y={-PHOTO.slider.h / 2}
-      width={PHOTO.slider.w}
-      height={PHOTO.slider.h}
-      filter="url(#zp-tint-k)"
-    />
-  </g>
-)
+// 슬라이더 사진은 몸통(위층, 고정)과 손잡이(아래층, 걸이를 축으로 흔들림) 두 장. 금속 손잡이만 마감 색으로 물들인다
+const SliderPart = ({ f, pull, part }: { f: number; pull: Pull; part: 'body' | 'pull' }) => {
+  const ph = PULL_PHOTO[pull]
+  const tint = part === 'body' || ph.metal ? 'url(#zp-tint-k)' : 'url(#zp-ssh)'
+  return (
+    <g transform={slide(f)}>
+      <image
+        href={`/zipper/pull-${pull}${part === 'body' ? '-body' : ''}.webp`}
+        x={NOSE - ph.w}
+        y={-ph.pivot.y}
+        width={ph.w}
+        height={ph.h}
+        preserveAspectRatio="none"
+        filter={tint}
+      />
+    </g>
+  )
+}
 
 const Layer = ({ children }: { children: React.ReactNode }) => (
   <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
@@ -175,16 +92,13 @@ const Layer = ({ children }: { children: React.ReactNode }) => (
   </svg>
 )
 
-// 손잡이 흔들림 축(슬라이더 위치 기준 x, 가운데 줄 기준 y; 그림 단위)
-const pivotAt = (f: number) => ({
-  x: 11 + f * (PHOTO.slider.right - PHOTO.slider.w + PHOTO.pivot.x * PX - 31),
-  y: f * (PHOTO.pivot.y * PX - PHOTO.slider.h / 2),
-})
+// 손잡이 흔들림 축(슬라이더 위치 기준 x, 그림 단위)
+const pivotX = (f: number, pull: Pull) => 11 + f * (NOSE - PULL_PHOTO[pull].w + PULL_PHOTO[pull].pivot.x - 31)
 const PULL_MAX = 14 // 손잡이가 기울 수 있는 최대 각도(평면에 놓인 손잡이라 크게 돌지 않는다)
 
-const ZipperPlay = ({ kind, size = 5 }: { kind: ZipKind; size?: number }) => {
+const ZipperPlay = ({ kind, size = 5, pull = 'tab' }: { kind: ZipKind; size?: number; pull?: Pull }) => {
   const f = sizeScale(size)
-  const pv = pivotAt(f)
+  const pvx = pivotX(f, pull)
 
   // 한 번만 붙인다(형식이 바뀌어 다시 그려져도 슬라이더 위치·스프링 상태 유지)
   const setup = useCallback((root: HTMLDivElement | null) => {
@@ -226,9 +140,9 @@ const ZipperPlay = ({ kind, size = 5 }: { kind: ZipKind; size?: number }) => {
     // 가로 거리는 최소 40 단위로 본다.
     const aim = () => {
       if (!dragging) return 0
-      const p = pivotAt(Number(root.dataset.f) || 1) // 호수 배율은 렌더마다 data-f 로 갱신된다
-      const dx = (ptrX - left) / u - (s + p.x)
-      const dy = (ptrY - top) / u - (root.clientHeight / 2 / u + p.y)
+      const px0 = Number(root.dataset.pvx) || 0 // 손잡이 축(호수·손잡이마다 렌더 때 data-pvx 로 갱신)
+      const dx = (ptrX - left) / u - (s + px0)
+      const dy = (ptrY - top) / u - root.clientHeight / 2 / u
       return (Math.atan2(-dy, Math.max(-dx, 40)) * 180) / Math.PI
     }
     const px = (n: number) => `translate3d(${(n * u).toFixed(2)}px,0,0)`
@@ -393,58 +307,26 @@ const ZipperPlay = ({ kind, size = 5 }: { kind: ZipKind; size?: number }) => {
     }
   }, [])
 
-  const half = (h: 'up' | 'dn', dy = 0) => <use href={`#zp-tape-${h}`} y={dy} />
+  const half = (h: 'up' | 'dn', dy = 0) => <use href={`#zp-half-${h}`} y={dy} />
+  const st = STRIP[kind]
+  const teethColor = kind === 'metal' ? 'var(--cfg-s1)' : 'var(--cfg-teeth)'
 
   return (
-    <div className="zp" ref={setup} data-f={f} style={{ '--s': S0 } as React.CSSProperties}>
+    <div className="zp" ref={setup} data-pvx={pvx} style={{ '--s': S0 } as React.CSSProperties}>
       <svg className="zp__defs" aria-hidden="true" focusable="false">
         <defs>
-          <linearGradient id="zp-metal" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" style={{ stopColor: 'var(--cfg-s0)' }} />
-            <stop offset="0.35" style={{ stopColor: 'var(--cfg-s1)' }} />
-            <stop offset="0.75" style={{ stopColor: 'var(--cfg-s2)' }} />
-            <stop offset="1" style={{ stopColor: 'var(--cfg-s3)' }} />
-          </linearGradient>
-          {/* 슬라이더·손잡이: 마감 색(--cfg-k*). 메탈 지퍼면 이와 같은 색, 그 밖에는 슬라이더만 금속 */}
-          <linearGradient id="zp-slider" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" style={{ stopColor: 'var(--cfg-k0)' }} />
-            <stop offset="0.35" style={{ stopColor: 'var(--cfg-k1)' }} />
-            <stop offset="0.75" style={{ stopColor: 'var(--cfg-k2)' }} />
-            <stop offset="1" style={{ stopColor: 'var(--cfg-k3)' }} />
-          </linearGradient>
           <filter id="zp-hsh" filterUnits="userSpaceOnUse" x={-80} y={-340} width={W + 160} height={H + 680}>
-            <feDropShadow dx="0" dy="3" stdDeviation="3.5" floodColor="#000" floodOpacity="0.4" />
+            <feDropShadow dx="0" dy="3" stdDeviation="3.5" floodColor="#000" floodOpacity="0.35" />
           </filter>
-          <filter id="zp-tsh" filterUnits="userSpaceOnUse" x={-W - 20} y={CY - 60} width={W * 3 + 40} height={120}>
-            <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" floodColor="#000" floodOpacity="0.35" />
-          </filter>
-          <filter id="zp-ssh" x="-40%" y="-40%" width="180%" height="180%">
+          <filter id="zp-ssh" x="-20%" y="-20%" width="140%" height="140%">
             <feDropShadow dx="0" dy="3" stdDeviation="2.6" floodColor="#000" floodOpacity="0.35" />
           </filter>
-          {/* 사진 부품 물들이기: 사진의 명암(밝기)은 그대로, 색만 마감 색으로 → 그림자 */}
-          {(['s', 'k'] as const).map((v) => (
-            <filter key={v} id={`zp-tint-${v}`} x="-20%" y="-20%" width="140%" height="140%" colorInterpolationFilters="sRGB">
-              <feColorMatrix in="SourceGraphic" type="saturate" values="0" result="g" />
-              <feFlood style={{ floodColor: `var(--cfg-${v}1)` }} result="c" />
-              <feBlend in="c" in2="g" mode="multiply" result="m" />
-              <feComponentTransfer in="m" result="b">
-                <feFuncR type="linear" slope="1.55" />
-                <feFuncG type="linear" slope="1.55" />
-                <feFuncB type="linear" slope="1.55" />
-              </feComponentTransfer>
-              <feComposite in="b" in2="SourceAlpha" operator="in" result="t" />
-              <feDropShadow in="t" dx="0" dy={v === 's' ? 1.5 : 3} stdDeviation={v === 's' ? 1.2 : 2.6} floodColor="#000" floodOpacity="0.4" />
-            </filter>
-          ))}
-          <ToothPatterns />
+          <Tint id="zp-tint-tape" color="var(--cfg-tape)" slope={st.tape} />
+          <Tint id="zp-tint-teeth" color={teethColor} slope={st.teeth} />
+          <Tint id="zp-tint-k" color="var(--cfg-k1)" slope={1.25} shadow />
           {(['up', 'dn'] as const).map((h) => (
-            <g key={h} id={`zp-tape-${h}`}>
-              <Tape half={h} />
-            </g>
-          ))}
-          {(['up', 'dn'] as const).map((h) => (
-            <g key={h} id={`zp-teeth-${h}`}>
-              <Teeth kind={kind} half={h} f={f} />
+            <g key={h} id={`zp-half-${h}`}>
+              <Half kind={kind} half={h} f={f} />
             </g>
           ))}
         </defs>
@@ -455,22 +337,17 @@ const ZipperPlay = ({ kind, size = 5 }: { kind: ZipKind; size?: number }) => {
         <div key={h} className="zp__win zp__win--wedge">
           <div className={`zp__skew zp__skew--${h}`}>
             <div className="zp__in">
-              <Layer>
-                {half(h)}
-                <use href={`#zp-teeth-${h}`} />
-              </Layer>
+              <Layer>{half(h)}</Layer>
             </div>
           </div>
         </div>
       ))}
-      {/* 닫힌 구간: 테이프 둘 다 깐 뒤 이빨을 위에 (서로 맞물린 이빨이 테이프에 가리지 않게) */}
+      {/* 닫힌 구간: 두 반쪽이 맞물린 그대로 */}
       <div className="zp__win zp__win--closed">
         <div className="zp__in">
           <Layer>
             {half('up')}
             {half('dn')}
-            <use href="#zp-teeth-up" />
-            <use href="#zp-teeth-dn" />
           </Layer>
         </div>
       </div>
@@ -480,21 +357,19 @@ const ZipperPlay = ({ kind, size = 5 }: { kind: ZipKind; size?: number }) => {
           <Layer>
             {half('up', -G)}
             {half('dn', G)}
-            <use href="#zp-teeth-up" y={-G} />
-            <use href="#zp-teeth-dn" y={G} />
           </Layer>
         </div>
       </div>
 
       <div className="zp__slider" aria-hidden="true">
         {/* 손잡이(아래층)는 걸이 고리를 축으로 흔들리고, 몸통(위층)이 이음매를 덮는다 */}
-        <div className="zp__pull" style={{ transformOrigin: `calc(${pv.x} * var(--u)) calc(50% + ${pv.y} * var(--u))` }}>
+        <div className="zp__pull" style={{ transformOrigin: `calc(${pvx} * var(--u)) 50%` }}>
           <Layer>
-            <SliderPart f={f} part="pull" />
+            <SliderPart f={f} pull={pull} part="pull" />
           </Layer>
         </div>
         <Layer>
-          <SliderPart f={f} part="body" />
+          <SliderPart f={f} pull={pull} part="body" />
         </Layer>
         {/* 직접 해 보라는 안내: 슬라이더를 따라다니고, 처음 만지면 사라진다 */}
         <span className="zp__ping" />

@@ -1,16 +1,16 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import ZipperOverview from './ZipperOverview'
+import { useState } from 'react'
+import Picker from './Picker'
 import ZipperPlay from './ZipperPlay'
-import { DEFAULT_SPEC, FORMS, KINDS, LOCKS, METALS, PULLS, TAPE_COLORS, fixSpec, isLight, specVars, type Spec } from '@/lib/zipperSpec'
+import { DEFAULT_SPEC, KINDS, LOCKS, METALS, PULLS, TAPE_COLORS, fixSpec, isLight, specVars, type Spec } from '@/lib/zipperSpec'
 
-// 가이드 맨 위 "직접 골라 보기": 설정을 바꾸면 위(가까이)와 아래(전체 모양) 그림이 바로 바뀐다.
+// 가이드 맨 위 "직접 골라 보기": 설정을 바꾸면 사진으로 만든 지퍼가 바로 바뀐다.
 // 주문용이 아니라 이해를 돕는 보충 자료다(고른 값은 어디로도 보내지 않는다).
-// 짧은 선택지는 전환 버튼, 그림으로 봐야 이해되는 선택지(형태·마감·손잡이)는 3열 선택 상자.
+// 짧은 선택지는 전환 버튼, 그림으로 봐야 이해되는 선택지(마감·손잡이)는 3열 선택 상자.
 // 맨 아래 한 줄에 방금 바꾼 항목의 뜻을 보여 준다.
 
-type Key = 'kind' | 'size' | 'form' | 'tape' | 'finish' | 'lock' | 'pull'
+type Key = 'kind' | 'size' | 'tape' | 'finish' | 'lock' | 'pull'
 
 const KIND_NOTE: Record<Spec['kind'], string> = {
   metal: '금속 이. 단단하고 고급스러운 마감. 청바지, 재킷, 가방',
@@ -24,12 +24,6 @@ const SIZE_NOTE: Record<number, string> = {
   8: '굵고 튼튼함. 아우터, 패딩, 큰 가방',
   10: '가장 굵음. 대형 가방, 텐트, 작업복',
 }
-const FORM_NOTE: Record<Spec['form'], string> = {
-  close: '아래 고정, 분리 안 됨',
-  open: '아래 완전 분리',
-  twoway: '슬라이더 2개, 아래 분리',
-  twoclose: '슬라이더 2개, 양 끝 고정',
-}
 const LOCK_NOTE: Record<Spec['lock'], string> = {
   auto: '손잡이를 내리면 고정. 바지 앞여밈',
   non: '고정 없이 부드럽게 이동. 주머니, 가방',
@@ -40,49 +34,14 @@ const PULL_NOTE: Record<Spec['pull'], string> = {
   plate: '넓은 판형. 브랜드 로고 각인에 적합',
   ring: '고리형. 장갑을 낀 채로도 잡기 쉬움',
   cord: '끈 손잡이. 아웃도어, 가방',
+  leather: '가죽 손잡이. 로고 각인, 고급 아우터·가방',
+  rubber: '러버 손잡이. 로고 각인, 스포츠·아웃도어',
 }
 
-// 형태 아이콘: 왼쪽이 아래 끝(멈춤쇠 또는 박스·핀), 오른쪽이 위. 슬라이더 개수까지
-const FormIcon = ({ form }: { form: Spec['form'] }) => {
-  const open = form === 'open' || form === 'twoway'
-  const two = form === 'twoway' || form === 'twoclose'
-  return (
-    <svg viewBox="0 0 72 28" width="72" height="28" aria-hidden="true" className="lab__icon">
-      <rect x="6" y="8" width="62" height="12" rx="1.5" className="lab__icon-tape" />
-      <path d="M10 14H64" strokeDasharray="1.6 1.6" className="lab__icon-teeth" />
-      {open ? (
-        <>
-          <rect x="1" y="7.5" width="9" height="6" rx="1" className="lab__icon-metal" />
-          <rect x="1" y="14.5" width="9" height="6" rx="1" className="lab__icon-metal" />
-        </>
-      ) : (
-        <rect x="6" y="7" width="4" height="14" rx="1" className="lab__icon-metal" />
-      )}
-      <rect x="64" y="9" width="3" height="10" rx="1" className="lab__icon-metal" />
-      <path d="M50 8.5h7l3 5.5-3 5.5h-7z" className="lab__icon-metal" />
-      {two && <path d="M22 8.5h-7l-3 5.5 3 5.5h7z" className="lab__icon-metal" />}
-    </svg>
-  )
-}
-
+// 손잡이 고르기 아이콘: slider.png 에서 자른 실제 사진(세로)
 const PullIcon = ({ pull }: { pull: Spec['pull'] }) => (
-  <svg viewBox="0 0 32 40" width="26" height="32" aria-hidden="true" className="lab__icon">
-    <rect x="8" y="2" width="16" height="9" rx="3" className="lab__icon-metal" />
-    {pull === 'tab' && <rect x="12.5" y="9" width="7" height="26" rx="3.5" className="lab__icon-metal" />}
-    {pull === 'plate' && <rect x="9" y="11" width="14" height="25" rx="2" className="lab__icon-metal" />}
-    {pull === 'ring' && (
-      <>
-        <rect x="14" y="9" width="4" height="6" rx="2" className="lab__icon-metal" />
-        <circle cx="16" cy="25" r="9" fill="none" strokeWidth="3.4" className="lab__icon-ring" />
-      </>
-    )}
-    {pull === 'cord' && (
-      <>
-        <path d="M14 10c-2 9-2 18 1 26M18 10c2 9 2 18-1 26" fill="none" strokeWidth="2" className="lab__icon-ring" />
-        <rect x="12" y="22" width="8" height="8" rx="3" className="lab__icon-metal" />
-      </>
-    )}
-  </svg>
+  // eslint-disable-next-line @next/next/no-img-element -- 112px 짜리 고정 썸네일(이미 WebP 로 줄여 둠)
+  <img src={`/zipper/pull-${pull}-icon.webp`} alt="" className="pick__photo" loading="lazy" decoding="async" />
 )
 
 const metalBg = (stops: readonly string[]) => `linear-gradient(150deg, ${stops[0]}, ${stops[1]} 45%, ${stops[2]} 80%, ${stops[3]})`
@@ -113,72 +72,6 @@ function Seg<T extends string | number>({
   )
 }
 
-// 3열 선택 상자: 누르면 아래로 열리고, 바깥을 누르거나 Esc 로 닫힌다
-function Picker<T extends string>({
-  label,
-  items,
-  value,
-  onPick,
-}: {
-  label: string
-  items: { value: T; label: string; icon: React.ReactNode; hint?: string; disabled?: boolean }[]
-  value: T
-  onPick: (v: T) => void
-}) {
-  const [open, setOpen] = useState(false)
-  const box = useRef<HTMLDivElement>(null)
-  const cur = items.find((i) => i.value === value) ?? items[0]
-
-  useEffect(() => {
-    if (!open) return
-    const close = (e: Event) => {
-      if (e instanceof KeyboardEvent ? e.key === 'Escape' : !box.current?.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('pointerdown', close)
-    document.addEventListener('keydown', close)
-    return () => {
-      document.removeEventListener('pointerdown', close)
-      document.removeEventListener('keydown', close)
-    }
-  }, [open])
-
-  return (
-    <div className="pick" ref={box} data-open={open || undefined}>
-      <button type="button" className="pick__btn" aria-expanded={open} aria-haspopup="listbox" onClick={() => setOpen((o) => !o)}>
-        <span className="pick__cur">
-          {cur.icon}
-          {cur.label}
-        </span>
-        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" className="pick__chev">
-          <path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-      {open && (
-        <div className="pick__panel" role="listbox" aria-label={label}>
-          {items.map((it) => (
-            <button
-              key={it.value}
-              type="button"
-              role="option"
-              aria-selected={it.value === value}
-              disabled={it.disabled}
-              className="pick__opt"
-              onClick={() => {
-                onPick(it.value)
-                setOpen(false)
-              }}
-            >
-              <span className="pick__icon">{it.icon}</span>
-              <span className="pick__name">{it.label}</span>
-              {it.hint && <span className="pick__hint">{it.hint}</span>}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
 const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="lab__row">
     <span className="lab__k">{label}</span>
@@ -201,7 +94,6 @@ const ZipperLab = () => {
   const caption: Record<Key, [string, string]> = {
     kind: [`${kind.label} 지퍼`, KIND_NOTE[spec.kind]],
     size: [`${spec.size}호`, SIZE_NOTE[spec.size]],
-    form: [FORMS.find((f) => f.key === spec.form)!.label, FORM_NOTE[spec.form]],
     tape: [TAPE_COLORS.find((c) => c.hex === spec.tape)?.name ?? '직접 선택', '원단 샘플, 컬러칩, 팬톤 번호로 정확히 맞춤'],
     finish: [metal.name, spec.kind === 'metal' ? '이와 슬라이더를 같은 금속 컬러로' : '이는 테이프 컬러, 슬라이더만 금속 컬러로'],
     lock: [LOCKS.find((l) => l.key === spec.lock)!.label, LOCK_NOTE[spec.lock]],
@@ -213,10 +105,7 @@ const ZipperLab = () => {
     <div className="lab" style={specVars(spec) as React.CSSProperties}>
       <div className="lab__view">
         <div className="lab__play">
-          <ZipperPlay kind={spec.kind} size={spec.size} />
-        </div>
-        <div className="lab__whole">
-          <ZipperOverview spec={spec} idp="lab" dims="callout" />
+          <ZipperPlay kind={spec.kind} size={spec.size} pull={spec.pull} />
         </div>
       </div>
 
@@ -237,20 +126,6 @@ const ZipperLab = () => {
             items={[3, 5, 8, 10].map((n) => ({ value: n, label: `${n}호`, disabled: !kind.sizes.includes(n) }))}
             value={spec.size}
             onPick={(v) => set('size', { size: v })}
-          />
-        </Row>
-        <Row label="형태">
-          <Picker
-            label="형태"
-            items={FORMS.map((f) => ({
-              value: f.key,
-              label: f.label,
-              hint: FORM_NOTE[f.key],
-              icon: <FormIcon form={f.key} />,
-              disabled: spec.kind === 'conceal' && f.key !== 'close',
-            }))}
-            value={spec.form}
-            onPick={(v) => set('form', { form: v })}
           />
         </Row>
         <Row label="컬러">

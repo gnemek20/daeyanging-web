@@ -1,6 +1,6 @@
 // 상담 문의 양식 — 문의 폼(화면)과 서버 액션(메일 본문)이 함께 쓴다.
 // 두 가지 작성 방식: "양식으로 작성"(기본, 사양을 고르거나 짧게 적기) / "자유롭게 작성"(글 한 칸).
-// 사양 항목: 종류·호수·길이·형태·컬러·마감·슬라이더·손잡이·수량·납기.
+// 사양 항목: 종류·호수·길이·컬러·마감·슬라이더·손잡이·수량·납기.
 
 export const MODES = [
   { key: 'form', label: '양식으로 작성' },
@@ -18,7 +18,6 @@ export type Field =
 export const CHOICES: Field[] = [
   { name: 'q_kind', label: '종류', options: ['메탈', '비슬론', '나일론', '콘실', '방수'] },
   { name: 'q_size', label: '호수', options: ['3호', '5호', '8호', '10호'] },
-  { name: 'q_form', label: '형태', options: ['클로즈', '오픈', '양방향 오픈', '양방향 클로즈'] },
   { name: 'q_finish', label: '마감', options: ['골드', '실버', '앤틱 브라스', '블랙 니켈', '건메탈'] },
   { name: 'q_lock', label: '슬라이더', options: ['오토락', '논락', '양면'] },
 ]
@@ -31,7 +30,7 @@ export const TEXTS: Field[] = [
   { name: 'q_date', label: '납기', placeholder: '예) 12월 중순' },
 ]
 // 메일에 적는 순서
-const MAIL_ORDER = ['q_kind', 'q_size', 'q_len', 'q_form', 'q_color', 'q_finish', 'q_lock', 'q_pull', 'q_qty', 'q_date']
+const MAIL_ORDER = ['q_kind', 'q_size', 'q_len', 'q_color', 'q_finish', 'q_lock', 'q_pull', 'q_qty', 'q_date']
 const ALL = [...CHOICES, ...TEXTS]
 
 export const ANSWER_NAMES = ALL.map((f) => f.name)

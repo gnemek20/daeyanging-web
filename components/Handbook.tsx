@@ -7,7 +7,7 @@ import { ORDER_CHECKLIST } from '@/lib/guides'
 import { CARE, COLOR_TIPS, FAQ, MEASURE, ORDER_STEPS, PARTS, PICKS, SIZES, TOC, WORDS } from '@/lib/handbook'
 import { PHOTOS, PHOTO_QUALITY, type Photo } from '@/lib/photos'
 import { PRODUCTS, PARTS as PULLER_PHOTOS } from '@/lib/products'
-import { DEFAULT_SPEC, FORMS, LOCKS, METALS, specVars, type Spec } from '@/lib/zipperSpec'
+import { DEFAULT_SPEC, LOCKS, METALS, specVars, type Spec } from '@/lib/zipperSpec'
 
 // 가이드 화면: 왼쪽 목차(지금 보는 꼭지를 진하게) + 오른쪽 본문.
 // 맨 위 "직접 골라 보기"에서 설정을 바꿔 가며 그림으로 확인하고, 아래 꼭지들은 표·목록·그림·사진으로 자세히 본다.
@@ -43,7 +43,7 @@ const Handbook = () => {
 
         <Sec id="parts" n={n('parts')} title="지퍼의 구조">
           <div className="hb__fig">
-            <ZipperOverview spec={{ ...BASE, form: 'open' }} idp="hb-parts" />
+            <ZipperOverview spec={BASE} idp="hb-parts" />
           </div>
           <dl className="spec spec--table">
             {PARTS.map((p) => (
@@ -80,18 +80,6 @@ const Handbook = () => {
                 <strong>{s.n}호</strong>
                 <span className="hb__feel">{s.feel}</span>
                 <span className="hb__use">{s.use}</span>
-              </li>
-            ))}
-          </ul>
-        </Sec>
-
-        <Sec id="form" n={n('form')} title="형태">
-          <ul className="hb__forms">
-            {FORMS.map((f) => (
-              <li key={f.key}>
-                <ZipperOverview spec={{ ...BASE, form: f.key }} idp={`hb-form-${f.key}`} />
-                <h3>{f.label}</h3>
-                <p>{f.hint}</p>
               </li>
             ))}
           </ul>
@@ -150,7 +138,6 @@ const Handbook = () => {
                   <th scope="col">만드는 것</th>
                   <th scope="col">종류</th>
                   <th scope="col">호수</th>
-                  <th scope="col">형태</th>
                   <th scope="col">슬라이더</th>
                 </tr>
               </thead>
@@ -160,7 +147,6 @@ const Handbook = () => {
                     <th scope="row">{p.item}</th>
                     <td>{p.kind}</td>
                     <td>{p.size}</td>
-                    <td>{p.form}</td>
                     <td>{p.lock}</td>
                   </tr>
                 ))}
@@ -176,7 +162,7 @@ const Handbook = () => {
 
         <Sec id="measure" n={n('measure')} title="길이 재는 법">
           <div className="hb__fig">
-            <ZipperOverview spec={{ ...BASE, form: 'close', len: 20 }} idp="hb-measure" />
+            <ZipperOverview spec={{ ...BASE, len: 20 }} idp="hb-measure" />
           </div>
           <ol className="hb__steps">
             {MEASURE.map((m) => (
