@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback } from 'react'
-import { PULL_PHOTO, STRIP } from '@/lib/zipperParts'
+import { PULL_PHOTO, PULL_PIVOT, SLIDER_BODY, STRIP } from '@/lib/zipperParts'
 import { sizeScale, type Pull } from '@/lib/zipperSpec'
 
 // 가이드 "직접 골라 보기"의 가까이 보기: 끌어서 여닫는 지퍼(테이프에 글자는 넣지 않는다).
@@ -48,7 +48,8 @@ const Strip = ({ kind, part, f }: { kind: ZipKind; part: 'full' | 'up' | 'dn'; f
 }
 
 // 사진 색 입히기: 사진 밝기(회색)를 평균이 1 이 되게 늘린 뒤 색을 곱한다(명암·결은 사진 그대로)
-const Tint = ({ id, color, slope, shadow }: { id: string; color: string; slope: number; shadow?: boolean }) => (
+// soft: 천처럼 밝은 결이 조금 희게 바래 보이게(색을 살짝 뺀다)
+const Tint = ({ id, color, slope, shadow, soft }: { id: string; color: string; slope: number; shadow?: boolean; soft?: boolean }) => (
   <filter id={id} x="-20%" y="-20%" width="140%" height="140%" colorInterpolationFilters="sRGB">
     <feColorMatrix in="SourceGraphic" type="saturate" values="0" result="g" />
     <feFlood style={{ floodColor: color }} result="c" />
@@ -58,6 +59,7 @@ const Tint = ({ id, color, slope, shadow }: { id: string; color: string; slope: 
       <feFuncG type="linear" slope={slope} />
       <feFuncB type="linear" slope={slope} />
     </feComponentTransfer>
+    {soft && <feColorMatrix in="b" type="saturate" values="0.8" result="b" />}
     <feComposite in="b" in2="SourceAlpha" operator="in" result="t" />
     {shadow && <feDropShadow in="t" dx="0" dy="3" stdDeviation="2.6" floodColor="#000" floodOpacity="0.35" />}
   </filter>
@@ -65,20 +67,20 @@ const Tint = ({ id, color, slope, shadow }: { id: string; color: string; slope: 
 
 // 슬라이더(슬라이더 위치 s = 0 기준 좌표). 호수만큼: 몸통 가운데(그림 좌표 11)를 축으로
 const slide = (f: number) => `translate(11 ${CY}) scale(${f}) translate(-31 0)`
-const NOSE = 80 // 슬라이더 넓은 머리(오른쪽 끝)의 x
 
-// 슬라이더 사진은 몸통(위층, 고정)과 손잡이(아래층, 걸이를 축으로 흔들림) 두 장. 금속 손잡이만 마감 색으로 물들인다
+// 슬라이더 사진은 몸통(모든 손잡이에 같은 한 장, 통째로 슬라이더 색)과 손잡이(몸통 위에 놓여 걸이 끝을 축으로 흔들림) 두 장.
+// 손잡이는 금속(기본·로고판·링)만 슬라이더 색으로 물들이고, 끈·가죽·러버는 원래 색 그대로 둔다.
 const SliderPart = ({ f, pull, part }: { f: number; pull: Pull; part: 'body' | 'pull' }) => {
-  const ph = PULL_PHOTO[pull]
-  const tint = part === 'body' || ph.metal ? 'url(#zp-tint-k)' : 'url(#zp-ssh)'
+  const box = part === 'body' ? SLIDER_BODY : PULL_PHOTO[pull]
+  const tint = part === 'body' || PULL_PHOTO[pull].metal ? 'url(#zp-tint-k)' : 'url(#zp-ssh)'
   return (
     <g transform={slide(f)}>
       <image
-        href={`/zipper/pull-${pull}${part === 'body' ? '-body' : ''}.webp`}
-        x={NOSE - ph.w}
-        y={-ph.pivot.y}
-        width={ph.w}
-        height={ph.h}
+        href={`/zipper/pull-${part === 'body' ? 'body' : pull}.webp`}
+        x={box.x}
+        y={box.y}
+        width={box.w}
+        height={box.h}
         preserveAspectRatio="none"
         filter={tint}
       />
@@ -93,12 +95,12 @@ const Layer = ({ children }: { children: React.ReactNode }) => (
 )
 
 // 손잡이 흔들림 축(슬라이더 위치 기준 x, 그림 단위)
-const pivotX = (f: number, pull: Pull) => 11 + f * (NOSE - PULL_PHOTO[pull].w + PULL_PHOTO[pull].pivot.x - 31)
+const pivotX = (f: number) => 11 + f * (PULL_PIVOT - 31)
 const PULL_MAX = 14 // 손잡이가 기울 수 있는 최대 각도(평면에 놓인 손잡이라 크게 돌지 않는다)
 
 const ZipperPlay = ({ kind, size = 5, pull = 'tab' }: { kind: ZipKind; size?: number; pull?: Pull }) => {
   const f = sizeScale(size)
-  const pvx = pivotX(f, pull)
+  const pvx = pivotX(f)
 
   // 한 번만 붙인다(형식이 바뀌어 다시 그려져도 슬라이더 위치·스프링 상태 유지)
   const setup = useCallback((root: HTMLDivElement | null) => {
@@ -321,7 +323,7 @@ const ZipperPlay = ({ kind, size = 5, pull = 'tab' }: { kind: ZipKind; size?: nu
           <filter id="zp-ssh" x="-20%" y="-20%" width="140%" height="140%">
             <feDropShadow dx="0" dy="3" stdDeviation="2.6" floodColor="#000" floodOpacity="0.35" />
           </filter>
-          <Tint id="zp-tint-tape" color="var(--cfg-tape)" slope={st.tape} />
+          <Tint id="zp-tint-tape" color="var(--cfg-tape)" slope={st.tape} soft />
           <Tint id="zp-tint-teeth" color={teethColor} slope={st.teeth} />
           <Tint id="zp-tint-k" color="var(--cfg-k1)" slope={1.25} shadow />
           {(['full', 'up', 'dn'] as const).map((h) => (
@@ -359,15 +361,15 @@ const ZipperPlay = ({ kind, size = 5, pull = 'tab' }: { kind: ZipKind; size?: nu
       </div>
 
       <div className="zp__slider" aria-hidden="true">
-        {/* 손잡이(아래층)는 걸이 고리를 축으로 흔들리고, 몸통(위층)이 이음매를 덮는다 */}
+        {/* 몸통(아래층) 위에 손잡이(위층)가 놓이고, 손잡이는 몸통 걸이 끝을 축으로 흔들린다 */}
+        <Layer>
+          <SliderPart f={f} pull={pull} part="body" />
+        </Layer>
         <div className="zp__pull" style={{ transformOrigin: `calc(${pvx} * var(--u)) 50%` }}>
           <Layer>
             <SliderPart f={f} pull={pull} part="pull" />
           </Layer>
         </div>
-        <Layer>
-          <SliderPart f={f} pull={pull} part="body" />
-        </Layer>
         {/* 직접 해 보라는 안내: 슬라이더를 따라다니고, 처음 만지면 사라진다 */}
         <span className="zp__ping" />
         <span className="zp__hint">
