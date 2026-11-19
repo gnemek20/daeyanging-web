@@ -36,7 +36,7 @@ const PHOTO = {
   tooth: { w: 14 * PX, h: 46 * PX, up: -35.5 * PX, dn: -9.5 * PX, dnShift: 15 * PX }, // up/dn: CY 기준 위쪽 끝
   slider: { w: 398 * PX, h: 178 * PX, right: 80 }, // 넓은 머리(오른쪽 끝)가 몸통 그림의 x=80 에
   pivot: { x: 243, y: 89 }, // 손잡이가 몸통 걸이 고리에 걸린 점(사진 px) = 흔들림 축
-  tape: { w: 512 * PX, h: 128 * PX },
+  tape: { up: 178, dn: 189 }, // 테이프 반쪽 폭(사진 px, 바깥 가장자리 → 가운데 줄)
 }
 
 // f: 호수에 따른 배율(5호 = 1). 이빨 줄은 가운데(W/2, CY)를 축으로 키우고 줄인다
@@ -70,14 +70,13 @@ const Teeth = ({ kind, half, f }: { kind: ZipKind; half: 'up' | 'dn'; f: number 
   )
 }
 
-// 테이프 반쪽: 사진 테이프(public/zipper/tape.webp)를 반복해 깔고 설정 색으로 물들인다(그린 그래픽 없음)
+// 테이프 반쪽: 사진 테이프(원본 색 그대로, 바깥 가장자리 포함)를 깐다. 위아래로 바닥이 보여 지퍼 한 줄임이 드러난다.
 const Tape = ({ half }: { half: 'up' | 'dn' }) => {
   const up = half === 'up'
-  const y = up ? -320 : CY
-  const h = up ? CY + 320 : H + 320 - CY
+  const h = (up ? PHOTO.tape.up : PHOTO.tape.dn) * PX
   return (
     <g filter="url(#zp-hsh)">
-      <rect x={-60} y={y} width={W + 120} height={h} fill="url(#zp-photo-tape)" filter="url(#zp-tint-tape)" />
+      <image href={`/zipper/tape-${half}.webp`} x={-64} y={up ? CY - h : CY} width={1024 * PX} height={h} preserveAspectRatio="none" />
     </g>
   )
 }
@@ -437,19 +436,6 @@ const ZipperPlay = ({ kind, size = 5 }: { kind: ZipKind; size?: number }) => {
               <feDropShadow in="t" dx="0" dy={v === 's' ? 1.5 : 3} stdDeviation={v === 's' ? 1.2 : 2.6} floodColor="#000" floodOpacity="0.4" />
             </filter>
           ))}
-          <filter id="zp-tint-tape" x="0" y="0" width="100%" height="100%" colorInterpolationFilters="sRGB">
-            <feColorMatrix in="SourceGraphic" type="saturate" values="0" result="g" />
-            <feFlood style={{ floodColor: 'var(--cfg-tape)' }} result="c" />
-            <feBlend in="c" in2="g" mode="multiply" result="m" />
-            <feComponentTransfer in="m">
-              <feFuncR type="linear" slope="2" />
-              <feFuncG type="linear" slope="2" />
-              <feFuncB type="linear" slope="2" />
-            </feComponentTransfer>
-          </filter>
-          <pattern id="zp-photo-tape" patternUnits="userSpaceOnUse" width={PHOTO.tape.w} height={PHOTO.tape.h}>
-            <image href="/zipper/tape.webp" width={PHOTO.tape.w} height={PHOTO.tape.h} preserveAspectRatio="none" />
-          </pattern>
           <ToothPatterns />
           {(['up', 'dn'] as const).map((h) => (
             <g key={h} id={`zp-tape-${h}`}>

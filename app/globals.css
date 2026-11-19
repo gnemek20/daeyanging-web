@@ -726,73 +726,6 @@ select {
   }
 }
 
-/* ───────── 제품 ───────── */
-.products {
-  margin-top: clamp(3rem, 6vw, 5rem);
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(2.5rem, 4vw, 3.5rem) clamp(1rem, 2vw, 1.75rem);
-}
-.product__art {
-  aspect-ratio: 4 / 3;
-  border-radius: var(--r);
-  overflow: hidden;
-  .zstrip {
-    width: 100%;
-    height: 100%;
-    transition: scale 600ms cubic-bezier(0.2, 0.7, 0.2, 1);
-  }
-}
-@media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .product:hover .zstrip {
-    scale: 1.04;
-  }
-}
-.product__body {
-  padding-top: 1.1rem;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.25rem 2rem;
-  h3 {
-    font-size: 1.3rem;
-    font-weight: 600;
-    letter-spacing: -0.025em;
-    text-wrap: nowrap;
-    span {
-      margin-left: 0.6rem;
-      font-family: var(--wide);
-      font-stretch: 125%;
-      font-size: 0.8rem;
-      font-weight: 400;
-      color: var(--muted);
-      letter-spacing: 0;
-    }
-  }
-  p {
-    color: var(--muted);
-    justify-self: end;
-    text-align: right;
-    max-width: 22em;
-  }
-}
-.zstrip {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-@media (max-width: 760px) {
-  .products {
-    grid-template-columns: 1fr;
-  }
-  .product__body {
-    grid-template-columns: 1fr;
-    p {
-      justify-self: start;
-      text-align: left;
-    }
-  }
-}
-
 /* 끌어서 여닫는 지퍼(ZipperPlay). 그림 좌표 1 단위 = 100cqw / 640.
    창·안쪽 그림·슬라이더는 transform 만 바뀐다(첫 화면은 CSS 가, 이후엔 JS 가 px 로 직접 쓴다) */
 .zp {
@@ -801,9 +734,10 @@ select {
   inset: 0;
   container-type: inline-size;
   overflow: hidden;
+  /* 사진처럼 밝은 바닥 위에 지퍼 한 줄 */
   background:
-    radial-gradient(120% 70% at 50% 50%, rgb(255 255 255 / 0.06), transparent 70%),
-    #16171b;
+    radial-gradient(120% 80% at 50% 50%, #fff, transparent 75%),
+    #eceae5;
   touch-action: pan-y;
   cursor: grab;
   user-select: none;
@@ -1789,33 +1723,6 @@ select {
   }
   .facts dt {
     font-size: 0.88rem;
-  }
-
-  /* 제품 네 가지: 두 열로 한 화면에 */
-  .products {
-    margin-top: 1.5rem;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1.25rem 0.75rem;
-  }
-  .product__art {
-    aspect-ratio: 4 / 3;
-  }
-  .product__body {
-    padding-top: 0.6rem;
-    gap: 0.15rem;
-    h3 {
-      font-size: 1rem;
-      text-wrap: wrap;
-      span {
-        display: block;
-        margin-left: 0;
-        font-size: 0.72rem;
-      }
-    }
-    p {
-      font-size: 0.84rem;
-      line-height: 1.55;
-    }
   }
 
   .qualities {
@@ -3934,8 +3841,8 @@ select {
 }
 
 /* ───────── 제품 · 사진 갤러리 ───────── */
-.gal {
-  padding-top: 0;
+.sec.gal {
+  padding-top: clamp(2.5rem, 5vw, 4rem);
 }
 .gal__seg {
   margin-top: clamp(2rem, 4vw, 3rem);

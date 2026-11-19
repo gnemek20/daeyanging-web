@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import Craft from '@/components/Craft'
 import Gallery from '@/components/Gallery'
-import Products from '@/components/Products'
 import { OG_BASE } from '@/lib/site'
 
 export const metadata: Metadata = {
@@ -16,7 +15,6 @@ export default function ProductsPage() {
   return (
     <main className="tabpage">
       <h1 className="sr-only">제품</h1>
-      <Products />
       <Gallery />
       <Craft />
     </main>

@@ -16,13 +16,15 @@ const VisitCta = () => {
             지금 상담하세요.
           </h2>
           <p className="body visit__body">
-            <span className="ph">샘플 한 개부터 대량 생산까지,</span> <span className="ph">사양을 몰라도 괜찮습니다.</span>
+            상상하시는 그대로,
+            <br />
+            맞춤 지퍼를 만들어 드립니다.
           </p>
 
           {/* 지도 옆이라 눈이 지도로 가기 쉬워서, 문의 양식으로 가는 버튼은 왼쪽 칸 폭 전체의 큰 카드로 둔다 */}
           <Link className="visit__go" href="/contact">
             <span className="visit__go-text">
-              <strong>상담 문의 양식 작성하기</strong>
+              <strong>상담 문의하기</strong>
               <span>종류·호수·컬러만 골라 보내면 메일로 회신드립니다</span>
             </span>
             <span className="visit__go-arrow" aria-hidden="true">
