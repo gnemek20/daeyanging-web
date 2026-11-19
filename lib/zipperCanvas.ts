@@ -4,7 +4,7 @@
 // 그래서 색이나 종류·손잡이가 바뀔 때 한 번만 사진에 색과 그림자를 입혀 캔버스에 구워 두고(bake),
 // 창마다 놓인 캔버스에 그 그림을 한 번 그려 둔다(draw). 끄는 동안에는 이미 그려진 층을 transform 으로 옮기기만 한다.
 import { PULL_PHOTO, STRIP } from './zipperParts'
-import type { Pull } from './zipperSpec'
+import { ZIPPER_ASSET_V, type Pull } from './zipperSpec'
 
 type Kind = keyof typeof STRIP
 type RGB = readonly [number, number, number]
@@ -40,9 +40,10 @@ const canvas = (w: number, h: number) => {
   return c
 }
 
-// 사진 색 입히기(전에 쓰던 SVG 필터와 같은 계산): 밝기(회색) × 색 × slope. soft 면 색을 20% 뺀다(천이 희게 바랜 느낌)
+// 사진 색 입히기(전에 쓰던 SVG 필터와 같은 계산): 밝기(회색) × 색 × slope.
+// lift: 천 — 평균보다 밝은 결은 살짝 희끗하게(청바지 씨실이 비치는 느낌, 샘플 C)
 // metalZone: 끈·가죽·러버 슬라이더 사진에서 몸통 쪽(오른쪽) 이 폭(px) 안의 밝은 무채색(몸통·금속 고리)만 물들인다
-const tint = (img: HTMLImageElement, color: RGB | null, slope: number, soft = false, metalZone = 0) => {
+const tint = (img: HTMLImageElement, color: RGB | null, slope: number, lift = false, metalZone = 0) => {
   const c = canvas(img.naturalWidth, img.naturalHeight)
   const x = c.getContext('2d', { willReadFrequently: true })!
   x.drawImage(img, 0, 0)
@@ -52,10 +53,6 @@ const tint = (img: HTMLImageElement, color: RGB | null, slope: number, soft = fa
   const kr = (color[0] / 255) * slope
   const kg = (color[1] / 255) * slope
   const kb = (color[2] / 255) * slope
-  const s = 0.8
-  const m = soft
-    ? [0.213 + 0.787 * s, 0.715 - 0.715 * s, 0.072 - 0.072 * s, 0.213 - 0.213 * s, 0.715 + 0.285 * s, 0.072 - 0.072 * s, 0.213 - 0.213 * s, 0.715 - 0.715 * s, 0.072 + 0.928 * s]
-    : null
   const W = c.width
   const zx = W - metalZone
   for (let i = 0; i < p.length; i += 4) {
@@ -72,13 +69,11 @@ const tint = (img: HTMLImageElement, color: RGB | null, slope: number, soft = fa
     let r = Math.min(255, g * kr)
     let gg = Math.min(255, g * kg)
     let b = Math.min(255, g * kb)
-    if (m) {
-      const r2 = m[0] * r + m[1] * gg + m[2] * b
-      const g2 = m[3] * r + m[4] * gg + m[5] * b
-      const b2 = m[6] * r + m[7] * gg + m[8] * b
-      r = r2
-      gg = g2
-      b = b2
+    if (lift) {
+      const hi = Math.min(1, Math.max(0, ((g * slope) / 255 - 1) / 0.6)) * 0.32
+      r += (200 - r) * hi
+      gg += (210 - gg) * hi
+      b += (225 - b) * hi
     }
     p[i] = p[i] + (r - p[i]) * wgt
     p[i + 1] = p[i + 1] + (gg - p[i + 1]) * wgt
@@ -138,14 +133,14 @@ export const bake = async (
   const st = STRIP[kind]
   const parts = ['full', 'up', 'dn'] as const
   const imgs = await Promise.all([
-    ...parts.flatMap((p) => [load(`/zipper/${kind}-${p}.webp`), st.mask ? load(`/zipper/${kind}-${p}-t.webp`) : null]),
-    load(`/zipper/pull-${pull}.webp`),
+    ...parts.flatMap((p) => [load(`/zipper/${kind}-${p}.webp?v=${ZIPPER_ASSET_V}`), st.mask ? load(`/zipper/${kind}-${p}-t.webp?v=${ZIPPER_ASSET_V}`) : null]),
+    load(`/zipper/pull-${pull}.webp?v=${ZIPPER_ASSET_V}`),
   ])
   const stripRect = { x: -VW, y: CY + st.y, w: st.len, h: st.h }
   const strips = parts.map((_, i) => {
     const tape = imgs[i * 2]!
     const teeth = imgs[i * 2 + 1]
-    const layers = [tint(tape, colors.tape, st.tape)]
+    const layers = [tint(tape, colors.tape, st.tape, true)]
     if (teeth) layers.push(tint(teeth, colors.teeth, st.teeth))
     return compose(layers, stripRect, 1, { sd: 3.5, dy: 3 })
   })
@@ -171,8 +166,11 @@ const size = (cv: HTMLCanvasElement, w: number, h: number, dpr: number) => {
   if (cv.width !== W || cv.height !== H) {
     cv.width = W
     cv.height = H
-  } else cv.getContext('2d')!.clearRect(0, 0, W, H)
-  return cv.getContext('2d')!
+  }
+  const x = cv.getContext('2d')!
+  x.setTransform(1, 0, 0, 1, 0, 0) // 지난번 그리기의 변환이 남아 있으면 일부만 지워진다
+  x.clearRect(0, 0, W, H)
+  return x
 }
 
 // 지퍼 줄: 가운데(VW/2, CY)를 축으로 f 배, 그 뒤 위아래로 dy

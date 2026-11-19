@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { PULL_PHOTO, STRIP } from '@/lib/zipperParts'
 import { bake, drawSlider, drawStrip, readColor, type Baked } from '@/lib/zipperCanvas'
-import { sizeScale, type Pull } from '@/lib/zipperSpec'
+import { ZIPPER_ASSET_V, sizeScale, type Pull } from '@/lib/zipperSpec'
 
 // 가이드 "직접 골라 보기"의 가까이 보기: 끌어서 여닫는 지퍼(테이프에 글자는 넣지 않는다).
 // 그림은 모두 사진(public/zipper, tape.png · slider.png 에서 자른 것)이다. 종류·손잡이는 부모가 넘기고,
@@ -44,8 +44,8 @@ const Strip = ({ kind, part, f }: { kind: ZipKind; part: 'full' | 'up' | 'dn'; f
   const img = { x: -W, y: CY + st.y, width: st.len, height: st.h, preserveAspectRatio: 'none' as const }
   return (
     <g transform={grow(f)} filter="url(#zp-hsh)">
-      <image href={`/zipper/${kind}-${part}.webp`} {...img} filter="url(#zp-tint-tape)" />
-      {st.mask && <image href={`/zipper/${kind}-${part}-t.webp`} {...img} filter="url(#zp-tint-teeth)" />}
+      <image href={`/zipper/${kind}-${part}.webp?v=${ZIPPER_ASSET_V}`} {...img} filter="url(#zp-tint-tape)" />
+      {st.mask && <image href={`/zipper/${kind}-${part}-t.webp?v=${ZIPPER_ASSET_V}`} {...img} filter="url(#zp-tint-teeth)" />}
     </g>
   )
 }
@@ -78,7 +78,7 @@ const SliderPhoto = ({ f, pull }: { f: number; pull: Pull }) => {
   return (
     <g transform={slide(f)}>
       <image
-        href={`/zipper/pull-${pull}.webp`}
+        href={`/zipper/pull-${pull}.webp?v=${ZIPPER_ASSET_V}`}
         x={ph.x}
         y={ph.y}
         width={ph.w}

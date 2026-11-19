@@ -130,3 +130,6 @@ export const specVars = (s: Spec): Record<string, string> => {
 
 // 호수 → 미리보기 이·슬라이더 크기 배율
 export const sizeScale = (size: number) => ({ 3: 0.74, 5: 1, 8: 1.28, 10: 1.48 })[size] ?? 1
+
+// public/zipper 그림을 다시 만들 때마다 올린다(브라우저에 남은 옛 그림을 쓰지 않게 주소 뒤에 ?v= 로 붙인다)
+export const ZIPPER_ASSET_V = 7

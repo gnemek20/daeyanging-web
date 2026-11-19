@@ -4,7 +4,7 @@ import { startTransition, useActionState, useState } from 'react'
 import { sendInquiry, type InquiryState } from '@/app/actions/inquiry'
 import Picker from './Picker'
 import { ANSWER_MAX, CHOICES, FILES_MAX, FILES_MAX_TOTAL, FILE_ACCEPT, MODES, TEXTS, UNDECIDED, fileAllowed, findMissing, formatBytes, type Mode } from '@/lib/inquiryForm'
-import { PULLS } from '@/lib/zipperSpec'
+import { PULLS, ZIPPER_ASSET_V } from '@/lib/zipperSpec'
 
 // 상담 문의 폼. 서버 액션(sendInquiry) → 백엔드 API 가 hyunwoo.kim@daeyanging.com 으로 메일(첨부 포함)을 보내고,
 // 보낸 분께는 접수 확인 메일을 보낸다.
@@ -40,7 +40,7 @@ const preview = (name: string, option: string): { icon?: React.ReactNode; hint?:
   if (option === UNDECIDED) return { hint: '상담하며 정해요' }
   const key = name === 'q_kind' ? KIND_ICON[option] : name === 'q_slider' ? PULLS.find((p) => p.label === option)?.key : undefined
   if (!key) return {}
-  const src = name === 'q_kind' ? `/zipper/kind-${key}-icon.webp` : `/zipper/pull-${key}-gold.webp`
+  const src = (name === 'q_kind' ? `/zipper/kind-${key}-icon.webp` : `/zipper/pull-${key}-gold.webp`) + `?v=${ZIPPER_ASSET_V}`
   // eslint-disable-next-line @next/next/no-img-element -- 미리 줄여 둔 작은 WebP 썸네일
   return { icon: <img src={src} alt="" className={`pick__photo pick__photo--${name === 'q_kind' ? 'kind' : 'pull'}${LONG.has(key) ? ' pick__photo--long' : ''}`} loading="lazy" decoding="async" /> }
 }

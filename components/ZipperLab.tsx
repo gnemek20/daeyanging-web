@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { PopBox } from './Picker'
 import ZipperPlay from './ZipperPlay'
-import { DEFAULT_SPEC, KINDS, METALS, PULLS, TAPE_COLORS, fixSpec, isLight, specVars, type Spec } from '@/lib/zipperSpec'
+import { DEFAULT_SPEC, KINDS, METALS, PULLS, TAPE_COLORS, fixSpec, isLight, specVars, ZIPPER_ASSET_V, type Spec } from '@/lib/zipperSpec'
 
 // 가이드 맨 위 "직접 골라 보기": 상담 문의 양식처럼 종류 · 슬라이더 두 가지만 고른다.
 //   종류 상자: 지퍼 종류 4가지 + 컬러(테이프) / 슬라이더 상자: 손잡이 6가지 + 컬러(도금 또는 원하는 색)
@@ -14,10 +14,10 @@ const metalBg = (stops: readonly string[]) => `linear-gradient(150deg, ${stops[0
 // 미리 줄여 둔 작은 WebP 썸네일(종류: 이 부분 확대 사진, 손잡이: slider.png 에서 자른 사진)
 /* eslint-disable @next/next/no-img-element */
 const KindIcon = ({ kind }: { kind: Spec['kind'] }) => (
-  <img src={`/zipper/kind-${kind}-icon.webp`} alt="" className="pick__photo pick__photo--kind" loading="lazy" decoding="async" />
+  <img src={`/zipper/kind-${kind}-icon.webp?v=${ZIPPER_ASSET_V}`} alt="" className="pick__photo pick__photo--kind" loading="lazy" decoding="async" />
 )
 const PullIcon = ({ pull }: { pull: Spec['pull'] }) => (
-  <img src={`/zipper/pull-${pull}-gold.webp`} alt="" className="pick__photo" loading="lazy" decoding="async" />
+  <img src={`/zipper/pull-${pull}-gold.webp?v=${ZIPPER_ASSET_V}`} alt="" className="pick__photo" loading="lazy" decoding="async" />
 )
 /* eslint-enable @next/next/no-img-element */
 
