@@ -41,21 +41,18 @@ const markerStation = (line: string, color: string) => `
   box-shadow:0 2px 8px rgba(23,24,28,.3);
 ">${line}</div>`
 
+// 회사 정보 말풍선: 아래 꼬리가 핀 머리를 가리켜 "여기에 대양ING" 가 바로 읽히게
 const INFO_WINDOW = `
-<div style="
-  background:#fff;border-radius:12px;
-  padding:1rem 1.2rem;min-width:220px;
-  box-shadow:0 10px 30px rgba(23,24,28,.18);
-  font-family:${FONT};
-">
-  <div style="font-size:1rem;color:#17181C;font-weight:700;margin-bottom:.35rem">대양ING</div>
-  <div style="font-size:.82rem;color:#5E626B;line-height:1.6">
-    서울특별시 종로구<br>김상옥로 59, 한아빌딩 3층
+<div style="position:relative;font-family:${FONT};filter:drop-shadow(0 8px 18px rgba(23,24,28,.2))">
+  <div style="background:#fff;border-radius:12px;padding:.8rem 1rem .85rem;min-width:200px">
+    <div style="font-size:.95rem;color:#17181C;font-weight:700;margin-bottom:.2rem">대양ING</div>
+    <div style="font-size:.8rem;color:#5E626B;line-height:1.55">서울특별시 종로구<br>김상옥로 59, 한아빌딩 3층</div>
+    <div style="margin-top:.6rem;display:flex;gap:.4rem">
+      <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#0052A4;color:#fff">1 종로5가 5분</span>
+      <span style="font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:999px;background:#00A5DE;color:#fff">4 동대문 10분</span>
+    </div>
   </div>
-  <div style="margin-top:.75rem;display:flex;gap:.45rem">
-    <span style="font-size:.72rem;font-weight:600;padding:.25rem .6rem;border-radius:999px;background:#0052A4;color:#fff">1 종로5가 5분</span>
-    <span style="font-size:.72rem;font-weight:600;padding:.25rem .6rem;border-radius:999px;background:#00A5DE;color:#fff">4 동대문 10분</span>
-  </div>
+  <div style="position:absolute;left:50%;bottom:-9px;width:18px;height:18px;margin-left:-9px;background:#fff;transform:rotate(45deg);border-radius:0 0 4px 0"></div>
 </div>`
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID
@@ -137,7 +134,8 @@ const NaverMap = () => {
       borderWidth: 0,
       backgroundColor: 'transparent',
       disableAnchor: true,
-      pixelOffset: new maps.Point(0, -74),
+      // 말풍선 꼬리 끝이 핀 머리 바로 위(약 10px)에 오게
+      pixelOffset: new maps.Point(0, -10),
     })
 
     maps.Event.addListener(mainMarker, 'click', () => {
