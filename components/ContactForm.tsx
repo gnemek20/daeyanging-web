@@ -47,6 +47,32 @@ const preview = (name: string, option: string): { icon?: React.ReactNode; hint?:
 const LONG = new Set(['cord', 'leather', 'rubber'])
 const POP = new Set(['q_kind', 'q_slider'])
 
+// 글자 칸 오른쪽의 비우기(×) 단추: 칸에 초점이 있고 내용이 있을 때만 보인다(CSS).
+// React 가 관리하는 칸도 onChange 가 불리도록 값 설정자로 비운 뒤 input 이벤트를 보낸다.
+const clearInput = (btn: HTMLButtonElement) => {
+  const el = btn.previousElementSibling as HTMLInputElement
+  Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(el, '')
+  el.dispatchEvent(new Event('input', { bubbles: true }))
+  el.focus()
+}
+const Clearable = ({ children }: { children: React.ReactNode }) => (
+  <div className="clr">
+    {children}
+    <button
+      type="button"
+      className="clr__x"
+      aria-label="내용 지우기"
+      tabIndex={-1}
+      onPointerDown={(e) => e.preventDefault()} // 초점을 칸에 그대로 둔다
+      onClick={(e) => clearInput(e.currentTarget)}
+    >
+      <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+        <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+      </svg>
+    </button>
+  </div>
+)
+
 // 좁은 화면의 선택지 열 수: 짧은 말(3자 이하)이 5개 이하면 한 줄에 다 놓고, 아니면 3열(남는 칸이 덜 생기게)
 const mobileCols = (opts: string[]) => (opts.length <= 5 && opts.every((o) => o.length <= 3) ? opts.length : 3)
 
@@ -135,11 +161,15 @@ const ContactForm = ({ email }: { email: string }) => {
       <div className="form__row">
         <label>
           <span>성함 / 회사명</span>
-          <input name="name" type="text" placeholder="홍길동 / (주)○○" autoComplete="name" maxLength={80} required defaultValue={f?.name} />
+          <Clearable>
+            <input name="name" type="text" placeholder="홍길동 / (주)○○" autoComplete="name" maxLength={80} required defaultValue={f?.name} />
+          </Clearable>
         </label>
         <label>
           <span>이메일</span>
-          <input name="email" type="email" placeholder="you@company.com" autoComplete="email" maxLength={200} required defaultValue={f?.email} />
+          <Clearable>
+            <input name="email" type="email" placeholder="you@company.com" autoComplete="email" maxLength={200} required defaultValue={f?.email} />
+          </Clearable>
         </label>
       </div>
 
@@ -189,15 +219,17 @@ const ContactForm = ({ email }: { email: string }) => {
           {TEXTS.map((t) => (
             <label key={t.name} className="spec-f__fld">
               <span className="spec-f__k">{t.label}</span>
-              <input
-                name={t.name}
-                type="text"
-                placeholder={t.placeholder}
-                value={answers[t.name] ?? ''}
-                onChange={(e) => setAnswer(t.name, e.currentTarget.value)}
-                maxLength={ANSWER_MAX}
-                autoComplete="off"
-              />
+              <Clearable>
+                <input
+                  name={t.name}
+                  type="text"
+                  placeholder={t.placeholder}
+                  value={answers[t.name] ?? ''}
+                  onChange={(e) => setAnswer(t.name, e.currentTarget.value)}
+                  maxLength={ANSWER_MAX}
+                  autoComplete="off"
+                />
+              </Clearable>
             </label>
           ))}
         </div>
