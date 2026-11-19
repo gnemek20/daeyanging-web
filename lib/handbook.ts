@@ -16,14 +16,13 @@ export const TOC = [
   { id: 'faq', label: '자주 묻는 질문' },
 ] as const
 
-// pin: 지퍼의 구조 사진(메탈 지퍼)에서 그 부품의 자리(%, 왼쪽 위 기준). 위 멈춤쇠는 사진 밖(지퍼 위쪽 끝)이라 없다
+// pin: 지퍼의 구조 사진(메탈 지퍼)에서 그 부품의 자리(%, 왼쪽 위 기준)
 export const PARTS: { n: string; name: string; other: string; role: string; pin?: { x: number; y: number } }[] = [
-  { n: '1', name: '테이프', other: 'Tape', role: '이가 붙어 있는 천. 옷에 봉제되는 부분입니다.', pin: { x: 40, y: 71 } },
+  { n: '1', name: '테이프', other: 'Tape', role: '이가 붙어 있는 천. 옷에 봉제되는 부분입니다.', pin: { x: 25, y: 55 } },
   { n: '2', name: '이', other: '엘리먼트, Teeth', role: '서로 맞물려 지퍼를 닫는 부분입니다.', pin: { x: 69, y: 64 } },
   { n: '3', name: '슬라이더', other: '몸체, Slider', role: '이를 맞물리거나 벌려 지퍼를 여닫습니다.', pin: { x: 28, y: 39 } },
   { n: '4', name: '손잡이', other: '풀러, Puller', role: '슬라이더를 잡고 당기는 부분입니다. 모양과 소재, 각인을 고를 수 있습니다.', pin: { x: 46, y: 49 } },
   { n: '5', name: '아래 멈춤쇠', other: 'Bottom stop', role: '지퍼 아래쪽 끝을 막습니다.', pin: { x: 94, y: 83 } },
-  { n: '6', name: '위 멈춤쇠', other: 'Top stop', role: '지퍼 위쪽 끝에서 슬라이더가 빠지지 않게 막습니다.' },
 ]
 
 export const SIZES = [
