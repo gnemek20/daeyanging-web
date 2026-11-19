@@ -7,7 +7,7 @@ import { ORDER_CHECKLIST } from '@/lib/guides'
 import { CARE, COLOR_TIPS, FAQ, MEASURE, ORDER_STEPS, PARTS, PICKS, SIZES, TOC, WORDS } from '@/lib/handbook'
 import { PHOTOS, PHOTO_QUALITY, type Photo } from '@/lib/photos'
 import { PRODUCTS, PARTS as PULLER_PHOTOS } from '@/lib/products'
-import { DEFAULT_SPEC, LOCKS, METALS, specVars, type Spec } from '@/lib/zipperSpec'
+import { DEFAULT_SPEC, LOCKS, specVars, type Spec } from '@/lib/zipperSpec'
 
 // 가이드 화면: 왼쪽 목차(지금 보는 꼭지를 진하게) + 오른쪽 본문.
 // 맨 위 "직접 골라 보기"에서 설정을 바꿔 가며 그림으로 확인하고, 아래 꼭지들은 표·목록·그림·사진으로 자세히 본다.
@@ -117,21 +117,8 @@ const Handbook = () => {
 
         <Sec id="color" n={n('color')} title="컬러와 마감">
           <p>
-            컬러에는 제한이 없습니다. 테이프는 원하는 색으로 염색하고, 슬라이더와 메탈 이는 도금이나 도장으로 원하는 색을 냅니다. 아래는 자주
-            쓰는 금속 도금입니다.
+            컬러에는 제한이 없습니다. 테이프는 원하는 색으로 염색하고, 슬라이더와 메탈 이는 도금이나 도장으로 원하는 색을 냅니다.
           </p>
-          <ul className="hb__metals" aria-label="자주 쓰는 금속 도금">
-            {METALS.map((m) => (
-              <li key={m.key}>
-                <span
-                  className="hb__metal"
-                  style={{ background: `linear-gradient(160deg, ${m.stops[0]}, ${m.stops[1]} 45%, ${m.stops[2]} 80%, ${m.stops[3]})` }}
-                  aria-hidden="true"
-                />
-                {m.name}
-              </li>
-            ))}
-          </ul>
           <ul className="hb__tips">
             {COLOR_TIPS.map((c) => (
               <li key={c.t}>

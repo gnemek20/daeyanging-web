@@ -2214,24 +2214,6 @@ select {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-.hb__metals {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem 1.5rem;
-  li {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    font-size: 0.93rem;
-    font-weight: 500;
-  }
-}
-.hb__metal {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--r);
-  box-shadow: inset 0 0 0 1px rgb(18 19 22 / 0.14);
-}
 .hb__tips {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
