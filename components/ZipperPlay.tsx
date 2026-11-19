@@ -35,6 +35,7 @@ const PHOTO = {
   pitch: 29 * PX, // 한쪽 이 간격
   tooth: { w: 14 * PX, h: 46 * PX, up: -35.5 * PX, dn: -9.5 * PX, dnShift: 15 * PX }, // up/dn: CY 기준 위쪽 끝
   slider: { w: 398 * PX, h: 178 * PX, right: 80 }, // 넓은 머리(오른쪽 끝)가 몸통 그림의 x=80 에
+  pivot: { x: 243, y: 89 }, // 손잡이가 몸통 걸이 고리에 걸린 점(사진 px) = 흔들림 축
   tape: { w: 512 * PX, h: 128 * PX },
 }
 
@@ -155,10 +156,11 @@ const ToothPatterns = () => (
 // 슬라이더·손잡이도 호수만큼: 몸통 가운데(그림 좌표 11)를 축으로
 const slide = (f: number) => `translate(11 ${CY}) scale(${f}) translate(-31 0)`
 
-const SliderBody = ({ f }: { f: number }) => (
+// 슬라이더 사진은 몸통(위층, 고정)과 손잡이(아래층, 걸이 고리를 축으로 흔들림) 두 장
+const SliderPart = ({ f, part }: { f: number; part: 'body' | 'pull' }) => (
   <g transform={slide(f)}>
     <image
-      href="/zipper/slider.webp"
+      href={`/zipper/slider-${part}.webp`}
       x={PHOTO.slider.right - PHOTO.slider.w}
       y={-PHOTO.slider.h / 2}
       width={PHOTO.slider.w}
@@ -174,8 +176,16 @@ const Layer = ({ children }: { children: React.ReactNode }) => (
   </svg>
 )
 
+// 손잡이 흔들림 축(슬라이더 위치 기준 x, 가운데 줄 기준 y; 그림 단위)
+const pivotAt = (f: number) => ({
+  x: 11 + f * (PHOTO.slider.right - PHOTO.slider.w + PHOTO.pivot.x * PX - 31),
+  y: f * (PHOTO.pivot.y * PX - PHOTO.slider.h / 2),
+})
+const PULL_MAX = 14 // 손잡이가 기울 수 있는 최대 각도(평면에 놓인 손잡이라 크게 돌지 않는다)
+
 const ZipperPlay = ({ kind, size = 5 }: { kind: ZipKind; size?: number }) => {
   const f = sizeScale(size)
+  const pv = pivotAt(f)
 
   // 한 번만 붙인다(형식이 바뀌어 다시 그려져도 슬라이더 위치·스프링 상태 유지)
   const setup = useCallback((root: HTMLDivElement | null) => {
@@ -207,9 +217,21 @@ const ZipperPlay = ({ kind, size = 5 }: { kind: ZipKind; size?: number }) => {
     let dragging = false
     let offset = 0
     let left = 0
+    let top = 0
+    let ptrX = 0 // 끄는 중인 포인터(화면 px)
+    let ptrY = 0
     let touched = false
     let aria = -1
 
+    // 끄는 동안 손잡이가 포인터 쪽으로 기운다. 포인터가 축 오른쪽(몸통 위)이어도 위아래 위치만큼 기울게,
+    // 가로 거리는 최소 40 단위로 본다.
+    const aim = () => {
+      if (!dragging) return 0
+      const p = pivotAt(Number(root.dataset.f) || 1) // 호수 배율은 렌더마다 data-f 로 갱신된다
+      const dx = (ptrX - left) / u - (s + p.x)
+      const dy = (ptrY - top) / u - (root.clientHeight / 2 / u + p.y)
+      return (Math.atan2(-dy, Math.max(-dx, 40)) * 180) / Math.PI
+    }
     const px = (n: number) => `translate3d(${(n * u).toFixed(2)}px,0,0)`
     const paint = () => {
       closedWin.style.transform = px(s - W)
@@ -240,7 +262,7 @@ const ZipperPlay = ({ kind, size = 5 }: { kind: ZipKind; size?: number }) => {
       for (let i = 0; i < n; i++) {
         v += (-k * (s - target) - c * v) * h
         s += v * h
-        const at = reduce.matches ? 0 : clamp(-v * 0.03, -32, 32)
+        const at = reduce.matches ? 0 : clamp(aim() - v * 0.012, -PULL_MAX, PULL_MAX)
         av += (-170 * (a - at) - 9 * av) * h
         a += av * h
       }
@@ -268,7 +290,11 @@ const ZipperPlay = ({ kind, size = 5 }: { kind: ZipKind; size?: number }) => {
       pid = e.pointerId
       startX = e.clientX
       startY = e.clientY
-      left = root.getBoundingClientRect().left
+      const r = root.getBoundingClientRect()
+      left = r.left
+      top = r.top
+      ptrX = e.clientX
+      ptrY = e.clientY
       dragging = false
       touch()
     }
@@ -283,6 +309,8 @@ const ZipperPlay = ({ kind, size = 5 }: { kind: ZipKind; size?: number }) => {
         offset = Math.abs(at - s) < 70 ? at - s : 0 // 슬라이더를 잡았으면 잡은 자리 유지, 아니면 손가락으로 끌려온다
         k = 900
       }
+      ptrX = e.clientX
+      ptrY = e.clientY
       target = rubber(unitsAt(e.clientX) - offset)
       kick()
     }
@@ -369,7 +397,7 @@ const ZipperPlay = ({ kind, size = 5 }: { kind: ZipKind; size?: number }) => {
   const half = (h: 'up' | 'dn', dy = 0) => <use href={`#zp-tape-${h}`} y={dy} />
 
   return (
-    <div className="zp" ref={setup} style={{ '--s': S0 } as React.CSSProperties}>
+    <div className="zp" ref={setup} data-f={f} style={{ '--s': S0 } as React.CSSProperties}>
       <svg className="zp__defs" aria-hidden="true" focusable="false">
         <defs>
           <linearGradient id="zp-metal" x1="0" y1="0" x2="0" y2="1">
@@ -473,12 +501,15 @@ const ZipperPlay = ({ kind, size = 5 }: { kind: ZipKind; size?: number }) => {
       </div>
 
       <div className="zp__slider" aria-hidden="true">
-        <Layer>
-          <SliderBody f={f} />
-        </Layer>
-        <div className="zp__pull">
-          {/* 손잡이는 슬라이더 사진에 함께 들어 있다 */}
+        {/* 손잡이(아래층)는 걸이 고리를 축으로 흔들리고, 몸통(위층)이 이음매를 덮는다 */}
+        <div className="zp__pull" style={{ transformOrigin: `calc(${pv.x} * var(--u)) calc(50% + ${pv.y} * var(--u))` }}>
+          <Layer>
+            <SliderPart f={f} part="pull" />
+          </Layer>
         </div>
+        <Layer>
+          <SliderPart f={f} part="body" />
+        </Layer>
         {/* 직접 해 보라는 안내: 슬라이더를 따라다니고, 처음 만지면 사라진다 */}
         <span className="zp__ping" />
         <span className="zp__hint">
