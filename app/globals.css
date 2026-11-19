@@ -950,13 +950,6 @@ select {
     display: none;
   }
 }
-/* 손잡이: 슬라이더 몸통의 고리(그림 좌표 2, 가운데+8)를 축으로 흔들린다 */
-.zp__pull {
-  position: absolute;
-  inset: 0;
-  transform-origin: calc(2 * var(--u)) calc(50% + 8 * var(--u));
-  will-change: transform;
-}
 .zp__handle {
   position: absolute;
   left: calc(-44 * var(--u));

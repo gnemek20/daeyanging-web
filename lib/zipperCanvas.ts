@@ -11,7 +11,7 @@ type RGB = readonly [number, number, number]
 
 // 구운 그림 한 장과 그것이 놓일 자리(그림 단위, 호수 배율을 걸기 전 좌표). 그림자 여백까지 포함한다
 export type Sprite = { c: HTMLCanvasElement; x: number; y: number; w: number; h: number }
-export type Baked = { full: Sprite; up: Sprite; dn: Sprite; body: Sprite; pull: Sprite }
+export type Baked = { full: Sprite; up: Sprite; dn: Sprite; slider: Sprite }
 
 export const VW = 640 // 그림 좌표 폭·높이(ZipperPlay 와 같음)
 export const VH = 512
@@ -41,7 +41,7 @@ const canvas = (w: number, h: number) => {
 }
 
 // 사진 색 입히기(전에 쓰던 SVG 필터와 같은 계산): 밝기(회색) × 색 × slope. soft 면 색을 20% 뺀다(천이 희게 바랜 느낌)
-// metalZone: 끈·가죽·러버 손잡이 사진에서 몸통 쪽(오른쪽) 이 폭(px) 안의 밝은 무채색(금속 고리·몸통 끝)만 물들인다
+// metalZone: 끈·가죽·러버 슬라이더 사진에서 몸통 쪽(오른쪽) 이 폭(px) 안의 밝은 무채색(몸통·금속 고리)만 물들인다
 const tint = (img: HTMLImageElement, color: RGB | null, slope: number, soft = false, metalZone = 0) => {
   const c = canvas(img.naturalWidth, img.naturalHeight)
   const x = c.getContext('2d', { willReadFrequently: true })!
@@ -139,7 +139,6 @@ export const bake = async (
   const parts = ['full', 'up', 'dn'] as const
   const imgs = await Promise.all([
     ...parts.flatMap((p) => [load(`/zipper/${kind}-${p}.webp`), st.mask ? load(`/zipper/${kind}-${p}-t.webp`) : null]),
-    load(`/zipper/pull-${pull}-body.webp`),
     load(`/zipper/pull-${pull}.webp`),
   ])
   const stripRect = { x: -VW, y: CY + st.y, w: st.len, h: st.h }
@@ -150,15 +149,13 @@ export const bake = async (
     if (teeth) layers.push(tint(teeth, colors.teeth, st.teeth))
     return compose(layers, stripRect, 1, { sd: 3.5, dy: 3 })
   })
-  const body = imgs[6]!
-  const pi = imgs[7]!
+  const pi = imgs[6]!
   const ph = PULL_PHOTO[pull]
   return {
     full: strips[0],
     up: strips[1],
     dn: strips[2],
-    body: compose([tint(body, colors.slider, 1.25)], ph.body, 1, { sd: 2.6, dy: 3 }),
-    pull: compose([tint(pi, colors.slider, 1.25, false, ph.metal ? 0 : ph.mz)], ph.pull, 1, { sd: 2.6, dy: 3 }),
+    slider: compose([tint(pi, colors.slider, 1.25, false, ph.metal ? 0 : ph.mz)], ph, 1, { sd: 2.6, dy: 3 }),
   }
 }
 
