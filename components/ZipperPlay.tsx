@@ -26,10 +26,17 @@ const S_OPEN = 300 // 섹션에 들어오면 여기까지 저절로 열린다
 const SMIN = 24
 const SMAX = 620
 
-// 이빨 줄 반폭(가운데 줄에서 테이프 끝까지)과 한 칸 간격
-const BAND: Record<ZipKind, number> = { metal: 9, vislon: 10, coil: 7, conceal: 0 }
-
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
+
+// 사진 부품(public/zipper, 원본 사진 한 장에서 잘라 가로 방향으로 돌린 것). 사진 1px = PX 그림 단위.
+// 이(메탈)·테이프 결·슬라이더를 설정 색으로 물들여 조합한다.
+const PX = 0.75
+const PHOTO = {
+  pitch: 29 * PX, // 한쪽 이 간격
+  tooth: { w: 14 * PX, h: 46 * PX, up: -35.5 * PX, dn: -9.5 * PX, dnShift: 15 * PX }, // up/dn: CY 기준 위쪽 끝
+  slider: { w: 398 * PX, h: 178 * PX, right: 80 }, // 넓은 머리(오른쪽 끝)가 몸통 그림의 x=80 에
+  tape: { w: 512 * PX, h: 128 * PX },
+}
 
 // f: 호수에 따른 배율(5호 = 1). 이빨 줄은 가운데(W/2, CY)를 축으로 키우고 줄인다
 const grow = (f: number) => `translate(${W / 2} ${CY}) scale(${f}) translate(${-W / 2} ${-CY})`
@@ -50,49 +57,51 @@ const Teeth = ({ kind, half, f }: { kind: ZipKind; half: 'up' | 'dn'; f: number 
   return (
     <g transform={grow(f)}>
       {/* 줄였을 때도 화면 끝까지 닿도록 그림 폭의 세 배로 */}
-      <rect x={-W} y={CY - 34} width={W * 3} height={68} fill={`url(#zp-p-${kind}-${half})`} filter="url(#zp-tsh)" />
+      <rect
+        x={-W}
+        y={CY - 34}
+        width={W * 3}
+        height={68}
+        fill={`url(#zp-p-${kind}-${half})`}
+        filter={kind === 'metal' ? 'url(#zp-tint-s)' : 'url(#zp-tsh)'}
+      />
     </g>
   )
 }
 
-// 테이프 반쪽: 바탕 + 결 + 가운데로 갈수록 그늘 + 박음질
-const Tape = ({ kind, half, f }: { kind: ZipKind; half: 'up' | 'dn'; f: number }) => {
+// 테이프 반쪽: 사진 테이프(public/zipper/tape.webp)를 반복해 깔고 설정 색으로 물들인다(그린 그래픽 없음)
+const Tape = ({ half }: { half: 'up' | 'dn' }) => {
   const up = half === 'up'
-  const b = BAND[kind] * f
   const y = up ? -320 : CY
   const h = up ? CY + 320 : H + 320 - CY
   return (
     <g filter="url(#zp-hsh)">
-      <rect x={-60} y={y} width={W + 120} height={h} className="zp__tape" />
-      <rect x={-60} y={y} width={W + 120} height={h} fill="url(#zp-weave)" />
-      <rect x={-60} y={y} width={W + 120} height={h} fill={`url(#zp-shade-${half})`} />
-      {b > 0 && <rect x={-60} y={up ? CY - b : CY} width={W + 120} height={b} className="zp__core" />}
-      <path
-        d={`M-60 ${up ? CY - 96 : CY + 96} H${W + 60}`}
-        stroke="#fff"
-        strokeOpacity={0.32}
-        strokeWidth={1.4}
-        strokeDasharray="7 5"
-      />
+      <rect x={-60} y={y} width={W + 120} height={h} fill="url(#zp-photo-tape)" filter="url(#zp-tint-tape)" />
     </g>
   )
 }
 
 const ToothPatterns = () => (
   <>
-    {/* 금속: 마감(메탈·무광·유광) 그라데이션 */}
+    {/* 금속: 사진에서 자른 이 하나를 반복(색은 zp-tint-s 필터가 마감 색으로 물들인다) */}
     {(['up', 'dn'] as const).map((h) => (
       <pattern
         key={`m${h}`}
         id={`zp-p-metal-${h}`}
         patternUnits="userSpaceOnUse"
-        x={h === 'up' ? 0 : 11}
+        x={h === 'up' ? 0 : PHOTO.tooth.dnShift}
         y={0}
-        width={22}
+        width={PHOTO.pitch}
         height={H}
       >
-        <rect x={4.5} y={h === 'up' ? CY - 26 : CY - 9} width={13} height={35} rx={3} fill="url(#zp-metal)" />
-        <rect x={7} y={h === 'up' ? CY - 23 : CY - 5} width={3} height={28} rx={1.5} fill="#fff" opacity={0.55} />
+        <image
+          href={`/zipper/tooth-${h}.webp`}
+          x={(PHOTO.pitch - PHOTO.tooth.w) / 2}
+          y={CY + (h === 'up' ? PHOTO.tooth.up : PHOTO.tooth.dn)}
+          width={PHOTO.tooth.w}
+          height={PHOTO.tooth.h}
+          preserveAspectRatio="none"
+        />
       </pattern>
     ))}
     {/* 비슬론(플라스틱): 테이프보다 조금 진한 같은 색 */}
@@ -147,23 +156,15 @@ const ToothPatterns = () => (
 const slide = (f: number) => `translate(11 ${CY}) scale(${f}) translate(-31 0)`
 
 const SliderBody = ({ f }: { f: number }) => (
-  <g transform={slide(f)} filter="url(#zp-ssh)">
-    <path
-      d="M-8 -34 H54 Q70 -34 74 -20 L80 0 L74 20 Q70 34 54 34 H-8 Q-18 34 -18 24 V-24 Q-18 -34 -8 -34 Z"
-      fill="url(#zp-slider)"
+  <g transform={slide(f)}>
+    <image
+      href="/zipper/slider.webp"
+      x={PHOTO.slider.right - PHOTO.slider.w}
+      y={-PHOTO.slider.h / 2}
+      width={PHOTO.slider.w}
+      height={PHOTO.slider.h}
+      filter="url(#zp-tint-k)"
     />
-    <path d="M-6 -24 H52" stroke="#fff" strokeOpacity={0.6} strokeWidth={2.4} strokeLinecap="round" />
-    <circle cx={22} cy={8} r={7} fill="url(#zp-slider)" stroke="#000" strokeOpacity={0.25} />
-  </g>
-)
-
-const Pull = ({ f }: { f: number }) => (
-  <g transform={slide(f)} filter="url(#zp-ssh)">
-    <g transform="rotate(-72 22 8)">
-      <rect x={6} y={2} width={32} height={104} rx={14} fill="url(#zp-slider)" />
-      <rect x={10} y={10} width={4} height={86} rx={2} fill="#fff" opacity={0.45} />
-      <rect x={15} y={66} width={14} height={28} rx={7} className="zp__tape" />
-    </g>
   </g>
 )
 
@@ -384,18 +385,6 @@ const ZipperPlay = ({ kind, size = 5 }: { kind: ZipKind; size?: number }) => {
             <stop offset="0.75" style={{ stopColor: 'var(--cfg-k2)' }} />
             <stop offset="1" style={{ stopColor: 'var(--cfg-k3)' }} />
           </linearGradient>
-          <linearGradient id="zp-shade-up" gradientUnits="userSpaceOnUse" x1="0" y1={CY - 140} x2="0" y2={CY}>
-            <stop offset="0" stopColor="#000" stopOpacity="0" />
-            <stop offset="1" stopColor="#000" stopOpacity="0.22" />
-          </linearGradient>
-          <linearGradient id="zp-shade-dn" gradientUnits="userSpaceOnUse" x1="0" y1={CY} x2="0" y2={CY + 140}>
-            <stop offset="0" stopColor="#000" stopOpacity="0.16" />
-            <stop offset="1" stopColor="#000" stopOpacity="0" />
-          </linearGradient>
-          <pattern id="zp-weave" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
-            <path d="M0 1h4" stroke="#fff" strokeOpacity="0.07" strokeWidth="1" />
-            <path d="M0 3h4" stroke="#000" strokeOpacity="0.06" strokeWidth="1" />
-          </pattern>
           <filter id="zp-hsh" filterUnits="userSpaceOnUse" x={-80} y={-340} width={W + 160} height={H + 680}>
             <feDropShadow dx="0" dy="3" stdDeviation="3.5" floodColor="#000" floodOpacity="0.4" />
           </filter>
@@ -405,10 +394,38 @@ const ZipperPlay = ({ kind, size = 5 }: { kind: ZipKind; size?: number }) => {
           <filter id="zp-ssh" x="-40%" y="-40%" width="180%" height="180%">
             <feDropShadow dx="0" dy="3" stdDeviation="2.6" floodColor="#000" floodOpacity="0.35" />
           </filter>
+          {/* 사진 부품 물들이기: 사진의 명암(밝기)은 그대로, 색만 마감 색으로 → 그림자 */}
+          {(['s', 'k'] as const).map((v) => (
+            <filter key={v} id={`zp-tint-${v}`} x="-20%" y="-20%" width="140%" height="140%" colorInterpolationFilters="sRGB">
+              <feColorMatrix in="SourceGraphic" type="saturate" values="0" result="g" />
+              <feFlood style={{ floodColor: `var(--cfg-${v}1)` }} result="c" />
+              <feBlend in="c" in2="g" mode="multiply" result="m" />
+              <feComponentTransfer in="m" result="b">
+                <feFuncR type="linear" slope="1.55" />
+                <feFuncG type="linear" slope="1.55" />
+                <feFuncB type="linear" slope="1.55" />
+              </feComponentTransfer>
+              <feComposite in="b" in2="SourceAlpha" operator="in" result="t" />
+              <feDropShadow in="t" dx="0" dy={v === 's' ? 1.5 : 3} stdDeviation={v === 's' ? 1.2 : 2.6} floodColor="#000" floodOpacity="0.4" />
+            </filter>
+          ))}
+          <filter id="zp-tint-tape" x="0" y="0" width="100%" height="100%" colorInterpolationFilters="sRGB">
+            <feColorMatrix in="SourceGraphic" type="saturate" values="0" result="g" />
+            <feFlood style={{ floodColor: 'var(--cfg-tape)' }} result="c" />
+            <feBlend in="c" in2="g" mode="multiply" result="m" />
+            <feComponentTransfer in="m">
+              <feFuncR type="linear" slope="2" />
+              <feFuncG type="linear" slope="2" />
+              <feFuncB type="linear" slope="2" />
+            </feComponentTransfer>
+          </filter>
+          <pattern id="zp-photo-tape" patternUnits="userSpaceOnUse" width={PHOTO.tape.w} height={PHOTO.tape.h}>
+            <image href="/zipper/tape.webp" width={PHOTO.tape.w} height={PHOTO.tape.h} preserveAspectRatio="none" />
+          </pattern>
           <ToothPatterns />
           {(['up', 'dn'] as const).map((h) => (
             <g key={h} id={`zp-tape-${h}`}>
-              <Tape kind={kind} half={h} f={f} />
+              <Tape half={h} />
             </g>
           ))}
           {(['up', 'dn'] as const).map((h) => (
@@ -460,9 +477,7 @@ const ZipperPlay = ({ kind, size = 5 }: { kind: ZipKind; size?: number }) => {
           <SliderBody f={f} />
         </Layer>
         <div className="zp__pull">
-          <Layer>
-            <Pull f={f} />
-          </Layer>
+          {/* 손잡이는 슬라이더 사진에 함께 들어 있다 */}
         </div>
         {/* 직접 해 보라는 안내: 슬라이더를 따라다니고, 처음 만지면 사라진다 */}
         <span className="zp__ping" />

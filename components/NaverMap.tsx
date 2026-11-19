@@ -135,7 +135,7 @@ const NaverMap = () => {
       backgroundColor: 'transparent',
       disableAnchor: true,
       // 말풍선 꼬리 끝이 핀 머리 바로 위(약 10px)에 오게
-      pixelOffset: new maps.Point(0, -10),
+      pixelOffset: new maps.Point(0, -16),
     })
 
     maps.Event.addListener(mainMarker, 'click', () => {

@@ -19,14 +19,21 @@ const VisitCta = () => {
             <span className="ph">샘플 한 개부터 대량 생산까지,</span> <span className="ph">사양을 몰라도 괜찮습니다.</span>
           </p>
 
-          <div className="visit__actions">
-            <Link className="btn btn--light visit__cta" href="/contact">
-              상담 문의하기 <span aria-hidden="true">→</span>
-            </Link>
-            <a className="btn visit__mail" href={`mailto:${SITE.email}`}>
-              메일 보내기
-            </a>
-          </div>
+          {/* 지도 옆이라 눈이 지도로 가기 쉬워서, 문의 양식으로 가는 버튼은 왼쪽 칸 폭 전체의 큰 카드로 둔다 */}
+          <Link className="visit__go" href="/contact">
+            <span className="visit__go-text">
+              <strong>상담 문의 양식 작성하기</strong>
+              <span>종류·호수·컬러만 골라 보내면 메일로 회신드립니다</span>
+            </span>
+            <span className="visit__go-arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+            </span>
+          </Link>
+          <p className="visit__mail">
+            또는 <a href={`mailto:${SITE.email}`}>{SITE.email}</a> 로 바로 메일
+          </p>
 
           <address className="visit__addr">
             <strong>서울특별시 종로구 김상옥로 59, 한아빌딩 3층</strong>
