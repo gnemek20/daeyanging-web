@@ -4268,8 +4268,37 @@ html:has(.gal__dlg[open]) {
     height: 30px;
   }
 }
+/* 펼친 목록: 양식 바탕(남색)보다 한 톤 밝은 남색 카드, 칸 내용은 가운데 */
 .form .pick--form .pick__panel {
   z-index: 30;
+  gap: 0.35rem;
+  padding: 0.45rem;
+  border-color: rgb(255 255 255 / 0.16);
+  background: #2f418f;
+  box-shadow:
+    0 16px 40px rgb(8 12 40 / 0.45),
+    inset 0 1px 0 rgb(255 255 255 / 0.08);
+}
+.form .pick--form .pick__opt {
+  align-content: center;
+  min-height: 6.25rem;
+  color: #fff;
+  &:hover {
+    background: rgb(255 255 255 / 0.08);
+  }
+  &[aria-selected='true'] {
+    border-color: rgb(255 255 255 / 0.7);
+    background: rgb(255 255 255 / 0.12);
+  }
+  &:focus-visible {
+    outline-color: #fff;
+  }
+  .pick__hint {
+    color: rgb(255 255 255 / 0.6);
+  }
+  .pick__photo {
+    border-radius: 3px;
+  }
 }
 @media (max-width: 560px) {
   .form .pick--form .pick__btn {
