@@ -1,4 +1,4 @@
-// 자동 생성: scratchpad strips_v4.py · slider_v3.py (tape.png · texture.png · slider.png → public/zipper). 직접 고치지 말 것.
+// 자동 생성: scratchpad strips_v4.py · extract_v2.py (tape.png · texture.png · slider.png → public/zipper). 직접 고치지 말 것.
 // 단위는 가이드 지퍼 그림 좌표(가로 640). y 는 가운데 줄 기준(위가 음수). 줄 그림(full·up·dn)은 모두 같은 자리·크기. 줄 그림(full·up·dn)은 모두 같은 자리·크기. 줄 그림(full·up·dn)은 모두 같은 자리·크기. 줄 그림(full·up·dn)은 모두 같은 자리·크기. 줄 그림(full·up·dn)은 모두 같은 자리·크기. 줄 그림(full·up·dn)은 모두 같은 자리·크기. 줄 그림(full·up·dn)은 모두 같은 자리·크기.
 
 export const STRIP = {
@@ -8,18 +8,13 @@ export const STRIP = {
   conceal: { len: 1920.0, y: -115.0, h: 230.0, tape: 1.962, teeth: 1.7, mask: false },
 } as const
 
-// 슬라이더 몸통 사진(손잡이와 상관없이 하나): 왼쪽 위 x·y, 폭·높이(그림 단위, y 는 가운데 줄 기준)
-export const SLIDER_BODY = { x: -14.05, y: -38.95, w: 94.05, h: 78.85 } as const
-
-// 손잡이가 걸리는 곳(몸통 걸이 끝) x. 손잡이는 이 점을 축으로 흔들린다
-export const PULL_PIVOT = 2.1
-
-// 손잡이 사진: 왼쪽 위 x·y, 폭·높이, 금속인지(금속이면 슬라이더 색으로 물들인다)
+// 손잡이별 슬라이더 사진(원본 한 장을 걸이 높이에서 몸통·손잡이로 나눔): 그림 단위 자리·크기(y 는 가운데 줄 기준),
+// pivot 손잡이가 흔들리는 축 x, metal 손잡이가 금속인지, mz 끈·가죽·러버 사진에서 몸통 쪽 금속 고리 폭(px)
 export const PULL_PHOTO = {
-  tab: { x: -204.05, y: -41.8, w: 217.55, h: 76.95, metal: true },
-  plate: { x: -242.87, y: -43.23, w: 256.5, h: 82.14, metal: true },
-  ring: { x: -208.8, y: -70.3, w: 223.25, h: 132.05, metal: true },
-  cord: { x: -251.51, y: -28.31, w: 256.5, h: 48.53, metal: false },
-  leather: { x: -249.48, y: -32.81, w: 256.5, h: 56.33, metal: false },
-  rubber: { x: -242.37, y: -26.8, w: 256.5, h: 49.22, metal: false },
+  tab: { body: { x: -16.3, y: -42.3, w: 96.3, h: 84.6 }, pull: { x: -195.4, y: -42.3, w: 194.4, h: 84.6 }, pivot: -8.2, metal: true, mz: 0 },
+  plate: { body: { x: -16.3, y: -58.05, w: 96.3, h: 116.1 }, pull: { x: -255.88, y: -49.34, w: 253.8, h: 99.0 }, pivot: -8.2, metal: true, mz: 0 },
+  ring: { body: { x: -16.3, y: -72.45, w: 96.3, h: 144.9 }, pull: { x: -159.4, y: -72.45, w: 158.4, h: 144.9 }, pivot: -8.2, metal: true, mz: 0 },
+  cord: { body: { x: -16.3, y: -43.65, w: 96.3, h: 87.3 }, pull: { x: -364.78, y: -26.19, w: 360.9, h: 52.2 }, pivot: -8.2, metal: false, mz: 53 },
+  leather: { body: { x: -16.3, y: -67.5, w: 96.3, h: 135.0 }, pull: { x: -364.78, y: -40.5, w: 360.9, h: 81.0 }, pivot: -8.2, metal: false, mz: 60 },
+  rubber: { body: { x: -16.3, y: -48.15, w: 96.3, h: 96.3 }, pull: { x: -365.68, y: -28.89, w: 361.8, h: 57.6 }, pivot: -8.2, metal: false, mz: 53 },
 } as const

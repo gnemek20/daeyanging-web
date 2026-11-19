@@ -89,7 +89,7 @@ const ZipperLab = () => {
     <div className="lab" style={specVars(spec) as React.CSSProperties}>
       <div className="lab__view">
         <div className="lab__play">
-          <ZipperPlay kind={spec.kind} size={spec.size} pull={spec.pull} />
+          <ZipperPlay kind={spec.kind} size={spec.size} pull={spec.pull} tint={`${spec.tape}|${spec.slider}|${spec.teeth}`} />
         </div>
       </div>
 

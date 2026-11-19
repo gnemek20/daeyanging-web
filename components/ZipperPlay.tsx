@@ -1,7 +1,8 @@
 'use client'
 
-import { useCallback } from 'react'
-import { PULL_PHOTO, PULL_PIVOT, SLIDER_BODY, STRIP } from '@/lib/zipperParts'
+import { useCallback, useEffect, useRef } from 'react'
+import { PULL_PHOTO, STRIP } from '@/lib/zipperParts'
+import { bake, drawSlider, drawStrip, readColor, type Baked } from '@/lib/zipperCanvas'
 import { sizeScale, type Pull } from '@/lib/zipperSpec'
 
 // 가이드 "직접 골라 보기"의 가까이 보기: 끌어서 여닫는 지퍼(테이프에 글자는 넣지 않는다).
@@ -9,7 +10,9 @@ import { sizeScale, type Pull } from '@/lib/zipperSpec'
 // 색은 부모 상자의 CSS 변수(--cfg-tape 테이프, --cfg-s1 메탈 이, --cfg-teeth 수지·코일 이, --cfg-k1 슬라이더)로 물들인다.
 //
 // 성능 설계
-// - 지퍼 그림(테이프·이빨)은 한 번만 그려 두고 <use> 로 재사용한다. 움직일 때 SVG 를 다시 그리지 않는다.
+// - 색 입히기·그림자는 종류·손잡이·색이 바뀔 때 한 번만 캔버스로 구워(lib/zipperCanvas) 창마다 놓인 캔버스에 그려 둔다.
+//   화면에서 SVG 필터를 돌리지 않으므로 느린 휴대폰에서도 끌 때 다시 그리는 일이 없다.
+//   (굽기 전 첫 화면과 자바스크립트가 없을 때는 같은 모양의 SVG 판을 보여 준다.)
 // - 화면은 세 구간으로 나눈다: 슬라이더 뒤 "닫힘", 바로 앞 "벌어짐"(위·아래 반쪽을 skewY 로 V 자), 그 앞 "열림".
 //   각 구간은 "창(overflow:hidden)을 x 만큼, 안쪽 그림을 -x 만큼" 옮겨 잘라낸다 → 프레임마다 transform 만 바뀐다
 //   (레이아웃·페인트 없음, 합성만).
@@ -68,15 +71,16 @@ const Tint = ({ id, color, slope, shadow, soft }: { id: string; color: string; s
 // 슬라이더(슬라이더 위치 s = 0 기준 좌표). 호수만큼: 몸통 가운데(그림 좌표 11)를 축으로
 const slide = (f: number) => `translate(11 ${CY}) scale(${f}) translate(-31 0)`
 
-// 슬라이더 사진은 몸통(모든 손잡이에 같은 한 장, 통째로 슬라이더 색)과 손잡이(몸통 위에 놓여 걸이 끝을 축으로 흔들림) 두 장.
-// 손잡이는 금속(기본·로고판·링)만 슬라이더 색으로 물들이고, 끈·가죽·러버는 원래 색 그대로 둔다.
+// 슬라이더 사진은 몸통(위층, 고정)과 손잡이(아래층, 걸이를 축으로 흔들림) 두 장(원본 한 사진을 걸이 높이에서 나눈 것).
+// 긴 손잡이는 걸이를 축으로 줄여 두었다. 몸통과 금속 손잡이는 슬라이더 색으로, 끈·가죽·러버는 몸통 쪽 금속 고리만 물들인다.
 const SliderPart = ({ f, pull, part }: { f: number; pull: Pull; part: 'body' | 'pull' }) => {
-  const box = part === 'body' ? SLIDER_BODY : PULL_PHOTO[pull]
-  const tint = part === 'body' || PULL_PHOTO[pull].metal ? 'url(#zp-tint-k)' : 'url(#zp-ssh)'
+  const ph = PULL_PHOTO[pull]
+  const box = ph[part]
+  const tint = part === 'body' || ph.metal ? 'url(#zp-tint-k)' : 'url(#zp-ssh)'
   return (
     <g transform={slide(f)}>
       <image
-        href={`/zipper/pull-${part === 'body' ? 'body' : pull}.webp`}
+        href={`/zipper/pull-${pull}${part === 'body' ? '-body' : ''}.webp`}
         x={box.x}
         y={box.y}
         width={box.w}
@@ -89,21 +93,92 @@ const SliderPart = ({ f, pull, part }: { f: number; pull: Pull; part: 'body' | '
 }
 
 const Layer = ({ children }: { children: React.ReactNode }) => (
-  <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+  <svg className="zp__svg" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
     {children}
   </svg>
 )
 
 // 손잡이 흔들림 축(슬라이더 위치 기준 x, 그림 단위)
-const pivotX = (f: number) => 11 + f * (PULL_PIVOT - 31)
+const pivotX = (f: number, pull: Pull) => 11 + f * (PULL_PHOTO[pull].pivot - 31)
 const PULL_MAX = 14 // 손잡이가 기울 수 있는 최대 각도(평면에 놓인 손잡이라 크게 돌지 않는다)
 
-const ZipperPlay = ({ kind, size = 5, pull = 'tab' }: { kind: ZipKind; size?: number; pull?: Pull }) => {
+// 구운 그림을 창 캔버스마다 그린다(크기가 바뀌거나 새로 구웠을 때만)
+const paintCanvases = (root: HTMLElement, b: Baked, f: number) => {
+  const v = { cw: root.clientWidth, ch: root.clientHeight, dpr: Math.min(2, window.devicePixelRatio || 1) }
+  if (!v.cw || !v.ch) return
+  root.querySelectorAll<HTMLCanvasElement>('canvas[data-cv]').forEach((cv) => {
+    const k = cv.dataset.cv
+    if (k === 'full') drawStrip(cv, b.full, f, 0, v)
+    else if (k === 'up') drawStrip(cv, b.up, f, 0, v)
+    else if (k === 'dn') drawStrip(cv, b.dn, f, 0, v)
+    else if (k === 'up-open') drawStrip(cv, b.up, f, -G, v)
+    else if (k === 'dn-open') drawStrip(cv, b.dn, f, G, v)
+    else if (k === 'body') drawSlider(cv, b.body, f, v)
+    else if (k === 'pull') drawSlider(cv, b.pull, f, v)
+  })
+  root.toggleAttribute('data-baked', true)
+}
+
+// tint: 색이 바뀌었음을 알리는 값(부모의 테이프·이·슬라이더 색). 색 자체는 부모 상자의 CSS 변수에서 읽는다
+const ZipperPlay = ({ kind, size = 5, pull = 'tab', tint = '' }: { kind: ZipKind; size?: number; pull?: Pull; tint?: string }) => {
   const f = sizeScale(size)
-  const pvx = pivotX(f)
+  const pvx = pivotX(f, pull)
+  const rootRef = useRef<HTMLDivElement | null>(null)
+  const bakedRef = useRef<Baked | null>(null)
+  const fRef = useRef(f)
+
+  // 종류·손잡이·색이 바뀌면 다시 굽는다
+  useEffect(() => {
+    const root = rootRef.current
+    if (!root) return
+    let alive = true
+    const colors = {
+      tape: readColor(root, '--cfg-tape'),
+      teeth: readColor(root, kind === 'metal' ? '--cfg-s1' : '--cfg-teeth'),
+      slider: readColor(root, '--cfg-k1'),
+    }
+    bake(kind, pull, colors)
+      .then((b) => {
+        if (!alive) return
+        bakedRef.current = b
+        paintCanvases(root, b, fRef.current)
+      })
+      .catch(() => {}) // 굽지 못하면 SVG 판이 그대로 보인다
+    return () => {
+      alive = false
+    }
+  }, [kind, pull, tint])
+
+  // 호수가 바뀌면 다시 그리기만
+  useEffect(() => {
+    fRef.current = f
+    if (rootRef.current && bakedRef.current) paintCanvases(rootRef.current, bakedRef.current, f)
+  }, [f])
+
+  // 상자 크기가 바뀌면 다시 그리기(한 프레임에 한 번)
+  useEffect(() => {
+    const root = rootRef.current
+    if (!root) return
+    let id = 0
+    let w = root.clientWidth
+    let h = root.clientHeight
+    const ro = new ResizeObserver(() => {
+      if (root.clientWidth === w && root.clientHeight === h) return
+      w = root.clientWidth
+      h = root.clientHeight
+      cancelAnimationFrame(id)
+      id = requestAnimationFrame(() => bakedRef.current && paintCanvases(root, bakedRef.current, fRef.current))
+    })
+    ro.observe(root)
+    return () => {
+      cancelAnimationFrame(id)
+      ro.disconnect()
+    }
+  }, [])
 
   // 한 번만 붙인다(형식이 바뀌어 다시 그려져도 슬라이더 위치·스프링 상태 유지)
   const setup = useCallback((root: HTMLDivElement | null) => {
+    rootRef.current = root
     if (!root) return
     const $ = (sel: string) => root.querySelector<HTMLElement>(sel)!
     const closedWin = $('.zp__win--closed')
@@ -323,7 +398,7 @@ const ZipperPlay = ({ kind, size = 5, pull = 'tab' }: { kind: ZipKind; size?: nu
           <filter id="zp-ssh" x="-20%" y="-20%" width="140%" height="140%">
             <feDropShadow dx="0" dy="3" stdDeviation="2.6" floodColor="#000" floodOpacity="0.35" />
           </filter>
-          <Tint id="zp-tint-tape" color="var(--cfg-tape)" slope={st.tape} soft />
+          <Tint id="zp-tint-tape" color="var(--cfg-tape)" slope={st.tape} />
           <Tint id="zp-tint-teeth" color={teethColor} slope={st.teeth} />
           <Tint id="zp-tint-k" color="var(--cfg-k1)" slope={1.25} shadow />
           {(['full', 'up', 'dn'] as const).map((h) => (
@@ -340,6 +415,7 @@ const ZipperPlay = ({ kind, size = 5, pull = 'tab' }: { kind: ZipKind; size?: nu
           <div className={`zp__skew zp__skew--${h}`}>
             <div className="zp__in">
               <Layer>{half(h)}</Layer>
+              <canvas className="zp__cv" data-cv={h} />
             </div>
           </div>
         </div>
@@ -348,6 +424,7 @@ const ZipperPlay = ({ kind, size = 5, pull = 'tab' }: { kind: ZipKind; size?: nu
       <div className="zp__win zp__win--closed">
         <div className="zp__in">
           <Layer>{half('full')}</Layer>
+          <canvas className="zp__cv" data-cv="full" />
         </div>
       </div>
       {/* 열린 구간: 반쪽을 위·아래로 G 만큼 */}
@@ -357,19 +434,23 @@ const ZipperPlay = ({ kind, size = 5, pull = 'tab' }: { kind: ZipKind; size?: nu
             {half('up', -G)}
             {half('dn', G)}
           </Layer>
+          <canvas className="zp__cv" data-cv="up-open" />
+          <canvas className="zp__cv" data-cv="dn-open" />
         </div>
       </div>
 
       <div className="zp__slider" aria-hidden="true">
-        {/* 몸통(아래층) 위에 손잡이(위층)가 놓이고, 손잡이는 몸통 걸이 끝을 축으로 흔들린다 */}
-        <Layer>
-          <SliderPart f={f} pull={pull} part="body" />
-        </Layer>
+        {/* 손잡이(아래층)는 걸이 고리를 축으로 흔들리고, 몸통(위층)이 이음매를 덮는다 */}
         <div className="zp__pull" style={{ transformOrigin: `calc(${pvx} * var(--u)) 50%` }}>
           <Layer>
             <SliderPart f={f} pull={pull} part="pull" />
           </Layer>
+          <canvas className="zp__cv zp__cv--s" data-cv="pull" />
         </div>
+        <Layer>
+          <SliderPart f={f} pull={pull} part="body" />
+        </Layer>
+        <canvas className="zp__cv zp__cv--s" data-cv="body" />
         {/* 직접 해 보라는 안내: 슬라이더를 따라다니고, 처음 만지면 사라진다 */}
         <span className="zp__ping" />
         <span className="zp__hint">
