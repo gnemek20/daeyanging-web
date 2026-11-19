@@ -3144,9 +3144,6 @@ select {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.1rem;
-  > :nth-child(3) {
-    grid-column: 1 / -1;
-  }
 }
 /* 선택지: 같은 크기의 칸 6열(가장 많은 항목이 6개라 모든 줄이 같은 격자에 맞는다) */
 .opts {
@@ -4296,9 +4293,39 @@ html:has(.gal__dlg[open]) {
   .pick__hint {
     color: rgb(255 255 255 / 0.6);
   }
-  .pick__photo {
-    border-radius: 3px;
+  .pick__icon:has(.pick__photo) {
+    height: auto;
   }
+  /* 종류: 이 부분을 확대해 위아래를 자른 가로 사진 */
+  .pick__photo--kind {
+    width: 100%;
+    max-width: 6.5rem;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 6px;
+    box-shadow: 0 0 0 1px rgb(255 255 255 / 0.14);
+  }
+  /* 슬라이더: 손잡이 모양 차이가 보이게 크게 */
+  .pick__photo--pull {
+    height: 5.5rem;
+    filter: drop-shadow(0 3px 4px rgb(0 0 0 / 0.35));
+  }
+  /* 끈·가죽·러버: 길어서 가늘게 보이니 크게 키우고 아래를 잘라(흐리게) 보여 준다 */
+  .pick__icon:has(.pick__photo--long) {
+    height: 5.5rem;
+    overflow: hidden;
+    align-items: start;
+    mask-image: linear-gradient(to bottom, #000 72%, transparent);
+  }
+  .pick__photo--long {
+    height: 8.5rem;
+  }
+}
+.form .pick--form .pick__btn .pick__photo--kind {
+  height: 30px;
+  width: 40px;
+  border-radius: 4px;
 }
 @media (max-width: 560px) {
   .form .pick--form .pick__btn {

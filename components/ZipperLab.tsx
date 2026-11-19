@@ -41,7 +41,7 @@ const PULL_NOTE: Record<Spec['pull'], string> = {
 // 손잡이 고르기 아이콘: slider.png 에서 자른 실제 사진(세로)
 const PullIcon = ({ pull }: { pull: Spec['pull'] }) => (
   // eslint-disable-next-line @next/next/no-img-element -- 112px 짜리 고정 썸네일(이미 WebP 로 줄여 둠)
-  <img src={`/zipper/pull-${pull}-icon.webp`} alt="" className="pick__photo" loading="lazy" decoding="async" />
+  <img src={`/zipper/pull-${pull}-gold.webp`} alt="" className="pick__photo" loading="lazy" decoding="async" />
 )
 
 const metalBg = (stops: readonly string[]) => `linear-gradient(150deg, ${stops[0]}, ${stops[1]} 45%, ${stops[2]} 80%, ${stops[3]})`
@@ -95,7 +95,7 @@ const ZipperLab = () => {
     kind: [`${kind.label} 지퍼`, KIND_NOTE[spec.kind]],
     size: [`${spec.size}호`, SIZE_NOTE[spec.size]],
     tape: [TAPE_COLORS.find((c) => c.hex === spec.tape)?.name ?? '직접 선택', '원단 샘플, 컬러칩, 팬톤 번호로 정확히 맞춤'],
-    finish: [metal.name, spec.kind === 'metal' ? '이와 슬라이더를 같은 금속 컬러로' : '이는 테이프 컬러, 슬라이더만 금속 컬러로'],
+    finish: [metal.name, '이와 슬라이더를 같은 금속 컬러로'],
     lock: [LOCKS.find((l) => l.key === spec.lock)!.label, LOCK_NOTE[spec.lock]],
     pull: [PULLS.find((p) => p.key === spec.pull)!.label + ' 손잡이', PULL_NOTE[spec.pull]],
   }

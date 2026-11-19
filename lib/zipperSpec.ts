@@ -42,7 +42,7 @@ export const PULLS: { key: Pull; label: string; engravable: boolean }[] = [
 ]
 
 export const TAPE_COLORS: { name: string; hex: string }[] = [
-  { name: '인디고', hex: '#26367A' },
+  { name: '데님', hex: '#253F72' },
   { name: '코발트', hex: '#1F6FD1' },
   { name: '레드', hex: '#C8202F' },
   { name: '탠저린', hex: '#E0662F' },
@@ -66,7 +66,7 @@ export const DEFAULT_SPEC: Spec = {
   kind: 'metal',
   size: 5,
   len: 20,
-  tape: '#26367A',
+  tape: '#253F72',
   teeth: 'gold',
   slider: 'gold',
   pull: 'tab',
@@ -111,8 +111,10 @@ export const fixSpec = (s: Spec): Spec => {
 
 // 미리보기 그림이 읽는 CSS 변수
 export const specVars = (s: Spec): Record<string, string> => {
-  const teethHex = s.kind === 'metal' || s.teeth === 'same' ? s.tape : s.teeth
-  const teethStops = s.kind === 'metal' ? metal(s.teeth as MetalKey).stops : metal('gold').stops
+  // 이 색: 메탈은 고른 금속, 비슬론·나일론도 기본은 슬라이더와 같은 금속 색(데님 지퍼처럼)
+  const finish = metal(s.slider === 'paint' ? 'gold' : s.slider).stops
+  const teethStops = s.kind === 'metal' ? metal(s.teeth as MetalKey).stops : finish
+  const teethHex = s.kind === 'metal' ? s.tape : s.teeth === 'same' ? finish[1] : s.teeth
   const k: readonly string[] =
     s.slider === 'paint'
       ? [

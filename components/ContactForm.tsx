@@ -4,7 +4,7 @@ import { startTransition, useActionState, useState } from 'react'
 import { sendInquiry, type InquiryState } from '@/app/actions/inquiry'
 import Picker from './Picker'
 import { ANSWER_MAX, CHOICES, FILES_MAX, FILES_MAX_TOTAL, FILE_ACCEPT, MODES, TEXTS, UNDECIDED, fileAllowed, formatBytes, type Mode } from '@/lib/inquiryForm'
-import { LOCKS, METALS } from '@/lib/zipperSpec'
+import { PULLS } from '@/lib/zipperSpec'
 
 // 상담 문의 폼. 서버 액션(sendInquiry) → 백엔드 API 가 hyunwoo.kim@daeyanging.com 으로 메일(첨부 포함)을 보내고,
 // 보낸 분께는 접수 확인 메일을 보낸다.
@@ -34,22 +34,18 @@ const Thumb = ({ file }: { file: File }) =>
     </span>
   )
 
-// 미리보기를 보며 고르는 항목(3열 선택 상자): 종류는 실제 지퍼 사진, 마감은 금속 색, 슬라이더는 설명
+// 미리보기를 보며 고르는 항목(3열 선택 상자): 종류는 이 부분을 확대한 지퍼 사진, 슬라이더는 손잡이 6종 사진
 const KIND_ICON: Record<string, string> = { 메탈: 'metal', 비슬론: 'vislon', 나일론: 'coil', 콘실: 'conceal', 방수: 'water' }
-const metalBg = (stops: readonly string[]) => `linear-gradient(150deg, ${stops[0]}, ${stops[1]} 45%, ${stops[2]} 80%, ${stops[3]})`
 const preview = (name: string, option: string): { icon?: React.ReactNode; hint?: string } => {
   if (option === UNDECIDED) return { hint: '상담하며 정해요' }
-  if (name === 'q_kind' && KIND_ICON[option])
-    // eslint-disable-next-line @next/next/no-img-element -- 미리 줄여 둔 작은 WebP 썸네일
-    return { icon: <img src={`/zipper/kind-${KIND_ICON[option]}-icon.webp`} alt="" className="pick__photo" loading="lazy" decoding="async" /> }
-  if (name === 'q_finish') {
-    const m = METALS.find((x) => x.name === option)
-    return m ? { icon: <span className="pick__metal" style={{ background: metalBg(m.stops) }} /> } : {}
-  }
-  if (name === 'q_lock') return { hint: LOCKS.find((l) => l.label === option)?.hint }
-  return {}
+  const key = name === 'q_kind' ? KIND_ICON[option] : name === 'q_slider' ? PULLS.find((p) => p.label === option)?.key : undefined
+  if (!key) return {}
+  const src = name === 'q_kind' ? `/zipper/kind-${key}-icon.webp` : `/zipper/pull-${key}-gold.webp`
+  // eslint-disable-next-line @next/next/no-img-element -- 미리 줄여 둔 작은 WebP 썸네일
+  return { icon: <img src={src} alt="" className={`pick__photo pick__photo--${name === 'q_kind' ? 'kind' : 'pull'}${LONG.has(key) ? ' pick__photo--long' : ''}`} loading="lazy" decoding="async" /> }
 }
-const POP = new Set(['q_kind', 'q_finish', 'q_lock'])
+const LONG = new Set(['cord', 'leather', 'rubber'])
+const POP = new Set(['q_kind', 'q_slider'])
 
 // 좁은 화면의 선택지 열 수: 짧은 말(3자 이하)이 5개 이하면 한 줄에 다 놓고, 아니면 3열(남는 칸이 덜 생기게)
 const mobileCols = (opts: string[]) => (opts.length <= 5 && opts.every((o) => o.length <= 3) ? opts.length : 3)
@@ -212,7 +208,7 @@ const ContactForm = ({ email }: { email: string }) => {
         <textarea
           name="message"
           rows={mode === 'form' ? 3 : 8}
-          placeholder={mode === 'form' ? '용도, 참고 사항 등' : '종류, 호수, 길이, 컬러, 마감, 수량, 납기 등'}
+          placeholder={mode === 'form' ? '용도, 참고 사항 등' : '종류, 슬라이더, 호수, 길이, 컬러, 수량, 납기 등'}
           maxLength={5000}
           required={mode === 'free'}
           defaultValue={f?.message}

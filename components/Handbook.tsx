@@ -12,7 +12,7 @@ import { DEFAULT_SPEC, LOCKS, METALS, specVars, type Spec } from '@/lib/zipperSp
 // 가이드 화면: 왼쪽 목차(지금 보는 꼭지를 진하게) + 오른쪽 본문.
 // 맨 위 "직접 골라 보기"에서 설정을 바꿔 가며 그림으로 확인하고, 아래 꼭지들은 표·목록·그림·사진으로 자세히 본다.
 
-const BASE: Spec = { ...DEFAULT_SPEC, tape: '#26367A', len: 60 }
+const BASE: Spec = { ...DEFAULT_SPEC, len: 60 }
 
 const Sec = ({ id, n, title, children }: { id: string; n: number; title: string; children: React.ReactNode }) => (
   <section className="hb__sec" id={id} aria-labelledby={`${id}-h`}>
