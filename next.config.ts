@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
     { source: '/design', destination: '/handbook', permanent: true },
   ],
   experimental: {
+    // next 업그레이드 안내: 보안 수정만 권하게
+    agentUpgrade: 'security',
     serverActions: {
       // 상담 문의 첨부 파일(합계 15MB, lib/inquiryForm.ts 의 FILES_MAX_TOTAL) + 폼 칸·경계 여유
       bodySizeLimit: '16mb',
