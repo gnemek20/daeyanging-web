@@ -11,7 +11,8 @@ type RGB = readonly [number, number, number]
 
 // 구운 그림 한 장과 그것이 놓일 자리(그림 단위, 호수 배율을 걸기 전 좌표). 그림자 여백까지 포함한다
 export type Sprite = { c: HTMLCanvasElement; x: number; y: number; w: number; h: number }
-export type Baked = { full: Sprite; up: Sprite; dn: Sprite; slider: Sprite }
+// slider: 몸통(+ 가운데 걸이 막대), pull: 손잡이(걸이 막대 끝을 축으로 흔들린다, 몸통 밑에 깔린다)
+export type Baked = { full: Sprite; up: Sprite; dn: Sprite; slider: Sprite; pull: Sprite }
 
 export const VW = 640 // 그림 좌표 폭·높이(ZipperPlay 와 같음)
 export const VH = 512
@@ -89,6 +90,7 @@ const compose = (
   rect: { x: number; y: number; w: number; h: number },
   scale: number,
   shadow: { sd: number; dy: number },
+  shadowFrom = 0, // 원본 px: 이 x 왼쪽에는 그림자를 드리우지 않는다(몸통 그림자가 그 밑 손잡이 위에 지지 않게)
 ): Sprite => {
   const w0 = layers[0].width
   const h0 = layers[0].height
@@ -105,6 +107,11 @@ const compose = (
   x.shadowBlur = shadow.sd * 2 * ppu
   x.shadowOffsetY = shadow.dy * ppu
   x.drawImage(t, pad, pad)
+  if (shadowFrom > 0) {
+    x.shadowColor = 'transparent'
+    x.clearRect(0, 0, pad + shadowFrom * scale, c.height)
+    x.drawImage(t, 0, 0, shadowFrom * scale, t.height, pad, pad, shadowFrom * scale, t.height)
+  }
   const pu = pad / ppu
   return { c, x: rect.x - pu, y: rect.y - pu, w: rect.w + pu * 2, h: rect.h + pu * 2 }
 }
@@ -123,6 +130,32 @@ export const readColor = (host: HTMLElement, cssVar: string): RGB => {
   x.fillRect(0, 0, 1, 1)
   const d = x.getImageData(0, 0, 1, 1).data
   return [d[0], d[1], d[2]]
+}
+
+// 슬라이더 사진(가로, 오른쪽 끝이 몸통 머리)을 몸통과 손잡이로 나눈다. 둘을 겹치면 원래 사진 그대로다.
+//   몸통: 오른쪽 끝부터 cut 폭 + 가운데 걸이 막대(lug 까지, 가운데 줄 ±LUG px)
+//   손잡이: 나머지. 흔들려도 틈이 보이지 않게 몸통 밑으로 UNDER 만큼 더 들어가고, 걸이 막대 자리(±LUG_IN)는 비운다
+const LUG = 13
+const LUG_IN = 9
+const UNDER = 8 // 손잡이가 몸통 밑으로 들어가는 폭(px): 기울어도 몸통과 사이에 틈이 안 생기게
+const splitPull = (img: HTMLCanvasElement, ph: { cut: number; lug: number; cy: number }) => {
+  const W = img.width
+  const H = img.height
+  const body = canvas(W, H)
+  const b = body.getContext('2d')!
+  b.drawImage(img, W - ph.cut, 0, ph.cut, H, W - ph.cut, 0, ph.cut, H)
+  const lx = W - ph.lug
+  const lw = ph.lug - ph.cut
+  b.drawImage(img, lx, ph.cy - LUG, lw, LUG * 2, lx, ph.cy - LUG, lw, LUG * 2)
+  const pull = canvas(W, H)
+  const p = pull.getContext('2d')!
+  const cx = W - ph.cut
+  const px = cx + UNDER
+  p.drawImage(img, 0, 0, cx, H, 0, 0, cx, H)
+  // 몸통 밑으로 들어가는 부분: 몸통 머리(더 넓다)를 복사하면 기울 때 삐져나오므로 손잡이 맨 윗줄을 늘여 깐다
+  p.drawImage(img, cx - 1, 0, 1, H, cx, 0, UNDER, H)
+  p.clearRect(lx, ph.cy - LUG_IN, px - lx, LUG_IN * 2)
+  return { body, pull }
 }
 
 export const bake = async (
@@ -146,11 +179,14 @@ export const bake = async (
   })
   const pi = imgs[6]!
   const ph = PULL_PHOTO[pull]
+  const whole = tint(pi, colors.slider, 1.25, false, ph.metal ? 0 : ph.mz)
+  const split = splitPull(whole, ph)
   return {
     full: strips[0],
     up: strips[1],
     dn: strips[2],
-    slider: compose([tint(pi, colors.slider, 1.25, false, ph.metal ? 0 : ph.mz)], ph, 1, { sd: 2.6, dy: 3 }),
+    slider: compose([split.body], ph, 1, { sd: 2.6, dy: 3 }, whole.width - ph.cut),
+    pull: compose([split.pull], ph, 1, { sd: 2.6, dy: 3 }),
   }
 }
 
@@ -183,6 +219,12 @@ export const drawStrip = (cv: HTMLCanvasElement, sp: Sprite, f: number, dy: numb
   x.translate(-VW / 2, -CY)
   x.imageSmoothingQuality = 'high'
   x.drawImage(sp.c, sp.x, sp.y, sp.w, sp.h)
+}
+
+// 손잡이 축의 화면 자리(px, 슬라이더 위치 0 기준·창 왼쪽 위 기준)
+export const pivotAt = (pv: number, f: number, v: View) => {
+  const { k, ox, oy } = fit(v)
+  return { x: ox + k * (11 + f * (pv - 31)), y: oy + k * CY }
 }
 
 // 슬라이더 부품: translate(11, CY) scale(f) translate(-31, 0). 몸통 밖(왼쪽으로 긴 손잡이)까지 덮도록 캔버스를 그 범위로 잡는다

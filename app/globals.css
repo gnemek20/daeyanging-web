@@ -838,6 +838,12 @@ select {
   transform: translateX(calc(var(--s) * var(--u)));
   will-change: transform;
 }
+/* 손잡이 흔들림 층: 회전 중심은 그릴 때 손잡이 축 자리로(style), 회전만 바꾸므로 다시 그리지 않는다 */
+.zp__pull {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
 /* 직접 여닫기 안내: 슬라이더 몸통 가운데(그림 좌표 11) 위에 붙어 함께 움직인다 */
 .zp__hint {
   position: absolute;

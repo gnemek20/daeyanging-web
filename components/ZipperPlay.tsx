@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef } from 'react'
 import { PULL_PHOTO, STRIP } from '@/lib/zipperParts'
-import { bake, drawSlider, drawStrip, readColor, type Baked } from '@/lib/zipperCanvas'
+import { bake, drawSlider, drawStrip, pivotAt, readColor, type Baked } from '@/lib/zipperCanvas'
 import { ZIPPER_ASSET_V, sizeScale, type Pull } from '@/lib/zipperSpec'
 
 // 가이드 "직접 골라 보기"의 가까이 보기: 끌어서 여닫는 지퍼(테이프에 글자는 넣지 않는다).
@@ -90,6 +90,8 @@ const SliderPhoto = ({ f, pull }: { f: number; pull: Pull }) => {
   )
 }
 
+const PULL_MAX = 9 // 손잡이가 기울 수 있는 최대 각도(평면에 놓인 손잡이라 크게 돌지 않는다)
+
 const Layer = ({ children }: { children: React.ReactNode }) => (
   <svg className="zp__svg" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
     {children}
@@ -98,9 +100,15 @@ const Layer = ({ children }: { children: React.ReactNode }) => (
 
 
 // 구운 그림을 창 캔버스마다 그린다(크기가 바뀌거나 새로 구웠을 때만)
-const paintCanvases = (root: HTMLElement, b: Baked, f: number) => {
+const paintCanvases = (root: HTMLElement, b: Baked, f: number, pull: Pull) => {
   const v = { cw: root.clientWidth, ch: root.clientHeight, dpr: Math.min(2, window.devicePixelRatio || 1) }
   if (!v.cw || !v.ch) return
+  // 손잡이 축: 흔들림 층의 회전 중심(px)과, 끄는 방향을 재는 데 쓰는 그림 단위 자리
+  const pv = PULL_PHOTO[pull].pv
+  const at = pivotAt(pv, f, v)
+  const wrap = root.querySelector<HTMLElement>('.zp__pull')
+  if (wrap) wrap.style.transformOrigin = `${at.x.toFixed(2)}px ${at.y.toFixed(2)}px`
+  root.dataset.pvx = String(11 + f * (pv - 31))
   root.querySelectorAll<HTMLCanvasElement>('canvas[data-cv]').forEach((cv) => {
     const k = cv.dataset.cv
     if (k === 'full') drawStrip(cv, b.full, f, 0, v)
@@ -109,6 +117,7 @@ const paintCanvases = (root: HTMLElement, b: Baked, f: number) => {
     else if (k === 'up-open') drawStrip(cv, b.up, f, -G, v)
     else if (k === 'dn-open') drawStrip(cv, b.dn, f, G, v)
     else if (k === 'slider') drawSlider(cv, b.slider, f, v)
+    else if (k === 'pull') drawSlider(cv, b.pull, f, v)
   })
   root.toggleAttribute('data-baked', true)
 }
@@ -119,6 +128,7 @@ const ZipperPlay = ({ kind, size = 5, pull = 'tab', tint = '' }: { kind: ZipKind
   const rootRef = useRef<HTMLDivElement | null>(null)
   const bakedRef = useRef<Baked | null>(null)
   const fRef = useRef(f)
+  const pullRef = useRef(pull)
 
   // 종류·손잡이·색이 바뀌면 다시 굽는다
   useEffect(() => {
@@ -134,7 +144,8 @@ const ZipperPlay = ({ kind, size = 5, pull = 'tab', tint = '' }: { kind: ZipKind
       .then((b) => {
         if (!alive) return
         bakedRef.current = b
-        paintCanvases(root, b, fRef.current)
+        pullRef.current = pull
+        paintCanvases(root, b, fRef.current, pull)
       })
       .catch(() => {}) // 굽지 못하면 SVG 판이 그대로 보인다
     return () => {
@@ -145,7 +156,7 @@ const ZipperPlay = ({ kind, size = 5, pull = 'tab', tint = '' }: { kind: ZipKind
   // 호수가 바뀌면 다시 그리기만
   useEffect(() => {
     fRef.current = f
-    if (rootRef.current && bakedRef.current) paintCanvases(rootRef.current, bakedRef.current, f)
+    if (rootRef.current && bakedRef.current) paintCanvases(rootRef.current, bakedRef.current, f, pullRef.current)
   }, [f])
 
   // 상자 크기가 바뀌면 다시 그리기(한 프레임에 한 번)
@@ -160,7 +171,7 @@ const ZipperPlay = ({ kind, size = 5, pull = 'tab', tint = '' }: { kind: ZipKind
       w = root.clientWidth
       h = root.clientHeight
       cancelAnimationFrame(id)
-      id = requestAnimationFrame(() => bakedRef.current && paintCanvases(root, bakedRef.current, fRef.current))
+      id = requestAnimationFrame(() => bakedRef.current && paintCanvases(root, bakedRef.current, fRef.current, pullRef.current))
     })
     ro.observe(root)
     return () => {
@@ -181,6 +192,7 @@ const ZipperPlay = ({ kind, size = 5, pull = 'tab', tint = '' }: { kind: ZipKind
     const openWin = $('.zp__win--open')
     const openIn = $('.zp__win--open > .zp__in')
     const slider = $('.zp__slider')
+    const pullEl = $('.zp__pull')
     const handle = $('.zp__handle')
     const reduce = matchMedia('(prefers-reduced-motion: reduce)')
 
@@ -189,6 +201,8 @@ const ZipperPlay = ({ kind, size = 5, pull = 'tab', tint = '' }: { kind: ZipKind
     let v = 0 // 속도(단위/초)
     let target = S0
     let k = 900 // 스프링 강도: 끌 때 단단하게, 놓은 뒤엔 부드럽게
+    let a = 0 // 손잡이 흔들림 각도(도)
+    let av = 0
     let raf = 0
     let last = 0
     let pid = -1
@@ -197,9 +211,21 @@ const ZipperPlay = ({ kind, size = 5, pull = 'tab', tint = '' }: { kind: ZipKind
     let dragging = false
     let offset = 0
     let left = 0
+    let top = 0
+    let ptrX = 0 // 끄는 중인 포인터(화면 px)
+    let ptrY = 0
     let touched = false
     let aria = -1
 
+    // 끄는 동안 손잡이가 포인터 쪽으로 기운다. 포인터가 축 오른쪽(몸통 위)이어도 위아래 위치만큼 기울게,
+    // 가로 거리는 최소 40 단위로 본다
+    const aim = () => {
+      if (!dragging) return 0
+      const px0 = Number(root.dataset.pvx) || 0
+      const dx = (ptrX - left) / u - (s + px0)
+      const dy = (ptrY - top) / u - root.clientHeight / 2 / u
+      return (Math.atan2(-dy, Math.max(-dx, 40)) * 180) / Math.PI
+    }
     const px = (n: number) => `translate3d(${(n * u).toFixed(2)}px,0,0)`
     const paint = () => {
       closedWin.style.transform = px(s - W)
@@ -212,6 +238,8 @@ const ZipperPlay = ({ kind, size = 5, pull = 'tab', tint = '' }: { kind: ZipKind
       openIn.style.transform = px(-(s + L))
       slider.style.transform = px(s)
       handle.style.transform = px(s)
+      // 출렁임이 넘쳐도 이음매가 벌어지지 않게 보이는 각도는 부드럽게 PULL_MAX + 1 안으로
+      pullEl.style.transform = a ? `rotate(${((PULL_MAX + 1) * Math.tanh(a / (PULL_MAX + 1))).toFixed(2)}deg)` : ''
       const pct = Math.round(((clamp(s, SMIN, SMAX) - SMIN) / (SMAX - SMIN)) * 100)
       if (pct !== aria) {
         aria = pct
@@ -229,11 +257,15 @@ const ZipperPlay = ({ kind, size = 5, pull = 'tab', tint = '' }: { kind: ZipKind
       for (let i = 0; i < n; i++) {
         v += (-k * (s - target) - c * v) * h
         s += v * h
+        // 손잡이: 포인터 쪽 + 움직이는 반대쪽으로 처지고, 덜 감쇠된 스프링이라 놓으면 몇 번 출렁이다 선다
+        const at = reduce.matches ? 0 : clamp(aim() - v * 0.012, -PULL_MAX, PULL_MAX)
+        av += (-170 * (a - at) - 9 * av) * h
+        a += av * h
       }
-      const moving = Math.abs(s - target) > 0.02 || Math.abs(v) > 0.4
+      const moving = Math.abs(s - target) > 0.02 || Math.abs(v) > 0.4 || Math.abs(a) > 0.05 || Math.abs(av) > 0.5
       if (!moving) {
         s = target
-        v = 0
+        v = a = av = 0
       }
       paint()
       raf = moving ? requestAnimationFrame(tick) : 0
@@ -256,6 +288,7 @@ const ZipperPlay = ({ kind, size = 5, pull = 'tab', tint = '' }: { kind: ZipKind
       startY = e.clientY
       const r = root.getBoundingClientRect()
       left = r.left
+      top = r.top
       dragging = false
       touch()
     }
@@ -270,6 +303,8 @@ const ZipperPlay = ({ kind, size = 5, pull = 'tab', tint = '' }: { kind: ZipKind
         offset = Math.abs(at - s) < 70 ? at - s : 0 // 슬라이더를 잡았으면 잡은 자리 유지, 아니면 손가락으로 끌려온다
         k = 900
       }
+      ptrX = e.clientX
+      ptrY = e.clientY
       target = rubber(unitsAt(e.clientX) - offset)
       kick()
     }
@@ -412,6 +447,10 @@ const ZipperPlay = ({ kind, size = 5, pull = 'tab', tint = '' }: { kind: ZipKind
         <Layer>
           <SliderPhoto f={f} pull={pull} />
         </Layer>
+        {/* 손잡이(흔들림 층, 몸통 밑) → 몸통 */}
+        <div className="zp__pull">
+          <canvas className="zp__cv zp__cv--s" data-cv="pull" />
+        </div>
         <canvas className="zp__cv zp__cv--s" data-cv="slider" />
         {/* 직접 해 보라는 안내: 슬라이더를 따라다니고, 처음 만지면 사라진다 */}
         <span className="zp__ping" />
