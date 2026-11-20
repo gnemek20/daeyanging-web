@@ -11,10 +11,10 @@ export const STRIP = {
 // 손잡이별 슬라이더 사진(원본 그대로 한 장: 몸통 + 손잡이): 그림 단위 자리·크기(y 는 가운데 줄 기준),
 // metal 손잡이가 금속인지, mz 끈·가죽·러버 사진에서 몸통·금속 고리 쪽(오른쪽 끝부터) 폭(px) — 여기만 슬라이더 색
 export const PULL_PHOTO = {
-  tab: { x: -195.4, y: -42.3, w: 275.4, h: 84.6, metal: true, mz: 0 },
-  plate: { x: -299.8, y: -58.05, w: 379.8, h: 116.1, metal: true, mz: 0 },
-  ring: { x: -159.4, y: -72.45, w: 239.4, h: 144.9, metal: true, mz: 0 },
-  cord: { x: -405.1, y: -43.65, w: 485.1, h: 87.3, metal: false, mz: 174 },
-  leather: { x: -404.2, y: -67.5, w: 484.2, h: 135.0, metal: false, mz: 186 },
-  rubber: { x: -406.0, y: -48.15, w: 486.0, h: 96.3, metal: false, mz: 174 },
+  tab: { x: -186.4, y: -41.85, w: 266.4, h: 82.8, metal: true, mz: 0 },
+  plate: { x: -289.9, y: -54.9, w: 369.9, h: 109.8, metal: true, mz: 0 },
+  ring: { x: -151.3, y: -69.3, w: 231.3, h: 143.1, metal: true, mz: 0 },
+  cord: { x: -397.9, y: -40.5, w: 477.9, h: 81.0, metal: false, mz: 165 },
+  leather: { x: -409.6, y: -60.3, w: 489.6, h: 119.7, metal: false, mz: 175 },
+  rubber: { x: -388.9, y: -44.55, w: 468.9, h: 89.1, metal: false, mz: 177 },
 } as const

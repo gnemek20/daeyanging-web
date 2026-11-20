@@ -2835,22 +2835,60 @@ select {
 .lab__panel {
   border-top: 2px solid var(--ink);
 }
-.lab__row {
+/* 종류 · 슬라이더: 고를 것들을 펼쳐 둔다(제목 + 지금 고른 것 → 사진 선택지 → 컬러) */
+.lab__sec {
   display: grid;
-  grid-template-columns: 4.5rem minmax(0, 1fr);
-  align-items: center;
-  gap: 1rem;
-  min-height: 3.5rem;
-  padding: 0.45rem 0;
+  gap: 0.7rem;
+  padding: 0.9rem 0 1rem;
   border-bottom: 1px solid var(--line);
+}
+.lab__head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
 }
 .lab__k {
   font-size: 0.92rem;
   font-weight: 700;
 }
-.lab__v {
-  position: relative;
+.lab__now {
   min-width: 0;
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+.lab__opts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+.lab__opts--6 {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.lab__panel .pick__opt {
+  padding: 0.5rem 0.25rem 0.45rem;
+  .pick__icon {
+    height: 3rem;
+  }
+  .pick__photo {
+    height: 3rem;
+  }
+  .pick__photo--kind {
+    height: auto;
+  }
+  .pick__name {
+    font-size: 0.82rem;
+  }
+}
+.lab__colors {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.lab__ck {
+  flex: none;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted);
 }
 .lab__swatches {
   gap: 0.45rem;
@@ -3074,9 +3112,26 @@ select {
   }
 }
 @media (max-width: 480px) {
-  .lab__row {
-    grid-template-columns: 3.75rem minmax(0, 1fr);
-    gap: 0.6rem;
+  .lab__opts {
+    gap: 0.3rem;
+  }
+  .lab__opts--6 .pick__name {
+    font-size: 0.74rem;
+  }
+  /* 컬러: 제목은 위로, 견본은 줄 끝까지 고르게 퍼지게(10개인 테이프 컬러는 5개씩 두 줄) */
+  .lab__colors {
+    display: grid;
+    gap: 0.5rem;
+    .swatches {
+      display: grid;
+      grid-auto-flow: column;
+      justify-content: space-between;
+      gap: 0.6rem 0;
+    }
+    .swatches:has(> :nth-child(7)) {
+      grid-auto-flow: row;
+      grid-template-columns: repeat(5, auto);
+    }
   }
   .seg2__btn {
     font-size: 0.84rem;
@@ -4449,7 +4504,8 @@ html:has(.gal__dlg[open]) {
 .pop__grid--4 {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
-.pop .pick__opt {
+.pop .pick__opt,
+.lab__panel .pick__opt {
   align-content: center;
   border-color: var(--line);
   background: var(--bg);
